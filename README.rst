@@ -33,22 +33,22 @@ The functions in the package can be used after importing novonix_add, for exampl
 
 .. _pyversion: https://uk.mathworks.com/help/matlab/getting-started-with-python.html
 
-.. _package: https://pypi.org/project/preparenovonix/
+.. _package: https://pypi.org/project/get_nebular_emission/
 
-.. _repository: https://github.com/BatLabLancaster/preparenovonix
+.. _repository: https://github.com/galform/get_nebular_emission
 
-.. |build| image:: https://travis-ci.org/BatLabLancaster/preparenovonix.svg?branch=master
-    :target: https://travis-ci.org/BatLabLancaster/preparenovonix
+.. |build| image:: https://travis-ci.org/galform/get_nebular_emission.svg?branch=master
+    :target: https://travis-ci.org/galform/get_nebular_emission
 
-.. |coverage| image:: https://codecov.io/gh/BatLabLancaster/preparenovonix/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/BatLabLancaster/preparenovonix
+.. |coverage| image:: https://codecov.io/gh/galform/get_nebular_emission/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/galform/get_nebular_emission
 	     
-.. |docs| image:: https://readthedocs.org/projects/prepare-novonix-data/badge/?version=latest
-   :target: https://prepare-novonix-data.readthedocs.io/en/latest/
+.. |docs| image:: https://readthedocs.org/projects/get_nebular_emission/badge/?version=latest
+   :target: https://get_nebular_emission.readthedocs.io/en/latest/
    :alt: Documentation Status
 
-.. |pypi| image:: https://img.shields.io/pypi/v/preparenovonix.svg
-    :target: https://pypi.org/project/preparenovonix/
+.. |pypi| image:: https://img.shields.io/pypi/v/get_nebular_emission.svg
+    :target: https://pypi.org/project/get_nebular_emissioin/
 	 
 .. |zenodo| image:: https://zenodo.org/badge/186994865.svg
    :target: https://zenodo.org/badge/latestdoi/186994865

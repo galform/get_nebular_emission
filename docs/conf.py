@@ -2,7 +2,7 @@
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
-# http://www.sphinx-doc.org/en/master/config
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 # -- Path setup --------------------------------------------------------------
 
@@ -12,14 +12,14 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('.'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'Get nebular emission'
-copyright = '2021, Violeta Gonzalez-Perez'
-author = 'Violeta Gonzalez-Perez'
+project = 'get_nebular_emission'
+copyright = '2021, GALFORM collaboration'
+author = 'GALFORM collaboration'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
@@ -57,9 +57,9 @@ master_doc = 'index'
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
+# a list of builtin themes ('classic','alabaster').
 #
-html_theme = 'classic'
+html_theme = 'alabaster'
 
 html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'] }
 
@@ -67,4 +67,3 @@ html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-

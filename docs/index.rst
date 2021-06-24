@@ -1,30 +1,20 @@
-.. Prepare Novonix Data documentation master file, created by
-   sphinx-quickstart on Mon May 20 17:08:48 2019.
+.. get_nebular_emission documentation master file, created by
+   sphinx-quickstart on Thu Jun 24 16:35:54 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Documentation for ``get_nebular_emission``
-==========================================
-
-.. toctree::
-   :hidden:
-
-   self
+Welcome to get_nebular_emission's documentation!
+================================================
 
 .. toctree::
    :maxdepth: 2
-   
-   readme_include.rst
-   overview.rst
-   features.rst
-   source/modules.rst
+   :caption: Contents:
 
-.. include:: ../README.rst
 
--------
-	     
+
+Indices and tables
+==================
+
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
