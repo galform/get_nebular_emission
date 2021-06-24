@@ -1,0 +1,25 @@
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
+language: python
+dist: xenial   # required for Python >= 3.7
+python:
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "3.8"
+  - "3.9"	
+  
+# command to install dependencies
+install:
+  - pip install -r docs/requirements.txt
+
+# command to run tests
+before_script:
+  - pip install .
+
+script:
+  - pytest --cov=./get_nebular_emission tests/
+
+# Code coverage
+after_success:
+  - codecov
