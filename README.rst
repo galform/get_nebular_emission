@@ -8,11 +8,23 @@ Get nebular emission
 **get_nebular_emission** is a Python package that given the metallicity of cold gas, the stellar mass and either the specific star formation or the number of ionizing photons, calculates the intensity of nebular emission lines from star forming HII regions.
 
 
+The code will read galaxy properties from an input text file with values separated by spaces. This can have a header, as long as the header lines start with characters (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).
+
+If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).
+
+
+
 Example
 -------
 
 The **example.py** runs over the given example data, producing a new file and a plot that compares the original and the prepared data. To run this
 example, simply type: :code:`python example.py`.
+
+Tests
+-----
+
+The test can be run using unittest:
+:code:`python3 -m unittest discover`.
 
 Requirements and Installation
 -----------------------------
