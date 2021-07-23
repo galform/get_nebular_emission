@@ -4,6 +4,7 @@
 import sys
 import os
 import numpy as np
+import eml_const as const
 
 def stop_if_no_file(infile):
     '''
@@ -101,10 +102,13 @@ def get_ncomponents(cols):
         ncomp = np.shape(cols)[0]
     except:
         ncomp = 1
-
+        print('STOP (eml_io.get_ncomponents): ',
+              'Columns should be given as m_sfr_z=[[0,1,2]]')
+        sys.exit()
+        
     return ncomp
 
-def get_data(infile, cols, h0=None, inoh=False, verbose=False):
+def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
@@ -124,6 +128,8 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False):
       If yes, the metallicity has already been provided as 12+log(O/H)
     verbose : boolean
       Yes = print out messages
+    Testing : boolean
+      Yes = to only run over few entries for testing purposes
 
     Returns
     -------
@@ -151,9 +157,49 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False):
                 else:
                     allcols = line.split()
 
-                if (il == ih):#here start arrays
-                    
-                print(il,allcols[2]); exit()
-        #mass, sfr, 
+                if (il == ih):
+                    lms   = np.array([[float(allcols[cols[ic][0]]) for ic in range(ncomp)]])
+                    lssfr = np.array([[float(allcols[cols[ic][1]]) for ic in range(ncomp)]])
+                    loh12 = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
+                else:
+                    comp = np.array([[float(allcols[cols[ic][0]]) for ic in range(ncomp)]])
+                    lms = np.append(lms,comp,axis=0)
+
+                    comp = np.array([[float(allcols[cols[ic][1]]) for ic in range(ncomp)]])
+                    lssfr= np.append(lssfr,comp,axis=0)
+
+                    comp = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
+                    loh12= np.append(loh12,comp,axis=0)
+
+                if (Testing and il>ih+50): break
+
+        # Set to a default value if negative stellar masses
+        ind = np.where(lms<=0.)
+        lms[ind] = -999. ; lssfr[ind] = -999. ; loh12[ind] = -999.
+
+        ind = np.where(lssfr<=0) # Avoid other negative SFR
+        lssfr[ind] = -999. ; loh12[ind] = -999.
+
+        ind = np.where(loh12<=0) # Avoid other negative Z
+        loh12[ind] = -999.
+
+        # Take the log of the stellar mass
+        ind = np.where(lms>0.)
+        lms[ind] = np.log10(lms[ind]) 
+
+        # Obtain log10(sSFR) in 1/yr
+        ind = np.where(lssfr>0.)
+        lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
         
-    return ih,ih,ih
+        if h0:
+            # Correct the units of the stellar mass
+            lms = lms - np.log10(h0)
+
+        # Obtain 12+log10(O/H) from Z=MZcold/Mcold
+        ind = np.where(loh12>0)
+        loh12[ind] = const.ohsun + np.log10(loh12[ind]) - np.log10(const.zsun)
+        #here
+            
+        print(lms)
+        
+    return lms,lssfr,loh12

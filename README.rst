@@ -24,7 +24,7 @@ Tests
 -----
 
 The test can be run using unittest:
-:code:`python3 -m unittest discover`.
+:code:`python3 -m unittest discover -s tests`.
 
 Requirements and Installation
 -----------------------------
