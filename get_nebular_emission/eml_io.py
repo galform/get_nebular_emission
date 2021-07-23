@@ -4,7 +4,7 @@
 import sys
 import os
 import numpy as np
-import eml_const as const
+import get_nebular_emission.eml_const as const
 
 def stop_if_no_file(infile):
     '''
@@ -81,6 +81,34 @@ def get_nheader(infile):
                 return ih
     return ih
         
+
+def get_zfile(zmet,photmod='gutkin'):
+    '''
+    Given a metallicity get the name of the corresponding table
+
+    Parameters
+    ----------
+    zmet : float
+       Metallicity value
+    photomod : string
+       Name of the considered photoionisation model
+
+    Returns
+    -------
+    zfile : string
+       Name of the model file with data for the given metallicity
+    '''
+    
+    dec = str(zmet).split('.')[-1]
+    root = 'nebular_data/'+photmod+'_tables/nebular_emission_Z'
+    zfile = root+dec+'.txt'
+
+    file_fine = check_file(zfile)
+    if (not file_fine):
+        zfile = None
+    
+    return zfile
+    
 
 def get_ncomponents(cols):
     '''
@@ -175,13 +203,15 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
 
         # Set to a default value if negative stellar masses
         ind = np.where(lms<=0.)
-        lms[ind] = -999. ; lssfr[ind] = -999. ; loh12[ind] = -999.
+        lms[ind] = const.notnum
+        lssfr[ind] = const.notnum
+        loh12[ind] = const.notnum
 
         ind = np.where(lssfr<=0) # Avoid other negative SFR
-        lssfr[ind] = -999. ; loh12[ind] = -999.
+        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
 
         ind = np.where(loh12<=0) # Avoid other negative Z
-        loh12[ind] = -999.
+        loh12[ind] = const.notnum
 
         # Take the log of the stellar mass
         ind = np.where(lms>0.)
@@ -190,6 +220,7 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         # Obtain log10(sSFR) in 1/yr
         ind = np.where(lssfr>0.)
         lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
+        #here: allow for input number of ionizing photons
         
         if h0:
             # Correct the units of the stellar mass
@@ -198,8 +229,6 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         # Obtain 12+log10(O/H) from Z=MZcold/Mcold
         ind = np.where(loh12>0)
         loh12[ind] = const.ohsun + np.log10(loh12[ind]) - np.log10(const.zsun)
-        #here
-            
-        print(lms)
-        
+        #here: allow for loh12 direct input
+                    
     return lms,lssfr,loh12

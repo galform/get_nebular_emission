@@ -33,11 +33,9 @@ This code has been developed in Python 3.7.1 and it is compatible with Python ab
 
 This code uses numpy as specified in docs/requirements.txt. The ploting routine from the *example.py* also requires the use of matplotlib.
 
-The code can be run directly from a cloned GitHub `repository`_ or it can also be installed as a python `package`_ through pip:
+The code can be run directly from a cloned GitHub `repository`_ and then makeing a local installation from the main directory (where you can see `setup.py`:
+:code:`python3 setup.py install`.
 
-.. code::
-
-   pip install get_nebular_emission
 
 The functions in the package can be used after importing novonix_add, for example as follows:
 
