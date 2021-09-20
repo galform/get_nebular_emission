@@ -13,6 +13,11 @@ The code will read galaxy properties from an input text file with values separat
 If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).
 
 
+TO DO
+-----
+[] Calculate Bulge and Disk separately and then add the fluxes from the 2 contributions.
+[] Adding AGN lines. From Cedric: For Galform, we should try to do this in a way that the spectrum and luminosity of the ionizing radiation assumed in the emission lines calculation is consistent with the AGN SED assumed in Galform. Currently we use an AGN template spectrum from Marconi, for which the shape depends on the AGN bolometric luminosity. Andrew updated the Galform code so that it calculated observer-frame magnitudes for any bands of interest, along with observer-frame luminosities in hard and soft X-ray bands, for outputs at snapshots, based on the Marconi template (which depends on bolometric luminosity). We should check that this is properly included in the main version of Galform on the archive, and that it works correctly. Andrew was still working on calculating AGN luminosities correctly on lightcones (the issue being that AGN luminosities do not vary smoothly between snapshots) when he left, so I don't think there is code for that yet.
+
 
 Example
 -------
