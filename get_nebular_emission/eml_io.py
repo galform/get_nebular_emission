@@ -228,7 +228,7 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
 
         # Obtain 12+log10(O/H) from Z=MZcold/Mcold
         ind = np.where(loh12>0)
-        loh12[ind] = const.ohsun + np.log10(loh12[ind]) - np.log10(const.zsun)
+        loh12[ind] = np.log10(loh12[ind]) + const.ohsun - np.log10(const.zsun)
         #here: allow for loh12 direct input
                     
     return lms,lssfr,loh12

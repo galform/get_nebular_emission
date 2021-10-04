@@ -14,7 +14,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
       Name of the input file. 
       In text files (*.dat, *txt, *.cat), columns separated by ' '.
       In csv files (*.csv), columns separated by ','.
-    cols : list
+    m_sfr_z : list
       [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
       For text or csv files: list of integers with column position.
       For hdf5 files: list of data names.
