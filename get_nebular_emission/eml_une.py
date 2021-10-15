@@ -6,7 +6,7 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
     '''
     Given log10(Mstar), log10(sSFR) and 12+log(O/H),
     get the ionizing parameter, logU, and the electron density, logne,
-    using equations 10 and 12 
+    using the coefficients in Table 2
     from Kashino and Inoue 2019 (https://arxiv.org/pdf/1812.06939.pdf)
 
     Parameters
@@ -33,7 +33,7 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
                    (lms > const.notnum) &
                    (loh12 > const.notnum))
     if (np.shape(ind)[1]>1):
-        lne[ind] = (lssfr[ind] + 12.661 + 0.627*(lms[ind]-10))/1.753
+        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9)
 
         lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -\
             0.292*lne[ind] + 0.428*(lssfr[ind] + 9)
