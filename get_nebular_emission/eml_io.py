@@ -136,7 +136,7 @@ def get_ncomponents(cols):
         
     return ncomp
 
-def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
+def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
@@ -154,6 +154,8 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
       If not None: value of h, H0=100h km/s/Mpc.
     inoh : boolean
       If yes, the metallicity has already been provided as 12+log(O/H)
+    LC2sfr : boolean
+      If yes, Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
     Testing : boolean
@@ -207,8 +209,9 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         lssfr[ind] = const.notnum
         loh12[ind] = const.notnum
 
-        ind = np.where(lssfr<=0) # Avoid other negative SFR
-        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
+        if not LC2sfr:
+            ind = np.where(lssfr<=0) # Avoid other negative SFR, but take negative LC
+            lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
 
         ind = np.where(loh12<=0) # Avoid other negative Z
         loh12[ind] = const.notnum
@@ -218,9 +221,14 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         lms[ind] = np.log10(lms[ind]) 
 
         # Obtain log10(sSFR) in 1/yr
-        ind = np.where(lssfr>0.)
-        lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
+
+        if LC2sfr:
+            lssfr[ind] = np.log10(7.5*(10.**(-0.4*lssfr[ind]-5.))) - 9. - lms[ind]
+        else:
+            ind = np.where(lssfr > 0.)
+            lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
         #here: allow for input number of ionizing photons
+
         
         if h0:
             # Correct the units of the stellar mass
