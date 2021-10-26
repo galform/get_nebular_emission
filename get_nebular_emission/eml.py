@@ -1,6 +1,7 @@
 from get_nebular_emission.eml_io import get_data
 from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
+import get_nebular_emission.eml_plots as plot
 
 def eml(infile, m_sfr_z=[0,1,2], h0=None,
         unemod='kashino20',photmod='gutkin16',
