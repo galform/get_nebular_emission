@@ -1,12 +1,12 @@
 from get_nebular_emission.eml_io import get_data
 from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
-import get_nebular_emission.eml_plots as plot
+import get_nebular_emission.eml_plots as get_plot
 
 def eml(infile, m_sfr_z=[0,1,2], h0=None,
         unemod='kashino20',photmod='gutkin16',
         LC2sfr=False,
-        verbose=False, Testing=False):
+        verbose=False, Testing=True):
     '''
     Calculate emission lines given the properties of model galaxies
 
@@ -30,6 +30,8 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
       If True Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
+    Testing : boolean
+      -If True run test : shorter and verification plots
 
     Returns
     -------
@@ -40,7 +42,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
     lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0,
                                  verbose=verbose, Testing=Testing)
 
-    print(lssfr.min(), lssfr.max())
+    #print(lssfr.min(), lssfr.max())
 
     # From the galaxy properties obtain the
     # ionizing parameter, U, and electron density, ne
@@ -48,4 +50,10 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
                     unemod=unemod, verbose=verbose)
 
     # From U and ne, obtain the emission lines from HII regions
+
+    if Testing:
+        get_plot.get_plots(lms, lssfr, verbose=verbose)
+        #print(lms,lssfr)
+        #plt.show(get_plot.get_plots(lms, lssfr, verbose=verbose))
+
     

@@ -1,18 +1,16 @@
 import numpy as np
 import os.path, sys
 import subprocess
-from Cosmology import *
 import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
-from scipy import ndimage
-from stats import *
 import get_nebular_emission.eml_style as style
-plt.style.use(style.style1)
 import get_nebular_emission.eml_const as const
 
-def get_plots(lms, lssfr, loh12, verbose=False):
+
+def get_plots(lms, lssfr, verbose=False):
+
     '''
        Given log10(Mstar), log10(sSFR) and 12+log(O/H),
        get the plots log10(sSFR) vs log10(Mstar)
@@ -32,8 +30,10 @@ def get_plots(lms, lssfr, loh12, verbose=False):
        Returns
        -------
        plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
-       '''
+    '''
 
+
+    plt.style.use(style.style1)
     # Define a class that forces representation of float to look a certain way
     # This remove trailing zero so '1.0' becomes '1'
     class nf(float):
@@ -48,12 +48,8 @@ def get_plots(lms, lssfr, loh12, verbose=False):
     #Here: We start with sSFR vs M. Add later Z vs M.
 
     #Prepare the plot
-    volume = (500. ** 3.) #Here: Add later to constant file.
-                          #Here: Allow for differents volumes
-    cuts = ['lo2', 'sfr', 'm']
-    lsty = ['-', '--', ':']
 
-    # Initialize GSMF
+    # Initialize GSMF (Galaxy Cosmological Mass Function)
     mmin = 8.5
     mmax = 15.
     dm = 0.1
@@ -73,6 +69,14 @@ def get_plots(lms, lssfr, loh12, verbose=False):
     gs = gridspec.GridSpec(3, 3)
     gs.update(wspace=0., hspace=0.)
     ax = plt.subplot(gs[1:, :-1])
+
+    volume = (500. ** 3.)  # Here: Add later to constant file.
+    # Here: Allow for differents volumes
+
+    cols = ['navy', 'royalblue', 'lightsteelblue']
+    lsty = ['-', '--', ':']
+
+
 
     # Fig. sSFR vs M
     xtit = "$log_{10}(\\rm M_{*}/M_{\odot})$"
@@ -97,7 +101,13 @@ def get_plots(lms, lssfr, loh12, verbose=False):
     axs.xaxis.set_ticks(np.arange(-4., end, 1.))
     plt.setp(axs.get_yticklabels(), visible=False)
 
-    for iic,cut in enumerate(cuts):
+
+    for iic,col in enumerate(cols):
+
+        #Necessary to do histogram2d:
+        lssfr = np.asarray(lssfr)[:,0]  #Here: we take only the first component data (disk, bulge,...).
+        lms = np.asarray(lms)[:, 0]     #Not necessary when unified.
+
         # GSMF
         H, bins_edges = np.histogram(lms, bins=np.append(mbins, mmax))
         gsmf = H / volume / dm  # In Mpc^3/h^3
@@ -106,45 +116,70 @@ def get_plots(lms, lssfr, loh12, verbose=False):
         H, bins_edges = np.histogram(lssfr,bins=np.append(sbins,smax))
         sfrf = H/volume/ds
 
+
         # sSFR-GSMF
-        H, xedges, yedges = np.histogram2d(lssfr,lms,
-                                       bins=[np.append(sbins,smax),
-                                             np.append(mbins,mmax)])
+        H, xedges, yedges = np.histogram2d(lssfr, lms,
+                                           bins=[np.append(sbins,smax),
+                                                 np.append(mbins,mmax)])
         smf = H/volume/dm/ds
+
 
         #Plot SMF vs SFR
         matplotlib.rcParams['contour.negative_linestyle'] = lsty[iic]
-        zz = np.zeros(shape=(len(shist),len(mhist))) ; zz.fill(const.notnum)
+        zz = np.zeros(shape=(len(shist), len(mhist))) ; zz.fill(const.notnum)
         ind = np.where(smf>0.)
         zz[ind] = np.log10(smf[ind])
 
-        ind = np.where(zz > -999.)
+        ind = np.where(zz > const.notnum)
+
         if (np.shape(ind)[1] > 1):
             # Contours
             xx, yy = np.meshgrid(mbins, sbins)
-            # al = nds[iin] ; print(al)
-            cs = ax.contour(xx, yy, zz, levels=al,colors=cols[iin])
-            # cs.levels = [nf(val) for val in cs.levels]
-            # ax.clabel(cs, cs.levels, inline=1,inline_spacing=0,\
-            #  fontsize=10,fmt='%r')#fmt='%r %%')
+            #al = nds[iin] ; print(al)
+            cs = ax.contour(xx, yy, zz,colors=cols[iic])
+            cs.levels = [nf(val) for val in cs.levels]
+            ax.clabel(cs, cs.levels, inline=1,inline_spacing=0, fontsize=10,fmt='%r')#fmt='%r %%')
 
         # GSMF
         py = gsmf; ind = np.where(py > 0.)
         x = mhist[ind]; y = np.log10(py[ind])
         ind = np.where(y < 0.)
-        axm.plot(x[ind], y[ind], color=cols[iin], linestyle=lsty[iic])
+        axm.plot(x[ind], y[ind], color=cols[iic], linestyle=lsty[iic])
+
 
         # SFRF
         px = sfrf ; ind = np.where(px>0.)
         y = shist[ind] ; x = np.log10(px[ind])
         ind = np.where(x < 0.)
         if (iic == 1):
-          inleg = '$n_{\\rm gal}=10^{'+str(nds[iin])+'}{\\rm Mpc}^{-3}h^{-3}$'
-          axs.plot(x[ind],y[ind],color=cols[iin], linestyle=lsty[iic],label=inleg)
-        else:
-            if (iin == 2 and iic == 0):
-                axs.plot([],[],' ',
-                         label=survey+', z='+zz_list[iiz])
+            inleg = '$leyenda1$'
+            axs.plot(x[ind],y[ind],color=cols[iic], linestyle=lsty[iic],label=inleg)
+        #else:
+         #   if (iin == 2 and iic == 0):
+          #      axs.plot([],[],' ',
+           #              label=survey+', z='+zz_list[iiz])
 
-            axs.plot(x[ind],y[ind],color=cols[iin],
+            axs.plot(x[ind],y[ind],color=cols[iic],
                      linestyle=lsty[iic])
+
+
+
+        '''if (nfiles>0)
+        leg = axs.legend(bbox_to_anchor=(1.05, 1.4), fontsize='small',
+                         handlelength=0, handletextpad=0)
+
+        for item in leg.legendHandles:
+            item.set_visible(False)
+        allcols = ['k'] + cols
+        for color, text in zip(allcols, leg.get_texts()):
+            text.set_color(color)
+            leg.draw_frame(False)
+'''
+        plotf = 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf'
+        # Save figures
+        fig.savefig( 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf')
+        print('Output: ', 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf')
+        print(lms,lssfr)
+        #plt.show()
+        return plotf
+

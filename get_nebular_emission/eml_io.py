@@ -136,7 +136,7 @@ def get_ncomponents(cols):
         
     return ncomp
 
-def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Testing=False):
+def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Testing=True):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
