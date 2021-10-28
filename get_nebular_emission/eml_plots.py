@@ -48,21 +48,25 @@ def get_plots(lms, lssfr, verbose=False):
     #Here: We start with sSFR vs M. Add later Z vs M.
 
     #Prepare the plot
+    volume = (500. ** 3.)  # Here: Add later to constant file.
+    # Here: Allow for differents volumes
+
+    cols = ['navy', 'royalblue', 'lightsteelblue']
+    lsty = ['-', '--', ':']
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
-    mmin = 8.5
-    mmax = 15.
+    mmin = 2.5 #8.5
+    mmax = 9. #15.
     dm = 0.1
     mbins = np.arange(mmin, mmax, dm)
     mhist = mbins + dm * 0.5
 
     # Initialize SSFR
-    smin = 3.
-    smax = 13.
+    smin = -12.
+    smax = -7.1
     ds = 0.1
     sbins = np.arange(smin, smax, ds)
     shist = sbins + ds * 0.5
-
 
     # Plots limits and style
     fig = plt.figure(figsize=(8.5, 9.))
@@ -70,18 +74,11 @@ def get_plots(lms, lssfr, verbose=False):
     gs.update(wspace=0., hspace=0.)
     ax = plt.subplot(gs[1:, :-1])
 
-    volume = (500. ** 3.)  # Here: Add later to constant file.
-    # Here: Allow for differents volumes
-
-    cols = ['navy', 'royalblue', 'lightsteelblue']
-    lsty = ['-', '--', ':']
-
-
-
-    # Fig. sSFR vs M
-    xtit = "$log_{10}(\\rm M_{*}/M_{\odot})$"
-    ytit = "$log_{10}(\\rm sSFR/yr)$"
-    xmin = mmin; xmax = 11.9; ymin = 6.;  ymax = smax
+    # Fig. SFRF vs M
+    # Here: Change units
+    xtit = "$log_{10}(\\rm M_{*}/M_{\odot}h^{-1})$"
+    ytit = "$log_{10}(\\rm SFR/M_{\odot}h^{-1}yr^{-1})$"
+    xmin = mmin; xmax = mmax; ymin = smin;  ymax = smax
     ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
     ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
@@ -89,7 +86,7 @@ def get_plots(lms, lssfr, verbose=False):
     axm = plt.subplot(gs[0, :-1],sharex=ax)
     ytit="$log_{10}(\Phi)$" ; axm.set_ylabel(ytit)
     axm.set_autoscale_on(False) ;  axm.minorticks_on()
-    axm.set_ylim(-5.5,-1.)
+    axm.set_ylim(-7.2,-6.3)
     plt.setp(axm.get_xticklabels(), visible=False)
 
     # SFRF
@@ -130,37 +127,39 @@ def get_plots(lms, lssfr, verbose=False):
         ind = np.where(smf>0.)
         zz[ind] = np.log10(smf[ind])
 
-        ind = np.where(zz > const.notnum)
+        ind = np.where(zz>const.notnum)
 
         if (np.shape(ind)[1] > 1):
             # Contours
             xx, yy = np.meshgrid(mbins, sbins)
             #al = nds[iin] ; print(al)
-            cs = ax.contour(xx, yy, zz,colors=cols[iic])
-            cs.levels = [nf(val) for val in cs.levels]
-            ax.clabel(cs, cs.levels, inline=1,inline_spacing=0, fontsize=10,fmt='%r')#fmt='%r %%')
+            cs = ax.contour(xx, yy, zz, colors=cols[iic])
+            #cs.levels = [nf(val) for val in cs.levels]
+            #ax.clabel(cs, cs.levels, inline=1,inline_spacing=0, fontsize=10,fmt='%r')#fmt='%r %%')
 
         # GSMF
-        py = gsmf; ind = np.where(py > 0.)
+        py = gsmf; ind = np.where(py>0.)
         x = mhist[ind]; y = np.log10(py[ind])
         ind = np.where(y < 0.)
-        axm.plot(x[ind], y[ind], color=cols[iic], linestyle=lsty[iic])
+        axm.plot(x[ind], y[ind], color=cols[iic],
+                 linestyle=lsty[iic])
 
 
         # SFRF
-        px = sfrf ; ind = np.where(px>0.)
-        y = shist[ind] ; x = np.log10(px[ind])
+        px = sfrf; ind = np.where(px>0.)
+        y = shist[ind]; x = np.log10(px[ind])
         ind = np.where(x < 0.)
         if (iic == 1):
-            inleg = '$leyenda1$'
-            axs.plot(x[ind],y[ind],color=cols[iic], linestyle=lsty[iic],label=inleg)
+            inleg = '$n_{\\rm gal}=10^{algo}{\\rm Mpc}^{-3}h^{-3}$'
+            axs.plot(x[ind],y[ind],color=cols[iic],
+                     linestyle=lsty[iic],label=inleg)
         #else:
          #   if (iin == 2 and iic == 0):
           #      axs.plot([],[],' ',
            #              label=survey+', z='+zz_list[iiz])
 
-            axs.plot(x[ind],y[ind],color=cols[iic],
-                     linestyle=lsty[iic])
+            #axs.plot(x[ind],y[ind],color=cols[iic],
+             #        linestyle=lsty[iic])
 
 
 
@@ -179,7 +178,7 @@ def get_plots(lms, lssfr, verbose=False):
         # Save figures
         fig.savefig( 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf')
         print('Output: ', 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf')
-        print(lms,lssfr)
+        #print(lms,lssfr)
         #plt.show()
         return plotf
 

@@ -27,7 +27,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
     photmod : string
       Photoionisation model to be used for look up tables.
     LC2sfr : boolean
-      If True Lyman Continuum photons expected as input for SFR.
+      If True magnitude of Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
     Testing : boolean
@@ -39,10 +39,10 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
     '''
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0,
+    lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0, LC2sfr=LC2sfr,
                                  verbose=verbose, Testing=Testing)
 
-    #print(lssfr.min(), lssfr.max())
+    #print(lms.min(), lms.max())
 
     # From the galaxy properties obtain the
     # ionizing parameter, U, and electron density, ne

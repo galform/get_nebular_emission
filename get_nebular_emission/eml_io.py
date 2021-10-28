@@ -136,7 +136,7 @@ def get_ncomponents(cols):
         
     return ncomp
 
-def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Testing=True):
+def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Testing=True):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
@@ -155,7 +155,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Test
     inoh : boolean
       If yes, the metallicity has already been provided as 12+log(O/H)
     LC2sfr : boolean
-      If yes, Lyman Continuum photons expected as input for SFR.
+      If True magnitude of Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
     Testing : boolean
@@ -165,7 +165,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Test
     -------
     mstars, ssfr, oh : floats
     '''
-    
+
     check_file(infile,verbose=verbose)
 
     ncomp = get_ncomponents(cols)
@@ -227,7 +227,6 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=True, verbose=False, Test
         else:
             ind = np.where(lssfr > 0.)
             lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
-        #here: allow for input number of ionizing photons
 
         
         if h0:
