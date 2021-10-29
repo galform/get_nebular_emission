@@ -9,7 +9,7 @@ import get_nebular_emission.eml_style as style
 import get_nebular_emission.eml_const as const
 
 
-def get_plots(lms, lssfr, verbose=False):
+def get_plots(lms, lssfr, h0=None, volume=500.**3., verbose=False, Plotting=False):
 
     '''
        Given log10(Mstar), log10(sSFR) and 12+log(O/H),
@@ -24,8 +24,14 @@ def get_plots(lms, lssfr, verbose=False):
          log10(sSFR/yr), it should be an instantaneous measurement
        loh12 : float
          12+log(O/H)
+       h0 : float
+         If not None: value of h, H0=100h km/s/Mpc.
+       volume : float
+         Carlton model default value = 500 Mpc^3/h^3. If not 500.**3 : value of the simulation volume in Mpc^3/h^3
        verbose : boolean
          Yes = print out messages
+       Plotting : boolean
+         If True run verification plots with all data.
 
        Returns
        -------
@@ -47,9 +53,10 @@ def get_plots(lms, lssfr, verbose=False):
 
     #Here: We start with sSFR vs M. Add later Z vs M.
 
+    # Correct the units of the simulation volume to Mpc^3:
+    volume=volume*(h0**3)
+
     #Prepare the plot
-    volume = (500. ** 3.)  # Here: Add later to constant file.
-    # Here: Allow for differents volumes
 
     cols = ['navy', 'royalblue', 'lightsteelblue']
     lsty = ['-', '--', ':']
@@ -62,8 +69,8 @@ def get_plots(lms, lssfr, verbose=False):
     mhist = mbins + dm * 0.5
 
     # Initialize SSFR
-    smin = -12.
-    smax = -7.1
+    smin = -14.
+    smax = -7.
     ds = 0.1
     sbins = np.arange(smin, smax, ds)
     shist = sbins + ds * 0.5
@@ -86,14 +93,14 @@ def get_plots(lms, lssfr, verbose=False):
     axm = plt.subplot(gs[0, :-1],sharex=ax)
     ytit="$log_{10}(\Phi)$" ; axm.set_ylabel(ytit)
     axm.set_autoscale_on(False) ;  axm.minorticks_on()
-    axm.set_ylim(-7.2,-6.3)
+    axm.set_ylim(-7.2,-5.)
     plt.setp(axm.get_xticklabels(), visible=False)
 
     # SFRF
     axs = plt.subplot(gs[1:, 2], sharey=ax)
     xtit = "$log_{10}(\Phi)$"; axs.set_xlabel(xtit)
     axs.set_autoscale_on(False); axs.minorticks_on()
-    axs.set_xlim(-4.4, 0.0)
+    axs.set_xlim(-4., 0.0)
     start, end = axs.get_xlim()
     axs.xaxis.set_ticks(np.arange(-4., end, 1.))
     plt.setp(axs.get_yticklabels(), visible=False)

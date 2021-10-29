@@ -136,7 +136,7 @@ def get_ncomponents(cols):
         
     return ncomp
 
-def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Testing=True):
+def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Plotting=False, Testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
@@ -158,6 +158,8 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Tes
       If True magnitude of Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
     Testing : boolean
       Yes = to only run over few entries for testing purposes
 
@@ -201,7 +203,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Tes
                     comp = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
                     loh12= np.append(loh12,comp,axis=0)
 
-                if (Testing and il>ih+50): break
+                if (Testing and not Plotting and il>ih+50): break
 
         # Set to a default value if negative stellar masses
         ind = np.where(lms<=0.)

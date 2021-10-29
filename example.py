@@ -12,7 +12,7 @@ infile = r"example_data/example_data.dat"
 # Several components are allowed (e.g. disk and bulge).
 #eml.eml(infile, m_sfr_z=[[11,6,2]],h0=0.6777, verbose=True, Testing=True)
 
-eml.eml(infile, m_sfr_z=[[11,0,2],[11,0,2]], h0=0.6777, LC2sfr=True, verbose=True, Testing=True) #(e.g. LC photons)
+eml.eml(infile, m_sfr_z=[[11,0,2],[11,0,2]], h0=0.6777, LC2sfr=True, verbose=True, Plotting=True, Testing=True) #(e.g. LC photons)
 #eml.eml(infile, m_sfr_z=[[11,13,2],[11,13,2]], h0=0.6777, LC2sfr=False, verbose=True, Testing=True) #(e.g. SFR)
 
 ## Compare the prepared file with the original one

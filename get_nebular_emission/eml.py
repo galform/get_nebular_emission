@@ -3,10 +3,10 @@ from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
 import get_nebular_emission.eml_plots as get_plot
 
-def eml(infile, m_sfr_z=[0,1,2], h0=None,
+def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3,
         unemod='kashino20',photmod='gutkin16',
         LC2sfr=False,
-        verbose=False, Testing=True):
+        verbose=False, Plotting=False, Testing=False):
     '''
     Calculate emission lines given the properties of model galaxies
 
@@ -22,6 +22,8 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
       For hdf5 files: list of data names.
     h0 : float
       If not None: value of h, H0=100h km/s/Mpc.
+    volume : float
+      Carlton model default value = 500 Mpc^3/h^3. If not 500 : value of the simulation volume in Mpc^3/h^3
     unemod : string
       Model to go from galaxy properties to U and ne
     photmod : string
@@ -30,8 +32,10 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
       If True magnitude of Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
     Testing : boolean
-      -If True run test : shorter and verification plots
+      If True run test : shorter.
 
     Returns
     -------
@@ -40,7 +44,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
 
     # Read the input data and correct it to the adequate units, etc.
     lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0, LC2sfr=LC2sfr,
-                                 verbose=verbose, Testing=Testing)
+                                 verbose=verbose, Plotting=Plotting, Testing=Testing)
 
     #print(lms.min(), lms.max())
 
@@ -51,9 +55,11 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
 
     # From U and ne, obtain the emission lines from HII regions
 
-    if Testing:
-        get_plot.get_plots(lms, lssfr, verbose=verbose)
+    if Plotting:
+        get_plot.get_plots(lms, lssfr, h0=h0, volume=volume, verbose=verbose, Plotting=Plotting)
         #print(lms,lssfr)
         #plt.show(get_plot.get_plots(lms, lssfr, verbose=verbose))
+    else:
+        print('This is a test that only run over few entries')
 
     
