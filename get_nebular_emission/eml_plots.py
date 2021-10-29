@@ -27,7 +27,7 @@ def get_plots(lms, lssfr, h0=None, volume=500.**3., verbose=False, Plotting=Fals
        h0 : float
          If not None: value of h, H0=100h km/s/Mpc.
        volume : float
-         Carlton model default value = 500 Mpc^3/h^3. If not 500.**3 : value of the simulation volume in Mpc^3/h^3
+         Carlton model default value = 500^3 Mpc^3/h^3. If not 500.**3. : value of the simulation volume in Mpc^3/h^3
        verbose : boolean
          Yes = print out messages
        Plotting : boolean
@@ -62,8 +62,8 @@ def get_plots(lms, lssfr, h0=None, volume=500.**3., verbose=False, Plotting=Fals
     lsty = ['-', '--', ':']
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
-    mmin = 2.5 #8.5
-    mmax = 9. #15.
+    mmin = 1.5 #8.5
+    mmax = 10.2 #15.
     dm = 0.1
     mbins = np.arange(mmin, mmax, dm)
     mhist = mbins + dm * 0.5
@@ -93,7 +93,7 @@ def get_plots(lms, lssfr, h0=None, volume=500.**3., verbose=False, Plotting=Fals
     axm = plt.subplot(gs[0, :-1],sharex=ax)
     ytit="$log_{10}(\Phi)$" ; axm.set_ylabel(ytit)
     axm.set_autoscale_on(False) ;  axm.minorticks_on()
-    axm.set_ylim(-7.2,-5.)
+    axm.set_ylim(-7.2,-4.5)
     plt.setp(axm.get_xticklabels(), visible=False)
 
     # SFRF
@@ -105,12 +105,19 @@ def get_plots(lms, lssfr, h0=None, volume=500.**3., verbose=False, Plotting=Fals
     axs.xaxis.set_ticks(np.arange(-4., end, 1.))
     plt.setp(axs.get_yticklabels(), visible=False)
 
-
+    #print(range(len(lssfr[0])-1))
+    #exit()
     for iic,col in enumerate(cols):
 
+        for ii in range(len(lssfr[0])-1):
+            lssfr = np.asarray(lssfr)[:, ii]
+            print(lssfr)
+            print(ii)
+
+
         #Necessary to do histogram2d:
-        lssfr = np.asarray(lssfr)[:,0]  #Here: we take only the first component data (disk, bulge,...).
-        lms = np.asarray(lms)[:, 0]     #Not necessary when unified.
+        #lssfr = np.asarray(lssfr)[:,iic]  #Here: we take only the first component data (disk, bulge,...).
+        lms = np.asarray(lms)[:, iic]     #Not necessary when unified.
 
         # GSMF
         H, bins_edges = np.histogram(lms, bins=np.append(mbins, mmax))
@@ -183,8 +190,8 @@ def get_plots(lms, lssfr, h0=None, volume=500.**3., verbose=False, Plotting=Fals
 '''
         plotf = 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf'
         # Save figures
-        fig.savefig( 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf')
-        print('Output: ', 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot1.pdf')
+        fig.savefig( 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot'+str(iic+1)+'.pdf')
+        print('Output: ', 'C:/Users/Olivia/PRUEBAS/'+'pruebaplot'+str(iic+1)+'.pdf')
         #print(lms,lssfr)
         #plt.show()
         return plotf

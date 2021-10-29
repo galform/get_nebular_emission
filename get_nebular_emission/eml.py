@@ -3,7 +3,7 @@ from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
 import get_nebular_emission.eml_plots as get_plot
 
-def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3,
+def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
         unemod='kashino20',photmod='gutkin16',
         LC2sfr=False,
         verbose=False, Plotting=False, Testing=False):
@@ -23,7 +23,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3,
     h0 : float
       If not None: value of h, H0=100h km/s/Mpc.
     volume : float
-      Carlton model default value = 500 Mpc^3/h^3. If not 500 : value of the simulation volume in Mpc^3/h^3
+      Carlton model default value = 500^3 Mpc^3/h^3. If not 500.**3. : value of the simulation volume in Mpc^3/h^3
     unemod : string
       Model to go from galaxy properties to U and ne
     photmod : string
