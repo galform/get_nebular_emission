@@ -3,6 +3,7 @@ import numpy as np
 notnum = -999.
 
 zsun = 0.0134 # Asplund 2009
+# zsum = 0.014 #CMB constant ref ?
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 unemods = ['kashino20']
