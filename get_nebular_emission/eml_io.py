@@ -168,7 +168,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Plo
     mstars, ssfr, oh : floats
     '''
 
-    check_file(infile,verbose=verbose)
+    check_file(infile, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
 
@@ -241,3 +241,78 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Plo
         #here: allow for loh12 direct input
                     
     return lms,lssfr,loh12
+
+
+def get_reducedfile(infile, outfile, indcol, verbose=False):
+    '''
+    Get reduced file with only the wanted columns data.
+
+    Parameters
+    ----------
+    infile : string
+      Name of the input file.
+      In text files (*.dat, *txt, *.cat), columns separated by ' '.
+      In csv files (*.csv), columns separated by ','.
+    outfile : string
+      Name of the output file.
+      Text file (*.dat, *txt, *.cat), columns separated by ' '.
+    indcols : list
+      [WantedColumn1,WantedColumn2,WantedColumn3,WantedColumn4,WantedColumn5,WantedColumn6]
+      For text or csv files: list of integers with column position.
+      For hdf5 files: list of data names.
+    verbose : boolean
+      Yes = print out messages
+    Returns
+    -------
+    outfile : string
+    Path to the reduced output file.
+    '''
+
+    check_file(infile,verbose=verbose)
+
+    if ('.hdf5' in infile):
+        print('Program not set to deal with hdf5 files yet, input a text file')
+    else:
+        with open(infile,"r") as ff:
+            ih = get_nheader(infile)
+            with open(outfile, "w") as outf:
+                for il,line in enumerate(ff):
+                    if il<ih-1:
+                        n=line
+                        #print(n,il,ih)
+                        #exit()
+                        outf.write(n)
+
+                    if il==ih-1:
+                        headlast=line.split()
+                        headlast=headlast[1:]
+                        headlast=np.array(headlast)
+                        #print(headlast[indcol[1]])
+                        headlast=np.column_stack(('#',headlast[indcol[0]], headlast[indcol[1]],
+                                                  headlast[indcol[2]], headlast[indcol[3]],
+                                                  headlast[indcol[4]],headlast[indcol[5]]))
+                        #print(headlast)
+                        np.savetxt(outf,headlast,fmt='%s')
+
+                    if il>ih:
+                        if ('.csv' in infile):
+                            allcols = line.split(',')
+                        else:
+                            allcols = line.split()
+
+                        wantedcolumn1 = np.array(float(allcols[indcol[0]]))
+                        wantedcolumn2 = np.array(float(allcols[indcol[1]]))
+                        wantedcolumn3 = np.array(float(allcols[indcol[2]]))
+                        wantedcolumn4 = np.array(float(allcols[indcol[3]]))
+                        wantedcolumn5 = np.array(float(allcols[indcol[4]]))
+                        wantedcolumn6 = np.array(float(allcols[indcol[5]]))
+
+                        datatofile = np.column_stack((wantedcolumn1, wantedcolumn2, wantedcolumn3,
+                                                      wantedcolumn4, wantedcolumn5,wantedcolumn6))
+                        np.savetxt(outf,datatofile)
+            outf.closed
+        ff.closed
+
+    #outfile = print(outf, 'Output file :{}'.format(outfile))
+
+    return outfile #Not sure that that is the return.

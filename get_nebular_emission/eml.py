@@ -1,4 +1,5 @@
 from get_nebular_emission.eml_io import get_data
+from get_nebular_emission.eml_io import get_reducedfile
 from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
 import get_nebular_emission.eml_plots as get_plot
@@ -48,6 +49,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
 
     #print(lms.min(), lms.max())
 
+
     # From the galaxy properties obtain the
     # ionizing parameter, U, and electron density, ne
     u, ne = get_une(lms, lssfr, loh12,
@@ -56,10 +58,10 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
     # From U and ne, obtain the emission lines from HII regions
 
     if Plotting:
-        get_plot.get_plots(lms, lssfr, h0=h0, volume=volume, verbose=verbose, Plotting=Plotting)
+        get_plot.get_plots(lms, lssfr, m_sfr_z, h0=h0, volume=volume, verbose=verbose, Plotting=Plotting)
         #print(lms,lssfr)
         #plt.show(get_plot.get_plots(lms, lssfr, verbose=verbose))
     else:
-        print('This is a test that only run over few entries')
+        print('This is a test that only run over a few entries')
 
     
