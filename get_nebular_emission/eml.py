@@ -1,10 +1,13 @@
 from get_nebular_emission.eml_io import get_data
+from get_nebular_emission.eml_io import get_reducedfile
 from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
+import get_nebular_emission.eml_plots as get_plot
 
-def eml(infile, m_sfr_z=[0,1,2], h0=None,
+def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
         unemod='kashino20',photmod='gutkin16',
-        verbose=False, Testing=False):
+        LC2sfr=False,
+        verbose=False, Plotting=False, Testing=False):
     '''
     Calculate emission lines given the properties of model galaxies
 
@@ -15,17 +18,25 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
       In text files (*.dat, *txt, *.cat), columns separated by ' '.
       In csv files (*.csv), columns separated by ','.
     m_sfr_z : list
-      [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
+      [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]
       For text or csv files: list of integers with column position.
       For hdf5 files: list of data names.
     h0 : float
       If not None: value of h, H0=100h km/s/Mpc.
+    volume : float
+      Carlton model default value = 500^3 Mpc^3/h^3. If not 500.**3. : value of the simulation volume in Mpc^3/h^3
     unemod : string
       Model to go from galaxy properties to U and ne
     photmod : string
       Photoionisation model to be used for look up tables.
+    LC2sfr : boolean
+      If True magnitude of Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
+    Testing : boolean
+      If True run test : shorter.
 
     Returns
     -------
@@ -33,8 +44,11 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
     '''
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0,
-                                 verbose=verbose, Testing=Testing)
+    lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0, LC2sfr=LC2sfr,
+                                 verbose=verbose, Plotting=Plotting, Testing=Testing)
+
+    #print(lms.min(), lms.max())
+
 
     # From the galaxy properties obtain the
     # ionizing parameter, U, and electron density, ne
@@ -42,4 +56,12 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None,
                     unemod=unemod, verbose=verbose)
 
     # From U and ne, obtain the emission lines from HII regions
+
+    if Plotting:
+        get_plot.get_plots(lms, lssfr, m_sfr_z, h0=h0, volume=volume, verbose=verbose, Plotting=Plotting)
+        #print(lms,lssfr)
+        #plt.show(get_plot.get_plots(lms, lssfr, verbose=verbose))
+    else:
+        print('This is a test that only run over a few entries')
+
     

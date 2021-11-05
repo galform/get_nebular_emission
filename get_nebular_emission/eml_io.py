@@ -136,7 +136,7 @@ def get_ncomponents(cols):
         
     return ncomp
 
-def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
+def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, verbose=False, Plotting=False, Testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
@@ -154,8 +154,12 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
       If not None: value of h, H0=100h km/s/Mpc.
     inoh : boolean
       If yes, the metallicity has already been provided as 12+log(O/H)
+    LC2sfr : boolean
+      If True magnitude of Lyman Continuum photons expected as input for SFR.
     verbose : boolean
       Yes = print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
     Testing : boolean
       Yes = to only run over few entries for testing purposes
 
@@ -163,8 +167,8 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
     -------
     mstars, ssfr, oh : floats
     '''
-    
-    check_file(infile,verbose=verbose)
+
+    check_file(infile, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
 
@@ -199,7 +203,7 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
                     comp = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
                     loh12= np.append(loh12,comp,axis=0)
 
-                if (Testing and il>ih+50): break
+                if (Testing and not Plotting and il>ih+50): break
 
         # Set to a default value if negative stellar masses
         ind = np.where(lms<=0.)
@@ -207,8 +211,9 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         lssfr[ind] = const.notnum
         loh12[ind] = const.notnum
 
-        ind = np.where(lssfr<=0) # Avoid other negative SFR
-        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
+        if not LC2sfr:
+            ind = np.where(lssfr<=0) # Avoid other negative SFR, but take negative LC
+            lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
 
         ind = np.where(loh12<=0) # Avoid other negative Z
         loh12[ind] = const.notnum
@@ -218,9 +223,13 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         lms[ind] = np.log10(lms[ind]) 
 
         # Obtain log10(sSFR) in 1/yr
-        ind = np.where(lssfr>0.)
-        lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
-        #here: allow for input number of ionizing photons
+
+        if LC2sfr:
+            lssfr[ind] = np.log10(7.5*(10.**(-0.4*lssfr[ind]-5.))) - 9. - lms[ind]
+        else:
+            ind = np.where(lssfr > 0.)
+            lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
+
         
         if h0:
             # Correct the units of the stellar mass
@@ -232,3 +241,78 @@ def get_data(infile, cols, h0=None, inoh=False, verbose=False, Testing=False):
         #here: allow for loh12 direct input
                     
     return lms,lssfr,loh12
+
+
+def get_reducedfile(infile, outfile, indcol, verbose=False):
+    '''
+    Get reduced file with only the wanted columns data.
+
+    Parameters
+    ----------
+    infile : string
+      Name of the input file.
+      In text files (*.dat, *txt, *.cat), columns separated by ' '.
+      In csv files (*.csv), columns separated by ','.
+    outfile : string
+      Name of the output file.
+      Text file (*.dat, *txt, *.cat), columns separated by ' '.
+    indcols : list
+      [WantedColumn1,WantedColumn2,WantedColumn3,WantedColumn4,WantedColumn5,WantedColumn6]
+      For text or csv files: list of integers with column position.
+      For hdf5 files: list of data names.
+    verbose : boolean
+      Yes = print out messages
+    Returns
+    -------
+    outfile : string
+    Path to the reduced output file.
+    '''
+
+    check_file(infile,verbose=verbose)
+
+    if ('.hdf5' in infile):
+        print('Program not set to deal with hdf5 files yet, input a text file')
+    else:
+        with open(infile,"r") as ff:
+            ih = get_nheader(infile)
+            with open(outfile, "w") as outf:
+                for il,line in enumerate(ff):
+                    if il<ih-1:
+                        n=line
+                        #print(n,il,ih)
+                        #exit()
+                        outf.write(n)
+
+                    if il==ih-1:
+                        headlast=line.split()
+                        headlast=headlast[1:]
+                        headlast=np.array(headlast)
+                        #print(headlast[indcol[1]])
+                        headlast=np.column_stack(('#',headlast[indcol[0]], headlast[indcol[1]],
+                                                  headlast[indcol[2]], headlast[indcol[3]],
+                                                  headlast[indcol[4]],headlast[indcol[5]]))
+                        #print(headlast)
+                        np.savetxt(outf,headlast,fmt='%s')
+
+                    if il>ih:
+                        if ('.csv' in infile):
+                            allcols = line.split(',')
+                        else:
+                            allcols = line.split()
+
+                        wantedcolumn1 = np.array(float(allcols[indcol[0]]))
+                        wantedcolumn2 = np.array(float(allcols[indcol[1]]))
+                        wantedcolumn3 = np.array(float(allcols[indcol[2]]))
+                        wantedcolumn4 = np.array(float(allcols[indcol[3]]))
+                        wantedcolumn5 = np.array(float(allcols[indcol[4]]))
+                        wantedcolumn6 = np.array(float(allcols[indcol[5]]))
+
+                        datatofile = np.column_stack((wantedcolumn1, wantedcolumn2, wantedcolumn3,
+                                                      wantedcolumn4, wantedcolumn5,wantedcolumn6))
+                        np.savetxt(outf,datatofile)
+            outf.closed
+        ff.closed
+
+    #outfile = print(outf, 'Output file :{}'.format(outfile))
+
+    return outfile #Not sure that that is the return.
