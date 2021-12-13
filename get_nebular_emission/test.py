@@ -44,7 +44,7 @@ lsty = ['-',(0,(2,3))]
 
 # Initialize GSMF (Galaxy Cosmological Mass Function)
 mmin = 10.3 # Buscar resolucion en masa
-mmax = 12. #15.
+mmax = 11.6 #15.
 dm = 0.1
 mbins = np.arange(mmin, mmax, dm)
 mhist = mbins + dm * 0.5
@@ -89,7 +89,7 @@ ytit = "$log_{10}(\Phi(M_*))$";
 axm.set_ylabel(ytit)
 axm.set_autoscale_on(False);
 axm.minorticks_on()
-axm.set_ylim(-5.5, -2.)
+axm.set_ylim(-4.5, -2.)
 plt.setp(axm.get_xticklabels(), visible=False)
 
 # SFRF

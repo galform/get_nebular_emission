@@ -52,7 +52,7 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 542.16**3.,
     # From the galaxy properties obtain the
     # ionizing parameter, U, and electron density, ne
     u, ne = get_une(lms, lssfr, loh12,
-                    unemod=unemod, verbose=verbose,
+                    unemod=unemod, LC2sfr=LC2sfr, verbose=verbose,
                     Plotting=Plotting, Testing=Testing)
 
 
