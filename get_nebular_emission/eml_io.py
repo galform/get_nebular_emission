@@ -216,6 +216,8 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
         lssfr[ind] = const.notnum
         loh12[ind] = const.notnum
 
+
+
         if LC2sfr: # Avoid positives magnitudes of LC photons
             ind = np.where(lssfr>0)
             lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
@@ -269,8 +271,10 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
 
         if LC2sfr:
             # DISK:
-            ins = 1.02*(10.**(-0.4*lssfr[:,0]-4.))
-            ind = np.where(ins>=0)
+            ins = np.zeros(len(lssfr))
+            ind = np.where(lssfr[:, 0] != const.notnum)
+            ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,0]-4.))
+            ind = np.where(ins>0)
             lssfrd[ind] = np.log10(ins[ind]) - 9. - lms[ind,0]
             ind = np.where(ins<0)
             lssfrd[ind] = const.notnum
@@ -280,7 +284,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
             # BULGE:
             ind = np.where(lssfr[:,1]!=const.notnum)
             ins[ind] = 0.360*(10.**(-0.4*lssfr[ind,1]-4.))
-            ind = np.where(ins>=0)
+            ind = np.where(ins>0)
             lssfrb[ind] = np.log10(ins[ind]) - 9. -lms[ind,1]
             ind = np.where(ins < 0)
             lssfrb[ind] = const.notnum
@@ -296,7 +300,6 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
             ins = ssfrd + ssfrb
             ind = np.where(ins > 0)
             lssfr_tot[ind] = np.log10(ins[ind])
-            #lssfr_tot = np.log10(ssfrd + ssfrb)
 
         else:
             # Take the log of the ssfr:
@@ -314,14 +317,16 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
             ind = np.where(ins>0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-
         if h0:
             # Correct the units of the stellar mass
             lms = lms - np.log10(h0)
+            lms_tot = lms_tot - np.log10(h0)
+
+        if Plotting:
+            lsfr = lssfr_tot+lms_tot
 
 
         # Obtain 12+log10(O/H) from Z=MZcold/Mcold
-
         ind = np.where(loh12>0)
         loh12[ind] = np.log10(loh12[ind]) + const.ohsun - np.log10(const.zsun)
 
@@ -343,19 +348,21 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
 
 
 
-        '''        
         if Testing and Plotting: # here : Search more efficient form. Allow more components in the header
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
-                      ' log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
+                      ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
                       '(12 + log(O/H))_tot, (12 + log (O/H))_disk, (12 + log (O/H))_bulge'
-            datatofile=np.column_stack((lms_tot,lms,lssfr_tot,lssfr,loh12_tot,loh12))
+            datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,loh12_tot,loh12))
 
+            if LC2sfr:
+                outfil = r"example_data/tmp_LC.dat"
+            else:
+                outfil = r"example_data/tmp_avSFR.dat"
 
-            outfil = r"example_data/tmp.dat"
             with open(outfil, 'w') as outf:
                 np.savetxt(outf, datatofile, delimiter=' ', header=header1)
                 outf.closed
-        '''
+
 
                     
     return lms,lssfr,loh12
@@ -406,8 +413,9 @@ def get_reducedfile(infile, outfile, indcol, verbose=False):
                         headlast=headlast[1:]
                         headlast=np.array(headlast)
                         #print(headlast[indcol[1]])
-                        # Here : Better with a matrix form. Future change.
 
+                        # Here : Better with a matrix form. Future change.
+                        # No necesito esto:
                         headlast=np.column_stack(('#',headlast[indcol[0]], headlast[indcol[1]],
                                                   headlast[indcol[2]], headlast[indcol[3]],
                                                   headlast[indcol[4]],headlast[indcol[5]],

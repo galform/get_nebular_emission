@@ -40,7 +40,7 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
 
     return lu, lne
     
-def get_une(lms, lssfr, loh12, unemod='kashino20', verbose=False, Testing=False, Plotting=False):
+def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, Testing=False, Plotting=False):
     '''
     Given log10(Mstar), log10(sSFR) and 12+log(O/H),
     get the ionizing parameter, U, and the electron density, ne.
@@ -75,7 +75,10 @@ def get_une(lms, lssfr, loh12, unemod='kashino20', verbose=False, Testing=False,
     if Testing and Plotting:  # here : Search more efficient form. Allow more components in the header
         header1 = 'log(u_comp_1),log(u_comp_2),log(ne_comp_1),log(ne_comp_q)'
         datatofile = np.append(lu, lne, axis=1)
-        outfil = r"example_data/tmp_une.dat"
+        if LC2sfr:
+            outfil = r"example_data/tmp_une_LC.dat"
+        else:
+            outfil = r"example_data/tmp_une_avSFR.dat"
         with open(outfil, 'w') as outf:
             np.savetxt(outf, datatofile, delimiter=' ', header=header1)
             outf.closed

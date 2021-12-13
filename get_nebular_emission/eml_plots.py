@@ -13,7 +13,7 @@ inicio = time.time()
 
 plt.style.use(style.style1)
 
-def test_ssfr(cols, h0=None, volume=542.16 ** 3., verbose=False):
+def test_ssfr(cols, h0=None, volume=const.vol_pm, verbose=False): # Poner volumen como constante con las constantes
 
     '''
        Given log10(Mstar), log10(sSFR) and 12+log(O/H),
