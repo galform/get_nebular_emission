@@ -115,6 +115,12 @@ ISSUES
 
 · In test_sfrf search an efficient form to get the observational data.
 
+· In test_sfrf add return in the description.
+
+· In test_sfrf add infiles in the description to let the choice to the user.
+
+· In test_sfrf there are an error with the colors.
+
 · Add Medians.py to eml_plots. Medians.py is the test_medians. Arrange all, delete the extra line code that are not needed.
 
 · Change all the definitions of the functions to the right ones. 
