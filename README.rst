@@ -107,13 +107,15 @@ ISSUES
 
 **eml_plots**
 
-· Change the paths to r"... (generic).
+· Change the paths to r"... (generic). (Search <<Here>> in the code to see where are.)
 
-· In test.py change the legends. There is an error and it does not work well, search this error.
+· In test_sfrf change the legends. There is an error and it does not work well, search this error.
 
-· In test.py add in the legend from which observations are the data, bibliography.
+· In test_sfrf add in the legend from which observations are the data, bibliography.
 
-· Add test.py and Medians.py to eml_plots. test.py is the test_sfrf and Medians.py is the test_medians. Arrange all, delete the extra line code that are not needed.
+· In test_sfrf search an efficient form to get the observational data.
+
+· Add Medians.py to eml_plots. Medians.py is the test_medians. Arrange all, delete the extra line code that are not needed.
 
 · Change all the definitions of the functions to the right ones. 
 
