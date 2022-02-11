@@ -131,7 +131,7 @@ errorObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=6, usecols=(3), unpack=Tr
 dexObslms = lmsobs_High - lmsobs_Low
 ghistObslms = lmsobs_High - 0.5 * dexObslms
 
-ih = 1
+
 
 nds = np.array([-2., -3., -4.])
 al = np.sort(nds)
@@ -150,7 +150,7 @@ for ii, sfr in enumerate(SFR):
     tempfile = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_'+sfr+'.dat'
     if not os.path.isfile(tempfile):
         continue
-
+    ih = 1
     lms   = np.loadtxt(tempfile, skiprows=ih, usecols=(0), unpack=True)
     lsfr = np.loadtxt(tempfile, skiprows=ih, usecols=(3), unpack=True)
     loh12 = np.loadtxt(tempfile, skiprows=ih, usecols=(6), unpack=True)
