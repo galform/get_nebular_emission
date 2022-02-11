@@ -7,28 +7,23 @@ from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_style as style
 import get_nebular_emission.eml_const as const
-from get_nebular_emission.eml_io import get_ncomponents
 from get_nebular_emission.eml_io import get_nheader
 
 plt.style.use(style.style1)
 
-def test_sfrf(cols, h0=None, volume=const.vol_pm, verbose=False): # Poner volumen como constante con las constantes
+def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the infiles to let the user the choice.
 
     '''
-       Given log10(Mstar), log10(sSFR) and 12 + log(O/H),
-       get the plots log10(sSFR) vs log10(Mstar)
-       and 12+log(O/H) vs log10(Mstar) when Plotting OTRA FUNCIÓN PARA ESTO:  test_zm
-       test_medians
-       plot_bpt
+       Given log10(Mstar) and log10(sSFR)
+       get the plots to compare log10(SFR) vs log10(Mstar).
+       Get the GSMF and the SFRF plots.
 
-       plot
+       Given the observations, compare the plots with the observations too.
+
 
        Parameters
        ----------
-       cols : list
-         [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-         For text or csv files: list of integers with column position.
-         For hdf5 files: list of data names.
+
        h0 : float
          If not None: value of h, H0=100h km/s/Mpc.
        volume : float
@@ -37,12 +32,10 @@ def test_sfrf(cols, h0=None, volume=const.vol_pm, verbose=False): # Poner volume
          If not 542.16**3. : value of the simulation volume in Mpc^3/h^3
        verbose : boolean
          Yes = print out messages
-       Plotting : boolean
-         If True run verification plots with all data.
 
        Returns
        -------
-       plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
+       plot(log10(SFR),log10(Mstar)) # HERE: Define better the Return. 
     '''
 
 

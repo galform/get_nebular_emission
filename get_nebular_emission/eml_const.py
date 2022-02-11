@@ -8,6 +8,8 @@ ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 vol_pm = 542.16**3. # Volume of the P-Millenium simulation
 
+h = 0.6777 # Hubble constant H = 100 h km s**-1 Mpc**-1
+
 unemods = ['kashino20']
 
 photmods = ['gutkin16']
