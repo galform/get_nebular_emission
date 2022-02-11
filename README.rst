@@ -79,7 +79,7 @@ ISSUES
 
 · Search a more efficient way to do the temporary file and allow to take more or less components.
 
-· Search a more efficient way to do the reduced_file, maybe matrix form. It is not necessary the column stack for the header. There is a last row in the file to reduce that is not a list of floats, it is a sentence, so the code gives an error, we must think a way to do not take the last row if it is not make of floats.  
+· Search a more efficient way to do the reduced_file, maybe matrix form. It is necessary the column stack for the header, maybe another function more efficient. There is a last row in the file to reduce that is not a list of floats, it is a sentence, so the code gives an error, we must think a way to do not take the last row if it is not make of floats.  
 
 · Explore star models for differents IMF for the conversion from the Lyman Continuum photons to the instantaneous SFR. Investigate the single stellar populations (SSP).
 
