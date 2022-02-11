@@ -72,7 +72,7 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
         sys.exit()
 
     if Testing and Plotting:  # here : Search more efficient form. Allow more components in the header
-        header1 = 'log(u_comp_1),log(u_comp_2),log(ne_comp_1),log(ne_comp_q)' # Here: Change the names.
+        header1 = 'log(u_disk),log(u_bulge),log(ne_disk),log(ne_bulge)'
         datatofile = np.append(lu, lne, axis=1)
         if LC2sfr:
             outfil = r"example_data/tmp_une_LC.dat"
