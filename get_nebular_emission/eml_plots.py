@@ -8,15 +8,13 @@ import get_nebular_emission.eml_style as style
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import get_ncomponents
 from get_nebular_emission.eml_io import get_nheader
-import time
-inicio = time.time()
 
 plt.style.use(style.style1)
 
-def test_ssfr(cols, h0=None, volume=const.vol_pm, verbose=False): # Poner volumen como constante con las constantes
+def test_sfrf(cols, h0=None, volume=const.vol_pm, verbose=False): # Poner volumen como constante con las constantes
 
     '''
-       Given log10(Mstar), log10(sSFR) and 12+log(O/H),
+       Given log10(Mstar), log10(sSFR) and 12 + log(O/H),
        get the plots log10(sSFR) vs log10(Mstar)
        and 12+log(O/H) vs log10(Mstar) when Plotting OTRA FUNCIÓN PARA ESTO:  test_zm
        test_medians
@@ -59,7 +57,6 @@ def test_ssfr(cols, h0=None, volume=const.vol_pm, verbose=False): # Poner volume
                 return '%.1f' % self.__float__()
     # -----------------------------------------------------
 
-    #Here: We start with sSFR vs M. Add later Z vs M.
 
     # We call the file with the data
     tempfile = r"example_data/tmp2.dat"

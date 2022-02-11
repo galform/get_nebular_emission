@@ -253,7 +253,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
             lms_tot = lms[:,0] + lms[:,1]
 
             # Take the log of the total stellar mass:
-            ind = np.where(lms_tot >0.)
+            ind = np.where(lms_tot > 0.)
             lms_tot[ind] = np.log10(lms_tot[ind])
 
             # Take the log of the stellar mass:
@@ -273,26 +273,32 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
             # DISK:
             ins = np.zeros(len(lssfr))
             ind = np.where(lssfr[:, 0] != const.notnum)
-            ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,0]-4.))
-            ind = np.where(ins>0)
-            lssfrd[ind] = np.log10(ins[ind]) - 9. - lms[ind,0]
-            ind = np.where(ins<0)
+            ins[ind] = 1.02*(10.**(-0.4*lssfr[ind, 0]-4.))
+            ind = np.where(ins > 0)
+            lssfrd[ind] = np.log10(ins[ind]) - 9. - lms[ind, 0]
+            ind = np.where(ins < 0)
             lssfrd[ind] = const.notnum
+
+            ind = np.where(lssfr[:, 0] == const.notnum)
+            lssfrd[ind] = const.notnum
+
+            # Calculate sSFR disk
             ind = np.where(lssfrd != const.notnum)
             ssfrd[ind] = 10. ** lssfrd[ind]
 
             # BULGE:
-            ind = np.where(lssfr[:,1]!=const.notnum)
-            ins[ind] = 0.360*(10.**(-0.4*lssfr[ind,1]-4.))
-            ind = np.where(ins>0)
-            lssfrb[ind] = np.log10(ins[ind]) - 9. -lms[ind,1]
+            ind = np.where(lssfr[:, 1] != const.notnum)
+            ins[ind] = 0.360*(10.**(-0.4*lssfr[ind, 1]-4.))
+            ind = np.where(ins > 0)
+            lssfrb[ind] = np.log10(ins[ind]) - 9. - lms[ind, 1]
             ind = np.where(ins < 0)
             lssfrb[ind] = const.notnum
 
             ind = np.where(lssfr[:,1] == const.notnum)
             lssfrb[ind] = const.notnum
 
-            ind = np.where(lssfrb!=const.notnum)
+            # Calculate sSFR bulge
+            ind = np.where(lssfrb != const.notnum)
             ssfrb[ind] = 10.**lssfrb[ind]
 
             # Final Vector and Total
@@ -301,6 +307,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
             ind = np.where(ins > 0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
+        # If instantaneous SFR as input:
         else:
             # Take the log of the ssfr:
             ind = np.where(lssfr > 0.)
@@ -333,6 +340,7 @@ def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, v
         oh12d = np.zeros(len(loh12))
         oh12b = np.zeros(len(loh12))
         loh12_tot = np.zeros(len(loh12))
+
         # Total :
         ind = np.where(loh12[:,0] != const.notnum)
         oh12d[ind] = 10. ** (loh12[ind, 0])
@@ -412,10 +420,9 @@ def get_reducedfile(infile, outfile, indcol, verbose=False):
                         headlast=line.split()
                         headlast=headlast[1:]
                         headlast=np.array(headlast)
-                        #print(headlast[indcol[1]])
 
                         # Here : Better with a matrix form. Future change.
-                        # No necesito esto:
+                        # This is necessary to only select the wanted columns of the header too:
                         headlast=np.column_stack(('#',headlast[indcol[0]], headlast[indcol[1]],
                                                   headlast[indcol[2]], headlast[indcol[3]],
                                                   headlast[indcol[4]],headlast[indcol[5]],
@@ -429,6 +436,7 @@ def get_reducedfile(infile, outfile, indcol, verbose=False):
                         else:
                             allcols = line.split()
 
+
                         mstars_total = np.array(float(allcols[indcol[0]]))
                         mstars_bulge = np.array(float(allcols[indcol[1]]))
                         mstardot = np.array(float(allcols[indcol[2]]))
@@ -438,11 +446,16 @@ def get_reducedfile(infile, outfile, indcol, verbose=False):
                         zcold = np.array(float(allcols[indcol[6]]))
                         zcold_burst = np.array(float(allcols[indcol[7]]))
 
+                        print(mstars_total)
+
+
                         datatofile = np.column_stack((mstars_total, mstars_bulge, mstardot,
-                                                      mstardot_burst, mag_LC_r_disk, mag_LC_r_bulge,
-                                                      zcold, zcold_burst))
+                                                    mstardot_burst, mag_LC_r_disk, mag_LC_r_bulge,
+                                                    zcold, zcold_burst))
 
                         np.savetxt(outf,datatofile)
+
+
             outf.closed
         ff.closed
 

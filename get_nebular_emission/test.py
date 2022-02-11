@@ -5,7 +5,7 @@ matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_const as const
-from forplots import eml_style as style
+from get_nebular_emission import eml_style as style
 
 
 # Define a class that forces representation of float to look a certain way

@@ -35,8 +35,7 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
     if (np.shape(ind)[1]>1):
         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9)
 
-        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -\
-            0.292*lne[ind] + 0.428*(lssfr[ind] + 9)
+        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr[ind] + 9)
 
     return lu, lne
     

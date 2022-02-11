@@ -58,9 +58,5 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 542.16**3.,
 
     # From U and ne, obtain the emission lines from HII regions
 
-    # if Plotting and Testing:
-      #  get_testplot.get_testplots(m_sfr_z, h0=h0, volume=volume, verbose=verbose, Plotting=Plotting)
-        #print(lms,lssfr)
-        #plt.show(get_plot.get_plots(lms, lssfr, verbose=verbose))
 
     

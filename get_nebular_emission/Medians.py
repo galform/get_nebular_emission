@@ -1,62 +1,125 @@
-import sys, os.path
-import subprocess
-
 import matplotlib.pyplot as plt
 import numpy as np
 from get_nebular_emission import eml_const as const
-from forplots.stats import percentiles
-from forplots.stats import perc_2arrays
-import forplots.eml_style as style
+from get_nebular_emission.stats import perc_2arrays
+import get_nebular_emission.eml_style as style
 
 SFR = ['avSFR','LC']
+variable = ['u','ne']
+cm = plt.get_cmap('tab10')  # Colour map to draw colours from
+color = []
+plt.style.use(style.style1)
+fig1=plt.figure(num=1)
+fig2=plt.figure(num=2)
+tempfile_io = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_LC.dat'
+plotf1 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_u.pdf'
+plotf2 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_ne.pdf'
+
+verbose = False
+ih = 1
+
+lms   = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
+# Prepare the bins
+mmin = 8.5
+mmax = 12
+dm = 0.1
+mbins = np.arange(mmin, (mmax + dm), dm)
+mbinsH = np.arange(mmin, mmax, dm)
+mhist = mbinsH + dm * 0.5
 
 for ii,sfr in enumerate(SFR):
     tempfile_une = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_une_'+sfr+'.dat'
-    tempfile_io = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_LC.dat'
 
-    verbose = False
-
-    ih = 1
-
-    data = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0,2),unpack=True)
+    #data = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0,2),unpack=True)
     lu = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0),unpack=True)
-    lne = np.loadtxt(tempfile_une,skiprows=ih,usecols=(2),unpack=True)
-    lms   = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
-
-    val0 = np.shape(data)[0] ; val1 = np.shape(data)[1]
-
-    # Prepare the bins
-    mmin = 8.5
-    mmax = 12
-    dm = 0.1
-    mbins = np.arange(mmin,(mmax+dm),dm)
-    mbinsH = np.arange(mmin, mmax, dm)
-    mhist = mbinsH + dm * 0.5
-
-    medians = np.zeros((len(mhist)))
+    #lne = np.loadtxt(tempfile_une,skiprows=ih,usecols=(2),unpack=True)
 
 
-
+    # MEDIANS:
     median1 = perc_2arrays(mbins,lms,lu,0.5)
+    #median2 = perc_2arrays(mbins,lms,lne,0.5)
 
-    #error = np.zeros((2, len(median1)))
-    up_q = perc_2arrays(mbins,lms,lu,0.75)
-    low_q =perc_2arrays(mbins,lms,lu,0.25)
-    ind = np.where((up_q != const.notnum) & (low_q != const.notnum))
-    error = np.row_stack((low_q[ind],up_q[ind]))
+    # QUARTILES:
 
+    up_qu   = perc_2arrays(mbins,lms,lu,0.75)
+    low_qu  = perc_2arrays(mbins,lms,lu,0.25)
+    #up_qne  = perc_2arrays(mbins,lms,lne,0.75)
+    #low_qne = perc_2arrays(mbins,lms,lne,0.25)
+
+
+    # COLOR:
+    col = cm(ii)  # cm(1.*ii/len(SFR));
+    color.append(col)  # col va cambiando en cada iteración
+
+    plt.style.use(style.style1)
+    plt.xlabel('log$_{10}$(M$_*$/M$_{\odot}$)')
+    plt.ylabel('log$_{10}$ (U)')
     plt.xlim(8.5,11.2)
-    plt.ylim(-5,-2.5)
-    plt.plot(mhist[ind],median1[ind],'ob')
-    plt.plot(mhist[ind],low_q[ind],'_')
-    plt.plot(mhist[ind],up_q[ind],'_')
-    plt.vlines(mhist[ind],low_q[ind],up_q[ind])
+    plt.ylim(-5,-2)
+    ind = np.where((up_qu > const.notnum) & (low_qu > const.notnum))
+    plt.plot(mhist[ind],median1[ind],'o',color=col,label='Calculated from the '+sfr+'')
+    plt.plot(mhist[ind],low_qu[ind],'_',color=col)
+    plt.plot(mhist[ind],up_qu[ind],'_',color=col)
+    plt.vlines(mhist[ind],low_qu[ind],up_qu[ind],color=col,linestyles='dashed')
 
-    #plt.errorbar(mhist[ind],median1[ind],yerr=error,fmt='.b',elinewidth=0.8,capsize=3.)
-    plt.show()
 
-    #errorpos1 = perc_2arrays(mbins,lms,lu,(0.5+0.68/2))
-    #errorneg1 = perc_2arrays(mbins,lms,lu,(0.5-0.68/2))
+plt.legend()
+plt.savefig(plotf1)
+plt.show()
+
+    #fig.savefig(plotf)
+
+
+
+# Save figures
+print('Plot: {}'.format(plotf1))
+
+for ii,sfr in enumerate(SFR):
+    tempfile_une = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_une_'+sfr+'.dat'
+
+    #data = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0,2),unpack=True)
+    #lu = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0),unpack=True)
+    lne = np.loadtxt(tempfile_une,skiprows=ih,usecols=(2),unpack=True)
+
+
+    # MEDIANS:
+    #median1 = perc_2arrays(mbins,lms,lu,0.5)
+    median2 = perc_2arrays(mbins,lms,lne,0.5)
+
+    # QUARTILES:
+
+    #up_qu   = perc_2arrays(mbins,lms,lu,0.75)
+    #low_qu  = perc_2arrays(mbins,lms,lu,0.25)
+    up_qne  = perc_2arrays(mbins,lms,lne,0.75)
+    low_qne = perc_2arrays(mbins,lms,lne,0.25)
+
+
+    # COLOR:
+    col = cm(ii)  # cm(1.*ii/len(SFR));
+    color.append(col)  # col change in each iteration
+
+    plt.style.use(style.style1)
+    plt.xlabel('log$_{10}$(M$_*$/M$_{\odot}$)')
+    plt.ylabel('log$_{10}$ (n$_e$/cm$^{-3}$)')
+    plt.xlim(8.5,11.2)
+    plt.ylim(-1.,2.)
+    ind = np.where((up_qne > const.notnum) & (low_qne > const.notnum))
+    plt.plot(mhist[ind],median2[ind],'o',color=col,label='Calculated from the '+sfr+'')
+    plt.plot(mhist[ind],low_qne[ind],'_',color=col)
+    plt.plot(mhist[ind],up_qne[ind],'_',color=col)
+    plt.vlines(mhist[ind],low_qne[ind],up_qne[ind],color=col,linestyles='dashed')
+
+
+plt.legend()
+plt.savefig(plotf2)
+plt.show()
+
+    #fig.savefig(plotf)
+
+
+
+# Save figures
+print('Plot: {}'.format(plotf2))
 
 
 '''
