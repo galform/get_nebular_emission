@@ -6,12 +6,13 @@ matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_style as style
+from get_nebular_emission.stats import perc_2arrays
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import get_nheader
 
 plt.style.use(style.style1)
 
-def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume=const.vol_pm, verbose=False): 
+def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=None, volume=const.vol_pm, verbose=False):
 
     '''
        Given log10(Mstar) and log10(sSFR)
@@ -23,9 +24,7 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
 
        Parameters
        ----------
-       outplot : string
-         Name of the output file.
-         Image-type files (*.pdf, *.jpg, ...)
+
        obsSFR : string
          Name of the input file for the SFR data observed.
          Expected histogram mode:
@@ -33,7 +32,7 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
          a column with the high value of the bin,
          a column with the frequency in the bin,
          and a column with the error.
-         These columns must be specify in the SFRcols variable.
+         These columns must be specify in the colsSFR variable.
 
          In text files (*.dat, *txt, *.cat), columns separated by ' '.
          In csv files (*.csv), columns separated by ','.
@@ -46,7 +45,7 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
          a column with the high value of the bin,
          a column with the frequency in the bin,
          and a column with the error.
-         These columns must be specify in the GSMcols variable.
+         These columns must be specify in the colsGSM variable.
 
          In text files (*.dat, *txt, *.cat), columns separated by ' '.
          In csv files (*.csv), columns separated by ','.
@@ -69,6 +68,10 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
        labelObs : list of strings
          For the legend, add the name to cite the observational data source.
          ['GSM observed', 'SFR observed']
+
+       outplot : string
+         Name of the output file.
+         Image-type files (*.pdf, *.jpg, ...)
 
        h0 : float
          If not None: value of h, H0=100h km/s/Mpc.
@@ -296,39 +299,90 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
     # os.remove(r"example_data/tmp_avSFR.dat")
 
 
-def test_zm(cols, h0=None, volume=542.16 ** 3., verbose=False):
+def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const.vol_pm, verbose=False):
+
+
+        '''
+       Given log10(Mstar) and (12 + log(O/H))
+       get the plots to compare (12 + log(O/H)) vs log10(Mstar).
+       Get the GSMF and the ZF plots. (If that exists)
+
+       Given the observations, compare the plots with the observations too. (If that exists)
+
+
+       Parameters
+       ----------
+       (HERE : IF THAT EXISTS)
+       obsZF : string
+         Name of the input file for the Z data observed.
+         Expected histogram mode:
+         with a column with the low value of the bin,
+         a column with the high value of the bin,
+         a column with the frequency in the bin,
+         and a column with the error.
+         These columns must be specify in the colsZ variable.
+
+         In text files (*.dat, *txt, *.cat), columns separated by ' '.
+         In csv files (*.csv), columns separated by ','.
+
+       obsGSM : string
+         Name of the input file for the GSM data observed.
+
+         Expected histogram mode:
+         with a column with the low value of the bin,
+         a column with the high value of the bin,
+         a column with the frequency in the bin,
+         and a column with the error.
+         These columns must be specify in the colsGSM variable.
+
+         In text files (*.dat, *txt, *.cat), columns separated by ' '.
+         In csv files (*.csv), columns separated by ','.
+
+       colsZ : list (HERE: IF THAT EXISTS, change everything)
+         Columns with the data required to do the observational histogram of the SFR.
+         Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
+         where: column1 is the column with the low values of the bins, in Msun/yr,
+                column2 with the high values of the bins, in Msun/yr,
+                column3 with the frequency, in Mpc^-3 dex^-1
+                column4 with the error, in Mpc^-3 dex^-1
+       colsGSM :
+         Columns with the data required to do the observational histogram of the GSM.
+         Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
+         where: column1 is the column with the low values of the bins, in h^-2Msun,
+                column2 with the high values of the bins, in h^-2Msun,
+                column3 with the frequency, in h^-3 Mpc^-3,
+                column4 with the error, in h^-3 Mpc^-3.
+
+       labelObs : list of strings
+         For the legend, add the name to cite the observational data source.
+         ['GSM observed', 'Z observed']
+
+       outplot : string
+         Name of the output file.
+         Image-type files (*.pdf, *.jpg, ...)
+
+       h0 : float
+         If not None: value of h, H0=100h km/s/Mpc.
+       volume : float
+         Carlton model default value = 542.16^3 Mpc^3/h^3.
+         table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract
+         If not 542.16**3. : value of the simulation volume in Mpc^3/h^3
+       verbose : boolean
+         Yes = print out messages
+
+       Returns
+       -------
+       plot((12 + log(O/H)),log10(Mstar)), plot GSMF and plot ZF,
+       all three in one grid.
+       Save it in the outplot path.
     '''
-          Given log10(Mstar), log10(sSFR) and 12+log(O/H),
-          get the plot 12+log(O/H) vs log10(Mstar) when Plotting
-          test_medians
-          plot_bpt
 
-          plot
-
-          Parameters
-          ----------
-          cols : list
-            [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-            For text or csv files: list of integers with column position.
-            For hdf5 files: list of data names.
-          h0 : float
-            If not None: value of h, H0=100h km/s/Mpc.
-          volume : float
-            Carlton model default value = 542.16^3 Mpc^3/h^3.
-            table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract
-            If not 542.16**3. : value of the simulation volume in Mpc^3/h^3
-          verbose : boolean
-            Yes = print out messages
-          Plotting : boolean
-            If True run verification plots with all data.
-
-          Returns
-          -------
-          plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
-       '''
+        # HERE: All like above if Z observational exists. I am not sure, I don't think so.
 
 def test_medians(cols, h0=None, volume=542.16 ** 3, verbose=False):
     '''
+        HERE: CHANGE ALL THE DESCRIPTION
+
         Given log10(Mstar), log10(sSFR) and 12+log(O/H),
         get the plot 12+log(O/H) vs log10(Mstar) when Plotting
 
@@ -355,6 +409,114 @@ def test_medians(cols, h0=None, volume=542.16 ** 3, verbose=False):
         -------
         plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
            '''
+
+    SFR = ['avSFR', 'LC']
+    variable = ['u', 'ne']
+    cm = plt.get_cmap('tab10')  # Colour map to draw colours from
+    color = []
+    plt.style.use(style.style1)
+    fig1 = plt.figure(num=1)
+    fig2 = plt.figure(num=2)
+    tempfile_io = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_LC.dat'
+    plotf1 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_u.pdf'
+    plotf2 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_ne.pdf'
+
+    verbose = False
+    ih = 1
+
+    lms = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
+    # Prepare the bins
+    mmin = 8.5
+    mmax = 12
+    dm = 0.1
+    mbins = np.arange(mmin, (mmax + dm), dm)
+    mbinsH = np.arange(mmin, mmax, dm)
+    mhist = mbinsH + dm * 0.5
+
+    for ii, sfr in enumerate(SFR):
+        tempfile_une = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_une_' + sfr + '.dat'
+
+        # data = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0,2),unpack=True)
+        lu = np.loadtxt(tempfile_une, skiprows=ih, usecols=(0), unpack=True)
+        # lne = np.loadtxt(tempfile_une,skiprows=ih,usecols=(2),unpack=True)
+
+        # MEDIANS:
+        median1 = perc_2arrays(mbins, lms, lu, 0.5)
+        # median2 = perc_2arrays(mbins,lms,lne,0.5)
+
+        # QUARTILES:
+
+        up_qu = perc_2arrays(mbins, lms, lu, 0.75)
+        low_qu = perc_2arrays(mbins, lms, lu, 0.25)
+        # up_qne  = perc_2arrays(mbins,lms,lne,0.75)
+        # low_qne = perc_2arrays(mbins,lms,lne,0.25)
+
+        # COLOR:
+        col = cm(ii)  # cm(1.*ii/len(SFR));
+        color.append(col)  # col va cambiando en cada iteración
+
+        plt.style.use(style.style1)
+        plt.xlabel('log$_{10}$(M$_*$/M$_{\odot}$)')
+        plt.ylabel('log$_{10}$ (U)')
+        plt.xlim(8.5, 11.2)
+        plt.ylim(-5, -2)
+        ind = np.where((up_qu > const.notnum) & (low_qu > const.notnum))
+        plt.plot(mhist[ind], median1[ind], 'o', color=col, label='Calculated from the ' + sfr + '')
+        plt.plot(mhist[ind], low_qu[ind], '_', color=col)
+        plt.plot(mhist[ind], up_qu[ind], '_', color=col)
+        plt.vlines(mhist[ind], low_qu[ind], up_qu[ind], color=col, linestyles='dashed')
+
+    plt.legend()
+    plt.savefig(plotf1)
+    plt.show()
+
+    # fig.savefig(plotf)
+
+    # Save figures
+    print('Plot: {}'.format(plotf1))
+
+    for ii, sfr in enumerate(SFR):
+        tempfile_une = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_une_' + sfr + '.dat'
+
+        # data = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0,2),unpack=True)
+        # lu = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0),unpack=True)
+        lne = np.loadtxt(tempfile_une, skiprows=ih, usecols=(2), unpack=True)
+
+        # MEDIANS:
+        # median1 = perc_2arrays(mbins,lms,lu,0.5)
+        median2 = perc_2arrays(mbins, lms, lne, 0.5)
+
+        # QUARTILES:
+
+        # up_qu   = perc_2arrays(mbins,lms,lu,0.75)
+        # low_qu  = perc_2arrays(mbins,lms,lu,0.25)
+        up_qne = perc_2arrays(mbins, lms, lne, 0.75)
+        low_qne = perc_2arrays(mbins, lms, lne, 0.25)
+
+        # COLOR:
+        col = cm(ii)  # cm(1.*ii/len(SFR));
+        color.append(col)  # col change in each iteration
+
+        plt.style.use(style.style1)
+        plt.xlabel('log$_{10}$(M$_*$/M$_{\odot}$)')
+        plt.ylabel('log$_{10}$ (n$_e$/cm$^{-3}$)')
+        plt.xlim(8.5, 11.2)
+        plt.ylim(-1., 2.)
+        ind = np.where((up_qne > const.notnum) & (low_qne > const.notnum))
+        plt.plot(mhist[ind], median2[ind], 'o', color=col, label='Calculated from the ' + sfr + '')
+        plt.plot(mhist[ind], low_qne[ind], '_', color=col)
+        plt.plot(mhist[ind], up_qne[ind], '_', color=col)
+        plt.vlines(mhist[ind], low_qne[ind], up_qne[ind], color=col, linestyles='dashed')
+
+    plt.legend()
+    plt.savefig(plotf2)
+    plt.show()
+
+    # fig.savefig(plotf)
+
+    # Save figures
+    print('Plot: {}'.format(plotf2))
+
 
 def plot_bpt(cols, h0=None, volume=542.16 ** 3, verbose=False):
     '''
