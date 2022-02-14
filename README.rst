@@ -109,17 +109,11 @@ ISSUES
 
 · Change the paths to r"... (generic). (Search <<Here>> in the code to see where are.)
 
-· In test_sfrf change the legends. There is an error and it does not work well, search this error.
+· In test_sfrf set the program to allow another units for the observational data.
 
-· In test_sfrf add in the legend from which observations are the data, bibliography.
+· In test_sfrf there is a problem with the contours, the plot is not well in my opinion.
 
-· In test_sfrf search an efficient form to get the observational data.
-
-· In test_sfrf add return in the description.
-
-· In test_sfrf add infiles in the description to let the choice to the user.
-
-· In test_sfrf there are an error with the colors.
+· In test_sfrf: How to find the levels of the data to do the contours in the right position?
 
 · Add Medians.py to eml_plots. Medians.py is the test_medians. Arrange all, delete the extra line code that are not needed.
 
@@ -134,6 +128,8 @@ ISSUES
 · In test_sfrf verify the limits for the SFR and the mass. 
 
 · Put some warnings if we have data out of the limits to do the plots. 
+
+· Put more warnings to notify the errors better.
 
 · In the future, for verification, we could compare the mstardot_average versus the mstardot given by GALFORM and the mstardot_average versus the (mstardot + mstardot_burst). We have assumed that mstardot is the SFR averaged of the disc, so this is a way to verify this assumption.
 
