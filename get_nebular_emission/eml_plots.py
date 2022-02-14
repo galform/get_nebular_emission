@@ -8,11 +8,10 @@ import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_style as style
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import get_nheader
-from get_nebular_emission.eml_io import get_ncomponents
 
 plt.style.use(style.style1)
 
-def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the infiles to let the user the choice.
+def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume=const.vol_pm, verbose=False): 
 
     '''
        Given log10(Mstar) and log10(sSFR)
@@ -67,6 +66,10 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
                 column3 with the frequency, in h^-3 Mpc^-3,
                 column4 with the error, in h^-3 Mpc^-3.
 
+       labelObs : list of strings
+         For the legend, add the name to cite the observational data source.
+         ['GSM observed', 'SFR observed']
+
        h0 : float
          If not None: value of h, H0=100h km/s/Mpc.
        volume : float
@@ -111,12 +114,11 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
 
     SFR = ['LC', 'avSFR']
     labels = ['average SFR', 'SFR from LC photons']
-    # HERE : Allow introduce the labels with the observational data, in the description.
-    #obs_labels = ['Henriques+2014, z = 2.0', 'Gruppioni+2015, z = 2.0-2.5'] # (gsmf observed, sfrf observed)
+
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
     for ii in range(0, 10):
-        col = cm(ii)  # cm(1.*ii/len(SFR));
+        col = cm(ii)
         color.append(col)  # col change for each iteration
 
 
@@ -171,15 +173,10 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
     plt.setp(axs.get_yticklabels(), visible=False)
 
     # Data Observations
-    #fobs_sfrf = obsSFR
-    #fobs_gsmf = obsGSM
 
-    # Here : Search an efficient form to do that.
+    # SFR observed
+
     ih = get_nheader(obsSFR)
-
-
-    '''SACAR FUERA, A LA DESCRIPCIÓN'''
-    #colsSFR = [0,1,2,3] # 0:Low, 1:High, 2:Freq, 3:error
 
     dataSFR = [0]*len(colsSFR)
 
@@ -191,9 +188,9 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
     dex = dataSFR[1]-dataSFR[0]
     histSFR = dataSFR[1]-0.5*dex
 
-    ih = get_nheader(obsGSM)
+    # GSM observed
 
-    colsGSM = [0,1,2,3] # 0:Low, 1:High, 2:Freq, 3:error
+    ih = get_nheader(obsGSM)
 
     dataGSM = [0]*len(colsGSM)
 
@@ -203,10 +200,10 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
 
     dex = dataGSM[1] - dataGSM[0]
 
-    # Change of units from h^-2 Msun to Msun.
-    '''Poner este requerimiento en la descripción también'''
+    # Change the units from h^-2 Msun to Msun.
     histGSM = dataGSM[1] + 2*np.log10(h0) - 0.5*dex
 
+    # Change the units from h^3 Mpc^-3 to Mpc^-3
     freqGSM = np.log10((dataGSM[2]))- 3 * np.log10(h0)
 
 
@@ -289,11 +286,14 @@ def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume
     #   text.set_color(color)
     #  leg.draw_frame(False)
 
-    plotf = outplot # Here: Change path
+    plotf = outplot
 
     # Save figures
     print('Plot: {}'.format(plotf))
     fig.savefig(plotf)
+
+    # os.remove(r"example_data/tmp_LC.dat")
+    # os.remove(r"example_data/tmp_avSFR.dat")
 
 
 def test_zm(cols, h0=None, volume=542.16 ** 3., verbose=False):

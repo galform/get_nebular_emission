@@ -5,7 +5,7 @@ import get_nebular_emission.eml as eml
 # otherwise ' ' can be enough to include the path.
 #infile = r"example_data/example_data.dat"
 infile = r"example_data/emlines_lc16_PMILL_iz245_ivol8_reduced.dat"
-LC2sfr = False
+LC2sfr = True
 
 # Calculate the nebular emission lines
 # The columns where the stellar mass, SFR and Zcold=Mzcold/Mcold are
