@@ -8,10 +8,11 @@ import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_style as style
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import get_nheader
+from get_nebular_emission.eml_io import get_ncomponents
 
 plt.style.use(style.style1)
 
-def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the infiles to let the user the choice.
+def test_sfrf(outplot, obsSFR, obsGSM, colsSFR,colsGSM,labelObs, h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the infiles to let the user the choice.
 
     '''
        Given log10(Mstar) and log10(sSFR)
@@ -50,6 +51,21 @@ def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=Fal
 
          In text files (*.dat, *txt, *.cat), columns separated by ' '.
          In csv files (*.csv), columns separated by ','.
+
+       colsSFR : list
+         Columns with the data required to do the observational histogram of the SFR.
+         Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
+         where: column1 is the column with the low values of the bins, in Msun/yr,
+                column2 with the high values of the bins, in Msun/yr,
+                column3 with the frequency, in Mpc^-3 dex^-1
+                column4 with the error, in Mpc^-3 dex^-1
+       colsGSM :
+         Columns with the data required to do the observational histogram of the GSM.
+         Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
+         where: column1 is the column with the low values of the bins, in h^-2Msun,
+                column2 with the high values of the bins, in h^-2Msun,
+                column3 with the frequency, in h^-3 Mpc^-3,
+                column4 with the error, in h^-3 Mpc^-3.
 
        h0 : float
          If not None: value of h, H0=100h km/s/Mpc.
@@ -96,7 +112,7 @@ def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=Fal
     SFR = ['LC', 'avSFR']
     labels = ['average SFR', 'SFR from LC photons']
     # HERE : Allow introduce the labels with the observational data, in the description.
-    obs_labels = ['Henriques, 2014, z = 2.0', 'Gruppioni, 2015, z = 2.0-2.5'] # (gsmf observed, sfrf observed)
+    #obs_labels = ['Henriques+2014, z = 2.0', 'Gruppioni+2015, z = 2.0-2.5'] # (gsmf observed, sfrf observed)
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
     for ii in range(0, 10):
@@ -155,33 +171,44 @@ def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=Fal
     plt.setp(axs.get_yticklabels(), visible=False)
 
     # Data Observations
-    fobs_sfrf = obsSFR
-    fobs_gsmf = obsGSM
+    #fobs_sfrf = obsSFR
+    #fobs_gsmf = obsGSM
 
     # Here : Search an efficient form to do that.
-    ih = get_nheader(fobs_sfrf)
-    colsSFR = [0,2,3,1]
+    ih = get_nheader(obsSFR)
+
+
+    '''SACAR FUERA, A LA DESCRIPCIÓN'''
+    #colsSFR = [0,1,2,3] # 0:Low, 1:High, 2:Freq, 3:error
+
+    dataSFR = [0]*len(colsSFR)
 
     for ii, col in enumerate(colsSFR):
-        SFRdata = np.loadtxt(fobs_sfrf,skiprows=ih, usecols=col, unpack=True)
-        print(SFRdata,ii,colsSFR[ii])
+        #print(ii,col,colsSFR[ii])
+        data = np.loadtxt(obsSFR,skiprows=ih, usecols=col, unpack=True)
+        dataSFR[ii] = np.array(data)
 
-    SFRobs_Low = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(0), unpack=True)
-    SFRobs_High = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(1), unpack=True)
-    freqObs_sfr = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(2), unpack=True)
-    errorObs_sfr = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(3), unpack=True)
+    dex = dataSFR[1]-dataSFR[0]
+    histSFR = dataSFR[1]-0.5*dex
 
-    dexObsSFR = SFRobs_High - SFRobs_Low
-    ghistObsSFR = SFRobs_High - 0.5 * dexObsSFR
+    ih = get_nheader(obsGSM)
 
-    ih = get_nheader(fobs_gsmf)
-    lmsobs_Low = np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(0), unpack=True) + 2 * np.log10(h0)
-    lmsobs_High = np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(1), unpack=True) + 2 * np.log10(h0)
-    freqObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(2), unpack=True)) - 3 * np.log10(h0)
-    errorObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(3), unpack=True)) - 3 * np.log10(h0)
+    colsGSM = [0,1,2,3] # 0:Low, 1:High, 2:Freq, 3:error
 
-    dexObslms = lmsobs_High - lmsobs_Low
-    ghistObslms = lmsobs_High - 0.5 * dexObslms
+    dataGSM = [0]*len(colsGSM)
+
+    for ii, col in enumerate(colsGSM):
+        data = np.loadtxt(obsGSM,skiprows=ih, usecols=col, unpack=True)
+        dataGSM[ii] = np.array(data)
+
+    dex = dataGSM[1] - dataGSM[0]
+
+    # Change of units from h^-2 Msun to Msun.
+    '''Poner este requerimiento en la descripción también'''
+    histGSM = dataGSM[1] + 2*np.log10(h0) - 0.5*dex
+
+    freqGSM = np.log10((dataGSM[2]))- 3 * np.log10(h0)
+
 
     for ii, sfr in enumerate(SFR):
         tempfile = r"example_data/tmp_"+sfr+".dat"
@@ -237,7 +264,7 @@ def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=Fal
                  linestyle=lsty[ii], label=labels[ii])
 
         # Plot observations GSMF
-        axm.plot(ghistObslms, freqObs_lms, 'o', color=color[ii + 1])
+        axm.plot(histGSM, freqGSM, 'o', color=color[ii + 1])
 
 
         # Plot SFRF
@@ -248,8 +275,8 @@ def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=Fal
                  linestyle=lsty[ii], label=labels[ii])
 
         # Plot observations SFRF
-        axs.plot(freqObs_sfr, ghistObsSFR, 'o', color=color[ii + 2],
-                 label=''+ obs_labels[ii] +'')
+        axs.plot(dataSFR[2], histSFR, 'o', color=color[ii + 2],
+                 label=''+ labelObs[ii] +'')
 
     leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
                      handlelength=1.2, handletextpad=0.4)

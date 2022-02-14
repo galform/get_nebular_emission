@@ -131,6 +131,8 @@ errorObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=6, usecols=(3), unpack=Tr
 dexObslms = lmsobs_High - lmsobs_Low
 ghistObslms = lmsobs_High - 0.5 * dexObslms
 
+print(ghistObslms)
+
 
 
 nds = np.array([-2., -3., -4.])
