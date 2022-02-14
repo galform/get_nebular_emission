@@ -220,7 +220,7 @@ leg.draw_frame(False)
  #   text.set_color(color)
   #  leg.draw_frame(False)
 
-plotf = 'C:/Users/Olivia/PRUEBAS/' + 'pruebaplot.pdf'
+plotf = 'C:/Users/Olivia/PRUEBAS/' + 'pruebaplot_test.pdf'
 # Save figures
 print('Plot: {}'.format(plotf))
 fig.savefig(plotf)

@@ -11,7 +11,7 @@ from get_nebular_emission.eml_io import get_nheader
 
 plt.style.use(style.style1)
 
-def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the infiles to let the user the choice.
+def test_sfrf(outplot, obsSFR, obsGSM, h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the infiles to let the user the choice.
 
     '''
        Given log10(Mstar) and log10(sSFR)
@@ -23,6 +23,33 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
 
        Parameters
        ----------
+       outplot : string
+         Name of the output file.
+         Image-type files (*.pdf, *.jpg, ...)
+       obsSFR : string
+         Name of the input file for the SFR data observed.
+         Expected histogram mode:
+         with a column with the low value of the bin,
+         a column with the high value of the bin,
+         a column with the frequency in the bin,
+         and a column with the error.
+         These columns must be specify in the SFRcols variable.
+
+         In text files (*.dat, *txt, *.cat), columns separated by ' '.
+         In csv files (*.csv), columns separated by ','.
+
+       obsGSM : string
+         Name of the input file for the GSM data observed.
+
+         Expected histogram mode:
+         with a column with the low value of the bin,
+         a column with the high value of the bin,
+         a column with the frequency in the bin,
+         and a column with the error.
+         These columns must be specify in the GSMcols variable.
+
+         In text files (*.dat, *txt, *.cat), columns separated by ' '.
+         In csv files (*.csv), columns separated by ','.
 
        h0 : float
          If not None: value of h, H0=100h km/s/Mpc.
@@ -35,7 +62,9 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
 
        Returns
        -------
-       plot(log10(SFR),log10(Mstar)) # HERE: Define better the Return. 
+       plot(log10(SFR),log10(Mstar)), plot GSMF and plot SFRF,
+       all three in one grid.
+       Save it in the outplot path.
     '''
 
 
@@ -56,6 +85,8 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
     if h0:
         volume=volume*(h0**3)
 
+    volume = volume/200 # There is only 1 sub-volume
+
     #Prepare the plot
     lsty = ['-',(0,(2,3))] # Line form
 
@@ -64,12 +95,14 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
 
     SFR = ['LC', 'avSFR']
     labels = ['average SFR', 'SFR from LC photons']
-    obs_labels = ['mstars_total', 'SFR_total'] # Here: Add Bibliography
+    # HERE : Allow introduce the labels with the observational data, in the description.
+    obs_labels = ['Henriques, 2014, z = 2.0', 'Gruppioni, 2015, z = 2.0-2.5'] # (gsmf observed, sfrf observed)
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
     for ii in range(0, 10):
         col = cm(ii)  # cm(1.*ii/len(SFR));
         color.append(col)  # col change for each iteration
+
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
     mmin = 10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
@@ -99,22 +132,22 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
     ax = plt.subplot(gs[1:, :-1])
 
     # Fig. sSFR vs M
-    xtit = "$log_{10}(\\rm M_{*}/M_{\odot})$"
-    ytit = "$log_{10}(\\rm SFR/M_{\odot}yr^{-1})$"
+    xtit = "log$_{10}(\\rm M_{*}/M_{\odot})$"
+    ytit = "log$_{10}(\\rm SFR/M_{\odot}yr^{-1})$"
     xmin = mmin; xmax = 11.6; ymin = smin;  ymax = smax
     ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
     ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
     # GSMF
     axm = plt.subplot(gs[0, :-1],sharex=ax)
-    ytit="$log_{10}(\Phi)$" ; axm.set_ylabel(ytit)
+    ytit="log$_{10}(\Phi(M_*))$" ; axm.set_ylabel(ytit)
     axm.set_autoscale_on(False) ;  axm.minorticks_on()
     axm.set_ylim(-4.5,-2.)
     plt.setp(axm.get_xticklabels(), visible=False)
 
     # SFRF
     axs = plt.subplot(gs[1:, 2], sharey=ax)
-    xtit = "$log_{10}(\Phi)$"; axs.set_xlabel(xtit)
+    xtit = "log$_{10}(\Phi(SFR))$"; axs.set_xlabel(xtit)
     axs.set_autoscale_on(False); axs.minorticks_on()
     axs.set_xlim(-6.4, 0.0)
     start, end = axs.get_xlim()
@@ -122,29 +155,30 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
     plt.setp(axs.get_yticklabels(), visible=False)
 
     # Data Observations
-
-    # Here: Ask how to change these paths. Put these data in gitHub ?
-    fobs_sfrf = 'C:/Users/Olivia/Desktop/Prácticas externas/Proyecto/Código Carlton/get_nebular_emission' \
-                '/cmb/gruppioni_2015_z2.0-2.5_cha.txt'
-    #if not os.path.isfile(fobs_sfrf): continue
-
-    fobs_gsmf = 'C:/Users/Olivia/Desktop/Prácticas externas/Proyecto/Código Carlton/get_nebular_emission' \
-                '/cmb/henriques_2014_z2_cha.txt'
-    # if not os.path.isfile(fobs_gsmf):continue
+    fobs_sfrf = obsSFR
+    fobs_gsmf = obsGSM
 
     # Here : Search an efficient form to do that.
-    SFRobs_Low = np.loadtxt(fobs_sfrf, skiprows=4, usecols=(0), unpack=True)
-    SFRobs_High = np.loadtxt(fobs_sfrf, skiprows=4, usecols=(1), unpack=True)
-    freqObs_sfr = np.loadtxt(fobs_sfrf, skiprows=4, usecols=(2), unpack=True)
-    errorObs_sfr = np.loadtxt(fobs_sfrf, skiprows=4, usecols=(3), unpack=True)
+    ih = get_nheader(fobs_sfrf)
+    colsSFR = [0,2,3,1]
+
+    for ii, col in enumerate(colsSFR):
+        SFRdata = np.loadtxt(fobs_sfrf,skiprows=ih, usecols=col, unpack=True)
+        print(SFRdata,ii,colsSFR[ii])
+
+    SFRobs_Low = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(0), unpack=True)
+    SFRobs_High = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(1), unpack=True)
+    freqObs_sfr = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(2), unpack=True)
+    errorObs_sfr = np.loadtxt(fobs_sfrf, skiprows=ih, usecols=(3), unpack=True)
 
     dexObsSFR = SFRobs_High - SFRobs_Low
     ghistObsSFR = SFRobs_High - 0.5 * dexObsSFR
 
-    lmsobs_Low = np.loadtxt(fobs_gsmf, skiprows=6, usecols=(0), unpack=True) + 2 * np.log10(h0)
-    lmsobs_High = np.loadtxt(fobs_gsmf, skiprows=6, usecols=(1), unpack=True) + 2 * np.log10(h0)
-    freqObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=6, usecols=(2), unpack=True)) - 3 * np.log10(h0)
-    errorObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=6, usecols=(3), unpack=True)) - 3 * np.log10(h0)
+    ih = get_nheader(fobs_gsmf)
+    lmsobs_Low = np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(0), unpack=True) + 2 * np.log10(h0)
+    lmsobs_High = np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(1), unpack=True) + 2 * np.log10(h0)
+    freqObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(2), unpack=True)) - 3 * np.log10(h0)
+    errorObs_lms = np.log10(np.loadtxt(fobs_gsmf, skiprows=ih, usecols=(3), unpack=True)) - 3 * np.log10(h0)
 
     dexObslms = lmsobs_High - lmsobs_Low
     ghistObslms = lmsobs_High - 0.5 * dexObslms
@@ -153,12 +187,13 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
         tempfile = r"example_data/tmp_"+sfr+".dat"
         if not os.path.isfile(tempfile): continue
 
-        ih = get_nheader(tempfile) # Number of lines of header
+        ih = get_nheader(tempfile) # Number of lines in header
 
         # Jump the header and read the provided columns
         lms = np.loadtxt(tempfile, skiprows=ih, usecols=(0), unpack=True)
         lsfr = np.loadtxt(tempfile, skiprows=ih, usecols=(3), unpack=True)
-        loh12 = np.loadtxt(tempfile, skiprows=ih, usecols=(6), unpack=True)
+        # loh12 = np.loadtxt(tempfile, skiprows=ih, usecols=(6), unpack=True). Not necessary in this plot
+
 
         # Make the histograms
 
@@ -177,22 +212,21 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
         # Plot SMF vs SFR
 
         matplotlib.rcParams['contour.negative_linestyle'] = lsty[ii]
-        zz = np.zeros(shape=(len(shist), len(mhist)));
-        zz.fill(const.notnum)
+        zz = np.zeros(shape=(len(shist), len(mhist))); zz.fill(const.notnum)
         ind = np.where(smf > 0.)
         zz[ind] = np.log10(smf[ind])
 
         ind = np.where(zz > const.notnum)
+
         if (np.shape(ind)[1] > 1):
 
             # Contours
             xx, yy = np.meshgrid(mbins, sbins)
+            # Here: How to find the levels of the data?
             cs = ax.contour(xx, yy, zz, levels=al, colors=color[ii])
-
-            # labels = ['average SFR', 'SFR from LC photons']
             ax.clabel(cs, inline=1, fontsize=10)
-            # for i in range(len(labels)):
-            #    cs.collections[i].set_label(labels[i])
+            for i in range(len(labels)):
+                cs.collections[i].set_label(labels[i])
 
         # Plot GSMF
         py = gsmf; ind = np.where(py > 0.)
@@ -201,8 +235,9 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
 
         axm.plot(x[ind], y[ind], color=color[ii],
                  linestyle=lsty[ii], label=labels[ii])
-        axm.plot(ghistObslms, freqObs_lms, 'o', color=color[ii + 1],
-                 label='log$_{10}$(mstars_total) observed' + SFR[ii] + '')
+
+        # Plot observations GSMF
+        axm.plot(ghistObslms, freqObs_lms, 'o', color=color[ii + 1])
 
 
         # Plot SFRF
@@ -212,9 +247,9 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
         axs.plot(x[ind], y[ind], color=color[ii],
                  linestyle=lsty[ii], label=labels[ii])
 
+        # Plot observations SFRF
         axs.plot(freqObs_sfr, ghistObsSFR, 'o', color=color[ii + 2],
-                 label='log$_{10}$(' + obs_labels[ii] + ') observed')
-                # Here: Change to the real bibliography
+                 label=''+ obs_labels[ii] +'')
 
     leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
                      handlelength=1.2, handletextpad=0.4)
@@ -227,11 +262,12 @@ def test_sfrf(h0=None, volume=const.vol_pm, verbose=False): # Here: Add here the
     #   text.set_color(color)
     #  leg.draw_frame(False)
 
-    plotf = 'C:/Users/Olivia/PRUEBAS/' + 'pruebaplot.pdf' # Here: Change path
+    plotf = outplot # Here: Change path
 
     # Save figures
     print('Plot: {}'.format(plotf))
     fig.savefig(plotf)
+
 
 def test_zm(cols, h0=None, volume=542.16 ** 3., verbose=False):
     '''
