@@ -95,8 +95,6 @@ ISSUES
 
 · Change the paths.
 
-· Move the plot part to the eml_plots module.
-
 · Implement the interpolations.
 
 · Allow the code to choose a photo-ionisation model and to deal with the interpolations.
@@ -109,19 +107,15 @@ ISSUES
 
 · Change the paths to r"... (generic). (Search <<Here>> in the code to see where are.)
 
-· In test_sfrf set the program to allow another units for the observational data.
+· In test_sfrf set the program to allow several observation data and automate for every redshift, allow the change of units depending of the observational file choosen.
 
-· In test_sfrf there is a problem with the contours, the plot is not well in my opinion.
+· In test_sfrf there is a problem with the contours, the plot is not well in my opinion. Set the program to allow automate the levels of the contours. One way to do it: In SFRF search the bin with at least 100 galaxies (before divide the data by the volume) to be the minimum level, get the maximum value of phi to be the maximum level and take another one between these two. 
 
-· In test_sfrf: How to find the levels of the data to do the contours in the right position?
-
-· Add Medians.py to eml_plots. Medians.py is the test_medians. Arrange all, delete the extra line code that are not needed.
-
-· Change all the definitions of the functions to the right ones. 
+· In test_medians the plots do not work, the legend is not show as wanted.
 
 · Add test_zm. Similar to test_sfrf but with the metallicity.
 
-· Add the plot_bpt. It is in the eml_photio module, we must just change it.
+· In plot_bpt, search a more efficent form to read the file.
 
 · Add the command to delete the temporary files after having done the plots.
 
@@ -141,5 +135,5 @@ ISSUES
 
 **Others**
 
-· example2.py is an example of how to run the function get_reducedfile from eml_io.
+· example2.py is an example of how to run the function get_reducedfile from eml_io and the test_plots.
 
