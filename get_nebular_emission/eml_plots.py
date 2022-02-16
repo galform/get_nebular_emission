@@ -298,7 +298,6 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=None, volume
     # os.remove(r"example_data/tmp_LC.dat")
     # os.remove(r"example_data/tmp_avSFR.dat")
 
-
 def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const.vol_pm, verbose=False):
 
 
@@ -379,7 +378,7 @@ def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const
 
         # HERE: All like above if Z observational exists. I am not sure, I don't think so.
 
-def test_medians(cols, h0=None, volume=542.16 ** 3, verbose=False):
+def test_medians(outplot, volume=542.16 ** 3, verbose=False):
     '''
         HERE: CHANGE ALL THE DESCRIPTION
 
@@ -410,40 +409,99 @@ def test_medians(cols, h0=None, volume=542.16 ** 3, verbose=False):
         plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
            '''
 
+    # Prepare the plots
+
     SFR = ['avSFR', 'LC']
-    variable = ['u', 'ne']
+    U_ne = ['u', 'ne']
+    col_une = [0,2] # [U, ne]
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
-    plt.style.use(style.style1)
-    fig1 = plt.figure(num=1)
-    fig2 = plt.figure(num=2)
-    tempfile_io = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_LC.dat'
+
+
+
+
+
+    # Read the data
+    tempfile_io = r"example_data/tmp_LC.dat"
+    '''
     plotf1 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_u.pdf'
     plotf2 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_ne.pdf'
-
-    verbose = False
-    ih = 1
-
+    '''
+    ih = get_nheader(tempfile_io)
     lms = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
+
     # Prepare the bins
     mmin = 8.5
-    mmax = 12
+    mmax = 11.5
     dm = 0.1
     mbins = np.arange(mmin, (mmax + dm), dm)
     mbinsH = np.arange(mmin, mmax, dm)
     mhist = mbinsH + dm * 0.5
 
-    for ii, sfr in enumerate(SFR):
-        tempfile_une = 'C:/Users/Olivia/get_nebular_emission/example_data/tmp_une_' + sfr + '.dat'
+    for iu, une in enumerate(U_ne):
+
+        # Prepare the figures
+        plotf = outplot + '/test_medians_'+ une+'.pdf'
+        col = cm(iu)
+        color.append(col)  # col change for each iteration
+
+        med=[0]*2 # HERE: Search an efficient form
+        qlow = med
+        qup = med
+
+
+        for ii,sfr in enumerate(SFR):
+            tempfile_une = r"example_data/tmp_une_" + sfr + ".dat"
+            # ih = get_nheader(tempfile_une) : Not necessary, it is the same that tempfile_io always.
+            data = np.loadtxt(tempfile_une,skiprows=ih,usecols=col_une,unpack=True) # data[0] = lu, data[1] = lne
 
         # data = np.loadtxt(tempfile_une,skiprows=ih,usecols=(0,2),unpack=True)
-        lu = np.loadtxt(tempfile_une, skiprows=ih, usecols=(0), unpack=True)
+
+        #lu = np.loadtxt(tempfile_une, skiprows=ih, usecols=(0), unpack=True)
+
         # lne = np.loadtxt(tempfile_une,skiprows=ih,usecols=(2),unpack=True)
 
-        # MEDIANS:
-        median1 = perc_2arrays(mbins, lms, lu, 0.5)
-        # median2 = perc_2arrays(mbins,lms,lne,0.5)
+            # MEDIANS:
+            median = perc_2arrays(mbins, lms, data[iu], 0.5)
+            # median2 = perc_2arrays(mbins,lms,lne,0.5)
+            #print(data[ii],median,ii,une)
+            med[ii]=median
 
+            # QUARTILES:
+            up_qu = perc_2arrays(mbins, lms, data[iu], 0.75)
+            qup[ii] = up_qu
+            low_qu = perc_2arrays(mbins, lms, data[iu], 0.25)
+            qlow[ii] = low_qu
+
+            ind = np.where(median>const.notnum)
+            #print(ind,median[ind])
+            #print(med[ii].item(0))
+            plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
+            plt.legend()
+        plt.savefig('C:/Users/Olivia/PRUEBAS/pruebaplot'+une+'.png')
+        #print('hecho')
+
+        '''
+        # PLOT
+            plt.xlabel('log$_{10}$(M$_*$/M$_{\odot}$)')
+            plt.ylabel('log$_{10}$ (U)')
+            plt.xlim(8.5, 11.2)
+            plt.ylim(-5, -2)
+            ind = np.where((median > const.notnum) & (low_qu > const.notnum) & (up_qu > const.notnum))
+            plt.plot(mhist[ind], median[ind], 'o', color=col, label='Calculated from the ' + sfr + '')
+            plt.plot(mhist[ind], low_qu[ind], '_', color=col)
+            plt.plot(mhist[ind], up_qu[ind], '_', color=col)
+            plt.vlines(mhist[ind], low_qu[ind], up_qu[ind], color=col, linestyles='dashed')
+
+            plt.legend()
+
+
+        plt.savefig(plotf)
+        print('Plot: {}'.format(plotf))
+        
+        '''
+
+        '''
         # QUARTILES:
 
         up_qu = perc_2arrays(mbins, lms, lu, 0.75)
@@ -516,7 +574,7 @@ def test_medians(cols, h0=None, volume=542.16 ** 3, verbose=False):
 
     # Save figures
     print('Plot: {}'.format(plotf2))
-
+'''
 
 def plot_bpt(cols, h0=None, volume=542.16 ** 3, verbose=False):
     '''
