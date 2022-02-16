@@ -304,14 +304,14 @@ def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const
         '''
        Given log10(Mstar) and (12 + log(O/H))
        get the plots to compare (12 + log(O/H)) vs log10(Mstar).
-       Get the GSMF and the ZF plots. (If that exists)
+       Get the GSMF and the ZF plots.
 
-       Given the observations, compare the plots with the observations too. (If that exists)
+       Given the observations, compare the plots with the observations too.
 
 
        Parameters
        ----------
-       (HERE : IF THAT EXISTS)
+
        obsZF : string
          Name of the input file for the Z data observed.
          Expected histogram mode:
@@ -376,38 +376,29 @@ def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const
        Save it in the outplot path.
     '''
 
-        # HERE: All like above if Z observational exists. I am not sure, I don't think so.
+       
 
-def test_medians(outplot, volume=542.16 ** 3, verbose=False):
+def test_medians(outplot, verbose=False):
     '''
-        HERE: CHANGE ALL THE DESCRIPTION
 
-        Given log10(Mstar), log10(sSFR) and 12+log(O/H),
-        get the plot 12+log(O/H) vs log10(Mstar) when Plotting
-
-        plot
+        Given U and ne calculated from the Mstar and the SFR in eml_une.
+        get the plot of the medians of these quantities in masses bins.
+        Compare the plots between the data calculated from the average SFR and
+        from the SFR calculated from the LC photons.
 
         Parameters
         ----------
-        cols : list
-            [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-            For text or csv files: list of integers with column position.
-            For hdf5 files: list of data names.
-        h0 : float
-            If not None: value of h, H0=100h km/s/Mpc.
-        volume : float
-            Carlton model default value = 542.16^3 Mpc^3/h^3.
-            table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract
-            If not 542.16**3. : value of the simulation volume in Mpc^3/h^3
+        outplot : string
+            Path to the folder where save the plot.
         verbose : boolean
             Yes = print out messages
-        Plotting : boolean
-            If True run verification plots with all data.
+
 
         Returns
         -------
-        plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
-           '''
+        Medians U and ne for each bin of mass in two differents plots.
+
+    '''
 
     # Prepare the plots
 
@@ -417,16 +408,9 @@ def test_medians(outplot, volume=542.16 ** 3, verbose=False):
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
 
-
-
-
-
     # Read the data
     tempfile_io = r"example_data/tmp_LC.dat"
-    '''
-    plotf1 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_u.pdf'
-    plotf2 = 'C:/Users/Olivia/PRUEBAS/pruebaplot_ne.pdf'
-    '''
+
     ih = get_nheader(tempfile_io)
     lms = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
 
@@ -445,10 +429,11 @@ def test_medians(outplot, volume=542.16 ** 3, verbose=False):
         col = cm(iu)
         color.append(col)  # col change for each iteration
 
+        '''
         med=[0]*2 # HERE: Search an efficient form
         qlow = med
         qup = med
-
+        '''
 
         for ii,sfr in enumerate(SFR):
             tempfile_une = r"example_data/tmp_une_" + sfr + ".dat"
@@ -465,13 +450,13 @@ def test_medians(outplot, volume=542.16 ** 3, verbose=False):
             median = perc_2arrays(mbins, lms, data[iu], 0.5)
             # median2 = perc_2arrays(mbins,lms,lne,0.5)
             #print(data[ii],median,ii,une)
-            med[ii]=median
+            #med[ii]=median
 
             # QUARTILES:
             up_qu = perc_2arrays(mbins, lms, data[iu], 0.75)
-            qup[ii] = up_qu
+            #qup[ii] = up_qu
             low_qu = perc_2arrays(mbins, lms, data[iu], 0.25)
-            qlow[ii] = low_qu
+            #qlow[ii] = low_qu
 
             ind = np.where(median>const.notnum)
             #print(ind,median[ind])
@@ -576,31 +561,45 @@ def test_medians(outplot, volume=542.16 ** 3, verbose=False):
     print('Plot: {}'.format(plotf2))
 '''
 
-def plot_bpt(cols, h0=None, volume=542.16 ** 3, verbose=False):
+def plot_bpt(fbpt, outplot, h0=None, volume=542.16 ** 3, verbose=False):
     '''
-        Given log10(Mstar), log10(sSFR) and 12+log(O/H),
-        get the plot 12+log(O/H) vs log10(Mstar) when Plotting
+        HERE: CHANGE ALL THE DESCRIPTION
+        Given 4 lines plot the BPT diagram
 
-        plot
 
         Parameters
         ----------
-        cols : list
-            [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-            For text or csv files: list of integers with column position.
-            For hdf5 files: list of data names.
-        h0 : float
-            If not None: value of h, H0=100h km/s/Mpc.
-        volume : float
-            Carlton model default value = 542.16^3 Mpc^3/h^3.
-            table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract
-            If not 542.16**3. : value of the simulation volume in Mpc^3/h^3
+        fbpt : string
+            Path of the data of the lines. # Here: it will be inside the code, temporary data that will be removed.
+        outplot : string
+            Path to the folder where save the plot.
         verbose : boolean
             Yes = print out messages
-        Plotting : boolean
-            If True run verification plots with all data.
 
         Returns
         -------
-        plot(log10(sSFR),log10(Mstar)), plot(12+log(O/H),log10(Mstar)) : plot #Change these names later
+        plot of BPT diagram
            '''
+
+    ih = get_nheader(fbpt)
+    # Here: search more efficient form:
+
+    line1 = np.loadtxt(fbpt, skiprows=ih, usecols=(0), unpack=True)
+    line2 = np.loadtxt(fbpt, skiprows=ih, usecols=(1), unpack=True)
+    line3 = np.loadtxt(fbpt, skiprows=ih, usecols=(2), unpack=True)
+    line4 = np.loadtxt(fbpt, skiprows=ih, usecols=(3), unpack=True)
+
+    ax = line1 - line2  # As they are logarithms
+    ay = line3 - line4
+
+    ind = np.where((ax > const.notnum) & (ay > const.notnum))
+    plt.plot(ax[ind], ay[ind], 'ob', label='GALFORM')
+    plt.xlabel('log$_{10}$(line$_1$/line$_2$)')
+    plt.ylabel('log$_{10}$(line$_3$/line$_4$)')
+    plt.legend()
+
+    outf = outplot + '/pruebaplot_BPT.pdf'
+    plt.savefig(outf)
+
+
+    #os.remove(fbpt)
