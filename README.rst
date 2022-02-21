@@ -91,9 +91,11 @@ ISSUES
 
 · Allow more models to be chosen.
 
+· LC2sfr in the description.
+
 **eml_photio**
 
-· Change the paths.
+· Improve the way to get the limits and to put other limits depending on the model.
 
 · Implement the interpolations.
 
@@ -136,4 +138,6 @@ ISSUES
 **Others**
 
 · example2.py is an example of how to run the function get_reducedfile from eml_io and the test_plots.
+
+· Allow the escape fraction vary: (100-escf)*LyC
 
