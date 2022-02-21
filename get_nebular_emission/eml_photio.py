@@ -30,6 +30,8 @@ def get_lines_Gutkin(loh12, lu, lne, verbose=False):
     using the tables
     from Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)
 
+    HERE : EXPLAIN HOW TO ADD LIMITS DEPENDING ON PHOTIO MODEL.
+
     Parameters
     ----------
     loh12 : float
