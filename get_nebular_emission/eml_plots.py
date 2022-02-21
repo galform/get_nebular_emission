@@ -376,8 +376,6 @@ def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const
        Save it in the outplot path.
     '''
 
-       
-
 def test_medians(outplot, verbose=False):
     '''
 
@@ -582,6 +580,8 @@ def plot_bpt(fbpt, outplot, h0=None, volume=542.16 ** 3, verbose=False):
            '''
 
     ih = get_nheader(fbpt)
+
+
     # Here: search more efficient form:
 
     line1 = np.loadtxt(fbpt, skiprows=ih, usecols=(0), unpack=True)

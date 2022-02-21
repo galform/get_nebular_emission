@@ -1,3 +1,4 @@
+'''
 # 4 arrays of random numbers: lines. File with 4 columns. Plot BPT to read and plot.
 import numpy as np
 import os
@@ -17,4 +18,83 @@ datatofile=np.column_stack((a, b, c, d))
 with open(bpt_data,'w') as svfile:
     np.savetxt(svfile,datatofile,delimiter=' ',header=header1)
     svfile.closed
+'''
+import numpy as np
+from get_nebular_emission.eml_io import get_nheader
+import get_nebular_emission.eml_const as const
+
+def get_lines_Gutkin(loh12, lu, lne, verbose=False):
+    '''
+    Given 12+log(O/H), logU and logne,
+    get the interpolations for the emission lines,
+    using the tables
+    from Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)
+
+    Parameters
+    ----------
+    loh12 : float
+      12+log(O/H)
+    lu : float
+      log(U)
+    lne : float
+      log(ne)
+    photmods : string
+      Model to go from U, Z and ne to emission lines luminosities.
+    verbose : boolean
+      Yes = print out messages
+
+    Returns
+    -------
+    emission lines : floats
+    '''
+
+    flimits = r"nebular_data/Limits.txt"
+    ih = get_nheader(flimits)
+
+    uplimit = np.loadtxt(flimits, skiprows=ih, usecols=(0),unpack = True)
+    lowlimit = np.loadtxt(flimits,skiprows=ih,usecols=(1),unpack = True)
+
+
+    ind = np.where(lne>uplimit)
+    lne[ind] = uplimit
+    ind = np.where(lne<lowlimit)
+    lne[ind] = lowlimit
+
+
+    return lu, lne,loh12
+
+
+def get_lines(loh12, lu, lne, photmods='Gutkin16', LC2sfr=False, verbose=False, Testing=False, Plotting=False):
+    '''
+    Given 12+log(O/H), logU and logne,
+    get the interpolations for the emission lines
+
+    Parameters
+    ----------
+    loh12 : float
+      12+log(O/H)
+    lu : float
+      log(U)
+    lne : float
+      log(ne)
+    photmods : string
+      Model to go from U, Z and ne to emission lines luminosities.
+    verbose : boolean
+      Yes = print out messages
+
+    Returns
+    -------
+      emission lines : floats
+    '''
+
+
+    if (photmods == 'Gutkin16'):
+        lu,lne,loh12 = get_lines_Gutkin(loh12, lu, lne, verbose=verbose)
+    else:
+        print('STOP (eml_une): Unrecognised model to get emission lines.')
+        print('                Possible unemod= {}'.format(const.photmods))
+        exit()
+
+
+    return lu, lne,loh12
 
