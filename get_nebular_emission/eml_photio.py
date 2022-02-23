@@ -23,6 +23,24 @@ import numpy as np
 from get_nebular_emission.eml_io import get_nheader
 import get_nebular_emission.eml_const as const
 
+def get_limits():
+    '''
+
+
+    Returns
+    -------
+    limits of the parameters of the photoionization model
+
+    '''
+
+    # HERE: Hacer otra función que lea los límites.
+    # Como una iteración porque hay tres propiedades n_lim !! VER SLACK propname bucle
+    # Si hay una n en la string se considera que son los límites de la n.
+    # En esa función va a tomar logaritmos así está todo preparado.
+    # Iteración sobre las tres propiedades de forma que solo tenga una cosa.
+    propname = ['n', 'Z', 'U']
+
+
 def get_lines_Gutkin(loh12, lu, lne, verbose=False):
     '''
     Given 12+log(O/H), logU and logne,
@@ -50,7 +68,7 @@ def get_lines_Gutkin(loh12, lu, lne, verbose=False):
     emission lines : floats
     '''
 
-    flimits = r"nebular_data/Limits.txt"
+    flimits = r"nebular_data/limits_gutkin.txt"
     ih = get_nheader(flimits)
 
     uplimit = np.loadtxt(flimits, skiprows=ih, usecols=(0),unpack = True)
@@ -63,10 +81,10 @@ def get_lines_Gutkin(loh12, lu, lne, verbose=False):
     lne[ind] = lowlimit
 
 
-    return lu, lne,loh12
+    return lines
 
 
-def get_lines(loh12, lu, lne, photmods='Gutkin16', LC2sfr=False, verbose=False, Testing=False, Plotting=False):
+def get_lines(loh12, lu, lne, photmods='Gutkin16', verbose=False, Testing=False, Plotting=False):
     '''
     Given 12+log(O/H), logU and logne,
     get the interpolations for the emission lines
@@ -91,12 +109,12 @@ def get_lines(loh12, lu, lne, photmods='Gutkin16', LC2sfr=False, verbose=False, 
 
 
     if (photmods == 'Gutkin16'):
-        lu,lne,loh12 = get_lines_Gutkin(loh12, lu, lne, verbose=verbose)
-    else:
+        lines = get_lines_Gutkin(loh12, lu, lne, verbose=verbose)
+    else: #HERE cambiar
         print('STOP (eml_une): Unrecognised model to get emission lines.')
         print('                Possible unemod= {}'.format(const.photmods))
         exit()
 
 
-    return lu, lne,loh12
+    return lines
 

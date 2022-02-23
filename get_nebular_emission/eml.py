@@ -50,13 +50,15 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 542.16**3.,
                                  verbose=verbose, Plotting=Plotting, Testing=Testing)
 
     # From the galaxy properties obtain the
-    # ionizing parameter, U, and electron density, ne
-    u, ne = get_une(lms, lssfr, loh12,
+    # ionizing parameter, log10(U), and electron density, log10(ne)
+    lu, lne = get_une(lms, lssfr, loh12,
                     unemod=unemod, LC2sfr=LC2sfr, verbose=verbose,
                     Plotting=Plotting, Testing=Testing)
 
 
     # From U and ne, obtain the emission lines from HII regions
 
-
-    
+    # HERE poner bonito.
+    lines = get_lines(loh12, lu, lne,
+                    photmod=photmod, verbose=verbose,
+                    Plotting=Plotting, Testing=Testing)
