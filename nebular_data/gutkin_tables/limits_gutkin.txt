@@ -1,0 +1,9 @@
+# Table 3 of Gutkin+2016 (https://arxiv.org/pdf/1607.06086.pdf)
+#Explicar que es cada cosa
+# Property      Lower_limit     Upper_limit
+Z               0.0001          0.040
+U               -4.0            -1.0
+xid             0.1             0.5
+nH              1               4
+CO              0.10            1.40
+mup             100             300
