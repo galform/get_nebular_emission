@@ -83,33 +83,6 @@ def get_nheader(infile):
     return ih
         
 
-def get_zfile(zmet,photmod='gutkin'):
-    '''
-    Given a metallicity get the name of the corresponding table
-
-    Parameters
-    ----------
-    zmet : float
-       Metallicity value
-    photomod : string
-       Name of the considered photoionisation model
-
-    Returns
-    -------
-    zfile : string
-       Name of the model file with data for the given metallicity
-    '''
-    
-    dec = str(zmet).split('.')[-1]
-    root = 'nebular_data/'+photmod+'_tables/nebular_emission_Z'
-    zfile = root+dec+'.txt'
-
-    file_fine = check_file(zfile)
-    if (not file_fine):
-        zfile = None
-    
-    return zfile
-    
 
 def get_ncomponents(cols):
     '''

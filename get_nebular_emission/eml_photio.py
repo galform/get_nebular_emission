@@ -24,6 +24,35 @@ from get_nebular_emission.eml_io import get_nheader
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import check_file
 
+def get_zfile(zmet, photmod='gutkin'):
+
+    '''
+    Given a metallicity get the name of the corresponding table
+
+    Parameters
+    ----------
+    zmet : float
+        Metallicity value
+    photomod : string
+        Name of the considered photoionisation model
+
+    Returns
+    -------
+    zfile : string
+        Name of the model file with data for the given metallicity
+    '''
+
+    dec = str(zmet).split('.')[-1]
+    root = 'nebular_data/' + photmod + '_tables/nebular_emission_Z'
+    zfile = root + dec + '.txt'
+
+    file_fine = check_file(zfile)
+    if (not file_fine):
+        zfile = None
+
+    return zfile
+
+
 def get_limits(infile, propname):
     '''
     Given a file with a structure: property + lower limit + upper limit,
@@ -98,36 +127,33 @@ def get_limits(infile, propname):
 
     return lower_limit,upper_limit
 
-'''
-    for line in ff:
-        sline = line.strip()
-        word1 = sline.split()[0]
-        word2 = sline.split()[1]
-        word3 = sline.split()[2]
-
-        for ii, name in enumerate(propname):
-            if propname[ii]==word1:
-                lower_limits.append(float(word2))
-                upper_limits.append(float(word3))
-
-    return propname, lower_limits, upper_limits
-    '''
-
 def clean_photarray(limfile, infile, col_prop, propname, photmod='Gutkin16', verbose=True):
     '''
+    Given a file with a structure: property + lower limit + upper limit,
+    a file with the data, the name of the property that we want and its column in the file well specify,
+    gets the array of the data property with the necessary changes due to the limits.
+
 
     Parameters
     ----------
-    limfile
-    infile
-    cols: list
-    propname
-    photmod
-    verbose
+    limfile: string
+        file with the limits
+    infile: string
+        file with the data
+    col_prop: float
+        column of the property in the infile
+    propname: string
+        name of the property
+    photmod:  string
+        Model to get the luminosity lines for the interpolations
+    verbose : boolean
+        Yes = print out messages
+
 
     Returns
     -------
-
+    prop : array
+        array of the property choose with all the data in the limits.
     '''
 
     # Llama a la función que te dice los limites. Hacer otra función que limpie los límites.
@@ -153,56 +179,35 @@ def clean_photarray(limfile, infile, col_prop, propname, photmod='Gutkin16', ver
 
         
         prop = np.loadtxt(infile, delimiter=deli, skiprows=ih, usecols = col_prop, unpack=True)
-        #Z = np.loadtxt(infile,delimiter=deli, skiprows=ih,usecols=cols[1],unpack=True)
-        #nH = np.loadtxt(infile,delimiter=deli, skiprows=ih,usecols=cols[2],unpack=True)
 
-        #U = U.tolist()
-        print(prop)
+    # Change of units
+    #if photmod == 'Gutkin16':
+     #   prop = np.log10(prop)  # Here: it works with nH but no with U, U is in log.
+    # It must be consistent the limits.txt and the data.
 
     ind = np.where(prop>upperl)
     prop[ind] = upperl
     ind = np.where(prop<lowerl)
     prop[ind] = lowerl
 
-    # Change of units
-    #if photmod == 'Gutkin16':
-     #   prop = np.log10(prop) # Here: it works with nH but no with U, U is in log.
-
-
-
-    '''
-    ind = np.where(Z>upperl)
-    Z[ind] = upperl
-    ind = np.where(Z<lowerl)
-    Z[ind] = lowerl
-
-    ind = np.where(nH>upperl)
-    nH[ind] = upperl
-    ind = np.where(nH<lowerl)
-    nH[ind] = lowerl
-    '''
-
     return prop
 
 
-
-def get_lines_Gutkin(loh12, lu, lne, verbose=False):
+def get_lines_Gutkin(limfile, infile, loh12, lu, lne, verbose=False):
     '''
-    Given 12+log(O/H), logU and logne,
+    Given a file with the limits of the Gutkin model and a file with data,
+    get 12+log(O/H), logU and logne to
     get the interpolations for the emission lines,
     using the tables
     from Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)
 
-    HERE : EXPLAIN HOW TO ADD LIMITS DEPENDING ON PHOTIO MODEL.
 
     Parameters
     ----------
-    loh12 : float
-      12+log(O/H)
-    lu : float
-      log(U)
-    lne : float
-      log(ne)
+    limfile: string
+        file with the limits
+    infile: string
+        file with the data
     photmods : string
       Model to go from U, Z and ne to emission lines luminosities.
     verbose : boolean
@@ -213,56 +218,51 @@ def get_lines_Gutkin(loh12, lu, lne, verbose=False):
     emission lines : floats
     '''
 
-    flimits = r"nebular_data/limits_gutkin.txt"
-    ih = get_nheader(flimits)
+    # loh12 = clean_photarray(limfile, infile, col_prop= it is in the name of the file,popname= 'Z', photmod='Gutkin16', verbose=True)
+    lu = clean_photarray(limfile, infile, col_prop=(0), photmod='Gutkin16', verbose=True)
+    lne = clean_photarray(limfile, infile, col_prop=(2), photmod='Gutkin16', verbose=True)
 
-    uplimit = np.loadtxt(flimits, skiprows=ih, usecols=(0),unpack = True)
-    lowlimit = np.loadtxt(flimits,skiprows=ih,usecols=(1),unpack = True)
+    lines = 'interpolations done'
 
-    #low_limit,up_limit = get_photlimits(photmod=,prop=,)
-
-    ind = np.where(lne>uplimit)
-    lne[ind] = uplimit
-    ind = np.where(lne<lowlimit)
-    lne[ind] = lowlimit
+    return lines
 
 
-    #return lines
-
-
-def get_lines(in_loh12, in_lu, in_lne, photmods='Gutkin16', verbose=False, Testing=False, Plotting=False):
+def get_lines(limfile, infile, photomod='Gutkin16',verbose=False, Testing=False, Plotting=False):
+    #(in_loh12, in_lu, in_lne, photmods='Gutkin16', verbose=False, Testing=False, Plotting=False):
     '''
     Given 12+log(O/H), logU and logne,
     get the interpolations for the emission lines
 
     Parameters
     ----------
-    loh12 : float
-      12+log(O/H)
-    lu : float
-      log(U)
-    lne : float
-      log(ne)
+    limfile: string
+        file with the limits
+    infile: string
+        file with the data
     photmods : string
       Model to go from U, Z and ne to emission lines luminosities.
     verbose : boolean
       Yes = print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
+    Testing : boolean
+      Yes = to only run over few entries for testing purposes
 
     Returns
     -------
       emission lines : floats
     '''
 
-# Hacer un loop sobre las tres arrays y que te las limpie el código.
-# loh12 = clean_photarrray(in_loh12=,photmod=,prop=loh12) Hacer para los tres
-'''
-    if (photmods == 'Gutkin16'):
-        lines = get_lines_Gutkin(loh12, lu, lne, verbose=verbose)
+    # Hacer un loop sobre las tres arrays y que te las limpie el código.
+    # loh12 = clean_photarrray(in_loh12=,photmod=,prop=loh12) Hacer para los tres
+
+    if (photomod == 'Gutkin16'):
+        lines = get_lines_Gutkin(limfile,infile, verbose=verbose)
     else: #HERE cambiar
-        print('STOP (eml_une): Unrecognised model to get emission lines.')
+        print('STOP (eml_photio): Unrecognised model to get emission lines.')
         print('                Possible unemod= {}'.format(const.photmods))
         exit()
 
 
     return lines
-'''
+
