@@ -110,27 +110,16 @@ def get_limits(infile, propname):
 
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
-    ind = prop.index(propname)
+    if propname not in prop:
+        print('STOP: property {} '.format(propname)+'not found in the limits file {}'.format(infile))
+        exit()
+    else:
+        ind = prop.index(propname)
 
-    # Read the header of '#'
-    '''
-    ih = 0
-    ff = open(infile, 'r')
-    for line in ff:
-        # Count any empty lines in the header
-        if not line.strip():
-            ih += 1
-        else:
-            sline = line.strip()
-            # Check that the first character is a '#'
-            char1 = sline[0]
-            if char1 == '#':
-                ih += 1
-    '''
-    ih = get_nheader(infile,firstchar='#')
-    lower_limit = np.loadtxt(infile, skiprows=ind+ih, max_rows=1, usecols=(1),unpack=True)
-    upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
-    return lower_limit,upper_limit
+        ih = get_nheader(infile,firstchar='#')
+        lower_limit = np.loadtxt(infile, skiprows=ind+ih, max_rows=1, usecols=(1),unpack=True)
+        upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
+        return lower_limit,upper_limit
 
 def clean_photarray(limfile, infile, col_prop, propname, photmod='Gutkin16', verbose=True):
     # Quitar limfile porque con el diccionario con Gutkin lo va a entender
