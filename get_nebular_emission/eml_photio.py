@@ -24,6 +24,10 @@ from get_nebular_emission.eml_io import get_nheader
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import check_file
 
+
+# DICCIONARIO DE MODELOS DE PHOTOIO: Nombre del modelo y nombre del fichero con los límites
+# Si lía mucho matriz de strings
+
 def get_zfile(zmet, photmod='gutkin'):
 
     '''
@@ -109,6 +113,7 @@ def get_limits(infile, propname):
     ind = prop.index(propname)
 
     # Read the header of '#'
+    '''
     ih = 0
     ff = open(infile, 'r')
     for line in ff:
@@ -121,13 +126,14 @@ def get_limits(infile, propname):
             char1 = sline[0]
             if char1 == '#':
                 ih += 1
-
+    '''
+    ih = get_nheader(infile,firstchar='#')
     lower_limit = np.loadtxt(infile, skiprows=ind+ih, max_rows=1, usecols=(1),unpack=True)
     upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
-
     return lower_limit,upper_limit
 
 def clean_photarray(limfile, infile, col_prop, propname, photmod='Gutkin16', verbose=True):
+    # Quitar limfile porque con el diccionario con Gutkin lo va a entender
     '''
     Given a file with a structure: property + lower limit + upper limit,
     a file with the data, the name of the property that we want and its column in the file well specify,
@@ -193,7 +199,7 @@ def clean_photarray(limfile, infile, col_prop, propname, photmod='Gutkin16', ver
     return prop
 
 
-def get_lines_Gutkin(limfile, infile, loh12, lu, lne, verbose=False):
+def get_lines_Gutkin(infile, verbose=False):
     '''
     Given a file with the limits of the Gutkin model and a file with data,
     get 12+log(O/H), logU and logne to
@@ -204,8 +210,6 @@ def get_lines_Gutkin(limfile, infile, loh12, lu, lne, verbose=False):
 
     Parameters
     ----------
-    limfile: string
-        file with the limits
     infile: string
         file with the data
     photmods : string
@@ -218,6 +222,7 @@ def get_lines_Gutkin(limfile, infile, loh12, lu, lne, verbose=False):
     emission lines : floats
     '''
 
+    limfile = r"/nebular_data/gutkin_tables/limits_gutkin.txt" # Estara en el diccionario, dado arriba
     # loh12 = clean_photarray(limfile, infile, col_prop= it is in the name of the file,popname= 'Z', photmod='Gutkin16', verbose=True)
     lu = clean_photarray(limfile, infile, col_prop=(0), photmod='Gutkin16', verbose=True)
     lne = clean_photarray(limfile, infile, col_prop=(2), photmod='Gutkin16', verbose=True)
@@ -227,7 +232,7 @@ def get_lines_Gutkin(limfile, infile, loh12, lu, lne, verbose=False):
     return lines
 
 
-def get_lines(limfile, infile, photomod='Gutkin16',verbose=False, Testing=False, Plotting=False):
+def get_lines(infile, photomod='Gutkin16',verbose=False, Testing=False, Plotting=False):
     #(in_loh12, in_lu, in_lne, photmods='Gutkin16', verbose=False, Testing=False, Plotting=False):
     '''
     Given 12+log(O/H), logU and logne,
@@ -235,8 +240,6 @@ def get_lines(limfile, infile, photomod='Gutkin16',verbose=False, Testing=False,
 
     Parameters
     ----------
-    limfile: string
-        file with the limits
     infile: string
         file with the data
     photmods : string
@@ -257,8 +260,8 @@ def get_lines(limfile, infile, photomod='Gutkin16',verbose=False, Testing=False,
     # loh12 = clean_photarrray(in_loh12=,photmod=,prop=loh12) Hacer para los tres
 
     if (photomod == 'Gutkin16'):
-        lines = get_lines_Gutkin(limfile,infile, verbose=verbose)
-    else: #HERE cambiar
+        lines = get_lines_Gutkin(infile, verbose=verbose)
+    else:
         print('STOP (eml_photio): Unrecognised model to get emission lines.')
         print('                Possible unemod= {}'.format(const.photmods))
         exit()

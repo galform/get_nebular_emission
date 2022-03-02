@@ -45,7 +45,7 @@ def create_dir(outdir):
     return True
 
 
-def get_nheader(infile):
+def get_nheader(infile,firstchar=None): # firstchar=None default
     '''
     Given a file with a structure: header+data, 
     counts the number of header lines
@@ -56,6 +56,7 @@ def get_nheader(infile):
     Returns:
     ih: integer, number of lines with the header text
     '''
+
 
     ih = 0
     ff = open(infile,'r')
@@ -69,17 +70,22 @@ def get_nheader(infile):
             # Check that the first character is not a digit
             char1 = sline[0]
             word1 = sline.split()[0]
-            if (not char1.isdigit()):
-                if (char1 != '-'):
-                    ih += 1
-                else:
-                    try:
-                        float(word1)
-                        return ih
-                    except:
+            if not firstchar:
+                if (not char1.isdigit()):
+                    if (char1 != '-'):
                         ih += 1
+                    else:
+                        try:
+                            float(word1)
+                            return ih
+                        except:
+                            ih += 1
+                else:
+                    return ih
             else:
-                return ih
+                if char1 == firstchar:
+                    ih+=1
+
     return ih
         
 
