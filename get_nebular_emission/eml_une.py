@@ -66,6 +66,11 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
     
     if (unemod == 'kashino20'):
         lu, lne = get_une_kashino20(lms,lssfr,loh12,verbose=verbose)
+        outfile = r"output_data/U_ne_loh12.txt"
+        header1 = 'log(u_disk),log(u_bulge), log(ne_disk), log(ne_bulge), (12 + log(O/H))_disk, (12 + log(O/H))_bulge'
+        tofile = np.column_stack((lu,lne,loh12))
+        with open(outfile,'w') as outf:
+            np.savetxt(outf, tofile, delimiter=' ', header=header1)
     else:
         print('STOP (eml_une): Unrecognised model to get U and ne.')
         print('                Possible unemod= {}'.format(const.unemods))
