@@ -1,4 +1,6 @@
 import sys
+
+import h5py
 import numpy as np
 import get_nebular_emission.eml_const as const
 
@@ -33,9 +35,9 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
                    (lms > const.notnum) &
                    (loh12 > const.notnum))
     if (np.shape(ind)[1]>1):
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9)
+        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
 
-        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr[ind] + 9)
+        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr[ind] + 9.)
 
     return lu, lne
     
@@ -66,11 +68,31 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
     
     if (unemod == 'kashino20'):
         lu, lne = get_une_kashino20(lms,lssfr,loh12,verbose=verbose)
-        outfile = r"output_data/U_ne_loh12.txt"
-        header1 = 'log(u_disk),log(u_bulge), log(ne_disk), log(ne_bulge), (12 + log(O/H))_disk, (12 + log(O/H))_bulge'
-        tofile = np.column_stack((lu,lne,loh12))
-        with open(outfile,'w') as outf:
-            np.savetxt(outf, tofile, delimiter=' ', header=header1)
+
+        thefile = r"output_data/U_ne_loh12.hdf5"
+        hf = h5py.File(thefile,'w')
+
+        # Header
+        head = hf.create_dataset('header',(1,))
+        head.attrs[u'HII model'] = unemod
+
+        # Data
+        hfdat = hf.create_group('data')
+
+        hfdat.create_dataset('lu', data=lu)
+        hfdat['lu'].dims[0].label = 'log10(U) (dimensionless) [disk, bulge]'
+
+        hfdat.create_dataset('lne',data=lne)
+        hfdat['lne'].dims[0].label = 'log10(nH) (cm**-3) [disk, bulge]'
+
+        hfdat.create_dataset('loh12', data=loh12)
+        hfdat['loh12'].dims[0].label = 'metallicity 12+log(O/H) [disk, bulge]'
+
+        #header1 = 'log(u_disk),log(u_bulge), log(ne_disk), log(ne_bulge), (12 + log(O/H))_disk, (12 + log(O/H))_bulge'
+        #tofile = np.column_stack((lu,lne,loh12))
+        #with open(outfile,'w') as outf:
+        #    np.savetxt(outf, tofile, delimiter=' ', header=header1)
+        hf.close()
     else:
         print('STOP (eml_une): Unrecognised model to get U and ne.')
         print('                Possible unemod= {}'.format(const.unemods))
