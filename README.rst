@@ -101,6 +101,10 @@ ISSUES
 
 · Allow the code to choose a photo-ionisation model and to deal with the interpolations.
 
+· If the limits file does not exist, allow the program to continue the interpolations.
+
+· Program set to do linear interpolations. See what happends with other types of interpolations.
+
 **eml_dust**
 
 · Create a dust module with the line attenuations.
