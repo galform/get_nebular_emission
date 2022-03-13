@@ -30,6 +30,8 @@ from get_nebular_emission.eml_io import check_file
 # Si lía mucho matriz de strings
 
 mod_lim = {'gutkin16': r"nebular_data/gutkin_tables/limits_gutkin.txt"}
+#mod_lim = {'gutkin16': 'C:/Users/Olivia/get_nebular_emission/nebular_data/gutkin_tables/limits_gutkin.txt'}
+# mod_lim = {'gutkin16': [r"nebular_data/gutkin_tables/limits_gutkin.txt", 18}
 # print(mod_lim.keys()) # To show the keys
 
 def get_zfile(zmet, photmod='gutkin16'):
@@ -118,7 +120,7 @@ def get_limits(propname, photmod = 'gutkin16',verbose=True):
         print('                  Possible photmod= {}'.format(mod_lim.keys()))
         exit()
 
-    # Check if the data file exists:
+    # Check if the limits file exists:
     check_file(infile, verbose=verbose)
 
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
@@ -295,7 +297,7 @@ def clean_photarray(photmod='gutkin16', verbose=True):
 
 
 
-def get_lines_Gutkin(infile,in_loh12, in_U, in_ne, verbose=True):
+def get_lines_Gutkin(verbose=True):
     '''
     Given a file with the limits of the Gutkin model and a file with data,
     get 12+log(O/H), logU and logne to
@@ -317,13 +319,32 @@ def get_lines_Gutkin(infile,in_loh12, in_U, in_ne, verbose=True):
     -------
     emission lines : floats
     '''
+    Z =['0001','0002','0005','001','002','004','006','008','010','014','017','020','030','040']
+    z=[]
+    file=[]
 
-    loh12 = clean_photarray(infile, propname= in_loh12, col_prop=(4),photmod='gutkin16', verbose=True)
-    lu = clean_photarray(infile, propname= in_U,col_prop=(0), photmod='gutkin16', verbose=True)
-    lne = clean_photarray(infile, propname= in_ne,col_prop=(2), photmod='gutkin16', verbose=True)
-    #print(loh12,lu,lne)
+    nemline = 18
+    nzmet = 14
+    nu = 7
+    nzmet_reduced = 4
+    emline_grid1 = np.zeros((nemline,nu,nzmet_reduced)) # He cambiado el orden que me dijo Violeta. 18 matrices 7x4
+                                                        # 18 lines matrices UxZ
+    emline_grid2 = np.zeros((nemline,nu,nzmet))
+    emline_grid3 = np.zeros((nemline,nu,nzmet))
+
+
+    for k, zname in enumerate(Z):
+        infile = r"nebular_data/gutkin_tables/nebular_emission_Z0001.txt"
+#" + zname + ".txt"
+        #file.append(infile)
+        #z.append(k)
+        check_file(infile,verbose=True)
+        #print(k,infile)
+        #ih = get_nheader(infile)
+
 
     lines = 'interpolations done'
+
 
     return lines
 
@@ -365,3 +386,7 @@ def get_lines(infile, photmod='Gutkin16',verbose=False, Testing=False, Plotting=
 
     return lines
 
+
+if __name__== "__main__":
+
+    print(get_lines_Gutkin(verbose=True))

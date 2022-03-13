@@ -11,4 +11,4 @@ http://www.iap.fr/neogal/ewExternalFiles/README-1.txt
 [nh]=[cm**-3]
 [(C/O)/(C/O)sol]= dimensionless where (C/O)sol=0.44
 [mup]=[M_sun]
-[intensities of emission lines =[3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]
+[intensities of emission lines] =[3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]
