@@ -6,6 +6,9 @@ import os
 import numpy as np
 import get_nebular_emission.eml_const as const
 import math
+from pathlib import Path
+
+homedir = Path.home()
 
 def stop_if_no_file(infile):
     '''
@@ -115,6 +118,43 @@ def get_ncomponents(cols):
         sys.exit()
         
     return ncomp
+
+def locate_interval(val, edges):
+    '''
+    Get the index, i, of the interval with edges.
+
+    Parameters:
+    val : int or float
+        Value
+    edges : array of int or floats
+        Array of the edges of the intervals
+    Returns:
+    ind : integer
+       Index of the interval. If outside: index of the limits
+    '''
+
+    ind = const.notnum
+    low = np.asarray(edges[:-1])
+    high = np.asarray(edges[1:])
+
+    if (val >= high[-1] and val >= low[-1]):
+        ind = len(high) - 1
+    elif (val<=low[0]):
+        ind = 0
+    else:
+        linds = np.where(val >= low)
+        hinds = np.where(val < high)
+
+        if (np.shape(linds)[1] > 0 and np.shape(hinds)[1] > 0):
+            lind = linds[0]
+            hind = hinds[0]
+            common = list(set(lind).intersection(hind))
+
+            if (len(common) == 1):
+                ind = common[0]
+
+    return ind
+
 
 def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, verbose=False, Plotting=False, Testing=False):
     '''

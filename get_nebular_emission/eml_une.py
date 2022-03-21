@@ -69,7 +69,7 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
     if (unemod == 'kashino20'):
         lu, lne = get_une_kashino20(lms,lssfr,loh12,verbose=verbose)
 
-        thefile = r"output_data/U_ne_loh12.hdf5"
+        thefile = r"output_data/output_kashino20.hdf5"
         hf = h5py.File(thefile,'w')
 
         # Header

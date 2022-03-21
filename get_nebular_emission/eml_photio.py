@@ -21,9 +21,10 @@ with open(bpt_data,'w') as svfile:
 '''
 import h5py
 import numpy as np
-from get_nebular_emission.eml_io import get_nheader
+from get_nebular_emission.eml_io import get_nheader, homedir
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import check_file
+from pathlib import Path
 
 
 # DICCIONARIO DE MODELOS DE PHOTOIO: Nombre del modelo y nombre del fichero con los límites
@@ -34,15 +35,17 @@ mod_lim = {'gutkin16': r"nebular_data/gutkin_tables/limits_gutkin.txt"}
 # mod_lim = {'gutkin16': [r"nebular_data/gutkin_tables/limits_gutkin.txt", 18}
 # print(mod_lim.keys()) # To show the keys
 
-def get_zfile(zmet, photmod='gutkin16'):
+#infile = r"nebular_data/gutkin_tables/nebular_emission_Z" + zname + ".txt"
+
+def get_zfile(zmet_str, photmod='gutkin16'):
 
     '''
-    Given a metallicity get the name of the corresponding table
+    Given a metallicity string get the name of the corresponding table
 
     Parameters
     ----------
-    zmet : float
-        Metallicity value
+    zmet_str : string
+        Metallicity name in files
     photomod : string
         Name of the considered photoionisation model
 
@@ -52,10 +55,11 @@ def get_zfile(zmet, photmod='gutkin16'):
         Name of the model file with data for the given metallicity
     '''
 
-    dec = str(zmet).split('.')[-1]
     root = 'nebular_data/' + photmod + '_tables/nebular_emission_Z'
-    zfile = root + dec + '.txt'
-
+    if len(zmet_str)<3:
+        zmet_str = zmet_str+'0'
+    zfile = root + zmet_str + '.txt'
+    # Si son 2 numeros que le añada un cero
     file_fine = check_file(zfile)
     if (not file_fine):
         zfile = None
@@ -122,6 +126,7 @@ def get_limits(propname, photmod = 'gutkin16',verbose=True):
 
     # Check if the limits file exists:
     check_file(infile, verbose=verbose)
+    print(infile)
 
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
@@ -319,28 +324,257 @@ def get_lines_Gutkin(verbose=True):
     -------
     emission lines : floats
     '''
-    Z =['0001','0002','0005','001','002','004','006','008','010','014','017','020','030','040']
-    z=[]
-    file=[]
+    zmet_str =['0001','0002','0005','001','002','004','006','008','010','014','017','020','030','040']
+    zmets = np.full(len(zmet_str),const.notnum)
+    zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
+
+    logubins = [-4., -3.5, -3., -2.5, -2., -1.5, -1.]
 
     nemline = 18
     nzmet = 14
     nu = 7
     nzmet_reduced = 4
-    emline_grid1 = np.zeros((nemline,nu,nzmet_reduced)) # He cambiado el orden que me dijo Violeta. 18 matrices 7x4
-                                                        # 18 lines matrices UxZ
-    emline_grid2 = np.zeros((nemline,nu,nzmet))
-    emline_grid3 = np.zeros((nemline,nu,nzmet))
+    zmets_reduced = np.array([0.0001, 0.002, 0.014, 0.030])
 
 
-    for k, zname in enumerate(Z):
-        infile = r"nebular_data/gutkin_tables/nebular_emission_Z0001.txt"
-#" + zname + ".txt"
-        #file.append(infile)
-        #z.append(k)
+
+    emline_grid1 = np.zeros((nzmet_reduced,nu,nemline)) # From slower to faster
+    emline_grid2 = np.zeros((nzmet,nu,nemline))
+    emline_grid3 = np.zeros((nzmet,nu,nemline))
+    emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
+
+    l = 0
+    kred = 0
+    nn = 0
+
+
+    for k, zname in enumerate(zmets):
+        infile = get_zfile(zmet_str[k],photmod='gutkin')
         check_file(infile,verbose=True)
         #print(k,infile)
-        #ih = get_nheader(infile)
+        ih = get_nheader(infile)
+
+        with open(infile,'r') as ff:
+            iline = -1.
+            for line in ff:
+                iline += 1
+
+                if iline<ih:continue
+
+                data = np.array((line.split()))
+                lu = float(data[0])
+                xid = float(data[1])
+                nH = float(data[2])
+                co = float(data[3])
+                imf_cut = float(data[4])
+
+
+                if xid==0.3 and co==1.and imf_cut==100:
+                    if lu == -4.:
+                        l = 0
+                    if lu == -3.5:
+                        l = 1
+                    if lu == -3.:
+                        l = 2
+                    if lu == -2.5:
+                        l = 3
+                    if lu == -2.:
+                        l = 4
+                    if lu == -1.5:
+                        l = 5
+                    if lu == -1.:
+                        l = 6
+
+
+                    if nH==10 or nH==100 or nH==1000 or nH==10000:
+
+                        if nH==10 or nH==10000:
+                            if k==0:
+                                kred = 0
+                            if k==4:
+                                kred = 1
+                            if k==9:
+                                kred = 2
+                            if k==12:
+                                kred = 3
+                        for j in range(nemline):
+                            if nH == 10:
+                                emline_grid1[kred,l,j] = float(data[j])
+                            if nH == 100:
+                                emline_grid2[k,l,j] = float(data[j])
+                            if nH == 1000:
+                                emline_grid3[k,l,j] = float(data[j])
+                            if nH == 10000:
+                                emline_grid4[kred,l,j] = float(data[j])
+
+    # Líneas de 201 a 212 no entiendo
+
+    # log metallicity bins ready for interpolation:
+
+    lzmets_reduced = np.full(len(zmets_reduced), const.notnum)
+    ind = np.where(zmets_reduced > 0.)
+    if (np.shape(ind)[1]) > 0:
+        lzmets_reduced[ind] = np.log10(zmets_reduced[ind])
+
+
+    lzmets = np.full(len(zmets), const.notnum)
+    ind = np.where(zmets > 0.)
+    if (np.shape(ind)[1] > 0):
+        lzmets[ind] = np.log10(zmets[ind])
+
+    #print(lzmets,lzmets_reduced)
+
+    # now read GAlFORM output
+    file = r"output_data/output_kashino20.hdf5"
+    check_file(file,verbose=True)
+
+    f = h5py.File(file, 'r')
+    header = f['header']
+    data = f['data']
+
+    lu = data['lu'][:]
+    lud = []; lub = []
+
+    for ii, u in enumerate(lu):
+        u1 = lu[ii]
+        u1 = u1.tolist()
+        lud.append(u1[0])
+        lub.append((u1[1]))
+    lud = np.array(lud)
+    lub = np.array(lub)
+
+    lne = data['lne'][:]
+    lned = []; lneb = []
+    for ii, ne in enumerate(lne):
+        ne1 = lne[ii]
+        ne1 = ne1.tolist()
+        lned.append(ne1[0])
+        lneb.append((ne1[1]))
+    lned = np.array(lned)
+    lneb = np.array(lneb)
+
+
+    loh12 = data['loh12'][:] - const.ohsun
+    loh12d = []; loh12b = []
+    for ii, oh12 in enumerate(loh12):
+        oh121 = loh12[ii]
+        oh121 = oh121.tolist()
+        loh12d.append(oh121[0])
+        loh12b.append((oh121[1]))
+    loh12d = np.array(loh12d)
+    loh12b = np.array(loh12b)
+
+    # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
+
+    # DISK
+
+    # Interpolate over disk ionisation parameter
+
+    '''
+    x = lud
+    xp = logubins
+    xp.sort()
+    fp = np.linspace(0, 1, len(xp))
+
+    du = np.interp(x, xp, fp)
+    '''
+
+    '''
+    for j1 in range(nu):
+        if j1 == 0: # Use the first value in grid
+            du.append(0.0)
+        elif j1 == nu-1: # Use the las value in grid
+            du.append(1.0)
+        else:
+            val = (lud - logubins[j1])/(logubins[j1+1]-logubins[j1])
+            #print(val)
+            du.append(val)
+            # No lo veo claro.
+    '''
+
+
+    # Interpolate over disk gas metallicity loh12d
+
+    x = loh12d
+    xp = lzmets_reduced
+    xp.sort()
+    fp = np.linspace(0, 1, len(xp))
+    dz = np.interp(x, xp, fp)
+
+    y = len(du)
+
+    emline_int1 = np.zeros((nemline,y))
+    emline_int2 = np.zeros((nemline,y))
+    emline_int3 = np.zeros((nemline,y))
+    emline_int4 = np.zeros((nemline,y))
+
+
+    for k in range(nemline):
+        for j1 in range(nu-1):
+            for i1 in range(nzmet_reduced-1):
+                emline_int1[k] = (1.-dz)*(1.-du)*emline_grid1[i1,j1,k] + \
+                                dz*(1.-du)*emline_grid1[i1+1,j1,k] + \
+                                (1.-dz)*du*emline_grid1[i1,j1+1,k] + \
+                                dz*du*emline_grid1[i1+1,j1+1,k]
+
+                emline_int4[k] = (1. - dz) * (1. - du) * emline_grid4[i1, j1, k] + \
+                                 dz * (1. - du) * emline_grid4[i1 + 1, j1, k] + \
+                                 (1. - dz) * du * emline_grid4[i1, j1 + 1, k] + \
+                                 dz * du * emline_grid4[i1 + 1, j1 + 1, k]
+
+
+    # Full metallicity grid for emlines_grid2 nH=100 and emlines_grid3 nH=1000
+
+    x = loh12d
+    xp = lzmets
+    xp.sort()
+    fp = np.linspace(0, 1, len(xp))
+    dz = np.interp(x, xp, fp)
+
+    for k in range(nemline):
+        for j1 in range(nu-1):
+            for i1 in range(nzmet-1):
+                emline_int2[k] = (1.-dz)*(1.-du)*emline_grid2[i1,j1,k] + \
+                                dz*(1.-du)*emline_grid2[i1+1,j1,k] + \
+                                (1.-dz)*du*emline_grid2[i1,j1+1,k] + \
+                                dz*du*emline_grid2[i1+1,j1+1,k]
+                emline_int3[k] = (1. - dz) * (1. - du) * emline_grid3[i1, j1, k] + \
+                                 dz * (1. - du) * emline_grid3[i1 + 1, j1, k] + \
+                                 (1. - dz) * du * emline_grid3[i1, j1 + 1, k] + \
+                                 dz * du * emline_grid3[i1 + 1, j1 + 1, k]
+
+
+
+    # Interpolate over ne
+    # Use gas density in disk lned
+    nebline_disk = 0.0
+    #print(len(lned))
+    #if lned > 2. and lned < 3.: # Interpolate between grids 2 and 3
+     #   dn = (lned-2.)/(3.-2.)
+      #  print(dn)
+
+
+
+    '''
+                if not line.strip(): continue
+                else:
+                    sline = line.strip()
+                    char1 = sline[0]
+                    word1 = sline.split()[0]
+
+                    if not (char1.isdigit()):
+                        if (char1!= '-'):
+                            continue
+                        else:
+                            try:
+                                float(word1)
+                            except: continue
+                    
+                    data = np.array((line.split()))
+                    xid = float(data[1])
+                    co = float(data[2])
+                    imf_cut = float(data[3])
+                    '''
 
 
     lines = 'interpolations done'
@@ -387,6 +621,11 @@ def get_lines(infile, photmod='Gutkin16',verbose=False, Testing=False, Plotting=
     return lines
 
 
-if __name__== "__main__":
 
-    print(get_lines_Gutkin(verbose=True))
+
+
+#if __name__== "__main__":
+    #print(Path.home())
+    #print(get_lines_Gutkin(verbose=True))
+    #print(get_limits(propname='U',photmod='gutkin16',verbose=True))
+    #print(mod_lim)
