@@ -138,7 +138,7 @@ def locate_interval(val, edges):
     high = np.asarray(edges[1:])
 
     if (val >= high[-1] and val >= low[-1]):
-        ind = len(high) - 1
+        ind = len(high)
     elif (val<=low[0]):
         ind = 0
     else:
