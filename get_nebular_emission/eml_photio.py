@@ -21,10 +21,11 @@ with open(bpt_data,'w') as svfile:
 '''
 import h5py
 import numpy as np
-from get_nebular_emission.eml_io import get_nheader, homedir
+from get_nebular_emission.eml_io import get_nheader, homedir, locate_interval
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import check_file
 from pathlib import Path
+
 
 
 # DICCIONARIO DE MODELOS DE PHOTOIO: Nombre del modelo y nombre del fichero con los límites
@@ -331,12 +332,11 @@ def get_lines_Gutkin(verbose=True):
     logubins = [-4., -3.5, -3., -2.5, -2., -1.5, -1.]
 
     nemline = 18
+    #nemline_reduced = 4
     nzmet = 14
     nu = 7
     nzmet_reduced = 4
     zmets_reduced = np.array([0.0001, 0.002, 0.014, 0.030])
-
-
 
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline)) # From slower to faster
     emline_grid2 = np.zeros((nzmet,nu,nemline))
@@ -346,7 +346,6 @@ def get_lines_Gutkin(verbose=True):
     l = 0
     kred = 0
     nn = 0
-
 
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod='gutkin')
@@ -399,13 +398,13 @@ def get_lines_Gutkin(verbose=True):
                                 kred = 3
                         for j in range(nemline):
                             if nH == 10:
-                                emline_grid1[kred,l,j] = float(data[j])
+                                emline_grid1[kred,l,j] = float(data[j+5]) #Revisar
                             if nH == 100:
-                                emline_grid2[k,l,j] = float(data[j])
+                                emline_grid2[k,l,j] = float(data[j+5])
                             if nH == 1000:
-                                emline_grid3[k,l,j] = float(data[j])
+                                emline_grid3[k,l,j] = float(data[j+5])
                             if nH == 10000:
-                                emline_grid4[kred,l,j] = float(data[j])
+                                emline_grid4[kred,l,j] = float(data[j+5])
 
     # Líneas de 201 a 212 no entiendo
 
@@ -440,6 +439,7 @@ def get_lines_Gutkin(verbose=True):
         u1 = u1.tolist()
         lud.append(u1[0])
         lub.append((u1[1]))
+    ndat = len(lud)  # 203436
     lud = np.array(lud)
     lub = np.array(lub)
 
@@ -464,119 +464,277 @@ def get_lines_Gutkin(verbose=True):
     loh12d = np.array(loh12d)
     loh12b = np.array(loh12b)
 
+    # Close the output file
+    f.close()
+
     # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
 
     # DISK
+    emline_int1 = np.zeros((nemline,ndat))
+    emline_int2 = np.zeros((nemline, ndat))
+    emline_int3 = np.zeros((nemline, ndat))
+    emline_int4 = np.zeros((nemline, ndat))
+
+    nebline_disk = np.zeros((nemline,ndat))
 
     # Interpolate over disk ionisation parameter
-
-    '''
-    x = lud
-    xp = logubins
-    xp.sort()
-    fp = np.linspace(0, 1, len(xp))
-
-    du = np.interp(x, xp, fp)
-    '''
-
-    '''
-    for j1 in range(nu):
-        if j1 == 0: # Use the first value in grid
+    du = []
+    j = []
+    for logud in lud:
+        j1 = locate_interval(logud,logubins)
+        if j1 == 0:
             du.append(0.0)
-        elif j1 == nu-1: # Use the las value in grid
+            j.append(0)
+            #du = 0.0
+            j1 = 0
+        elif j1 == nu - 1:
             du.append(1.0)
+            j.append(nu-2)
+            #du = 1.0
+            j1 = nu - 2
         else:
-            val = (lud - logubins[j1])/(logubins[j1+1]-logubins[j1])
-            #print(val)
-            du.append(val)
-            # No lo veo claro.
-    '''
-
+            d = (logud - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
+            du.append(d)
+            j.append(j1)
+    #print(j, len(j))
 
     # Interpolate over disk gas metallicity loh12d
+    dz = []
+    i = []
+    for logzd in loh12d:
+        i1 = locate_interval(logzd,lzmets_reduced)
 
-    x = loh12d
-    xp = lzmets_reduced
-    xp.sort()
-    fp = np.linspace(0, 1, len(xp))
-    dz = np.interp(x, xp, fp)
-
-    y = len(du)
-
-    emline_int1 = np.zeros((nemline,y))
-    emline_int2 = np.zeros((nemline,y))
-    emline_int3 = np.zeros((nemline,y))
-    emline_int4 = np.zeros((nemline,y))
-
-
-    for k in range(nemline):
-        for j1 in range(nu-1):
-            for i1 in range(nzmet_reduced-1):
-                emline_int1[k] = (1.-dz)*(1.-du)*emline_grid1[i1,j1,k] + \
-                                dz*(1.-du)*emline_grid1[i1+1,j1,k] + \
-                                (1.-dz)*du*emline_grid1[i1,j1+1,k] + \
-                                dz*du*emline_grid1[i1+1,j1+1,k]
-
-                emline_int4[k] = (1. - dz) * (1. - du) * emline_grid4[i1, j1, k] + \
-                                 dz * (1. - du) * emline_grid4[i1 + 1, j1, k] + \
-                                 (1. - dz) * du * emline_grid4[i1, j1 + 1, k] + \
-                                 dz * du * emline_grid4[i1 + 1, j1 + 1, k]
-
-
-    # Full metallicity grid for emlines_grid2 nH=100 and emlines_grid3 nH=1000
-
-    x = loh12d
-    xp = lzmets
-    xp.sort()
-    fp = np.linspace(0, 1, len(xp))
-    dz = np.interp(x, xp, fp)
+        if i1==0:
+            dz.append(0.0)
+            #dz = 0.0
+            i1 = 0
+            i.append(0)
+        elif i1 == nzmet_reduced-1:
+            dz.append(1.0)
+            #dz = 1.0
+            i1 = nzmet_reduced-2
+            i.append(nzmet_reduced-2)
+        else:
+            d = (logzd - lzmets_reduced[i1])/(lzmets_reduced[i1+1]-lzmets_reduced[i1])
+            dz.append(d)
+            i.append(i1)
 
     for k in range(nemline):
-        for j1 in range(nu-1):
-            for i1 in range(nzmet-1):
-                emline_int2[k] = (1.-dz)*(1.-du)*emline_grid2[i1,j1,k] + \
-                                dz*(1.-du)*emline_grid2[i1+1,j1,k] + \
-                                (1.-dz)*du*emline_grid2[i1,j1+1,k] + \
-                                dz*du*emline_grid2[i1+1,j1+1,k]
-                emline_int3[k] = (1. - dz) * (1. - du) * emline_grid3[i1, j1, k] + \
-                                 dz * (1. - du) * emline_grid3[i1 + 1, j1, k] + \
-                                 (1. - dz) * du * emline_grid3[i1, j1 + 1, k] + \
-                                 dz * du * emline_grid3[i1 + 1, j1 + 1, k]
+        for ii in range(ndat):
+            #emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))
+            #print(emline_grid1[i[ii]][j[ii]][k])
+            emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid1[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid1[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid1[i[ii]+1][j[ii]+1][k]
+
+            emline_int4[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid4[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid4[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid4[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid4[i[ii]+1][j[ii]+1][k]
 
 
+    # full metallicity grid for emlines_grid2 ne=100 and emlines_grid3 ne=1000
+
+    dz = []
+    i = []
+    for logzd in loh12d:
+        i1 = locate_interval(logzd, lzmets)
+
+        if i1 == 0:
+            dz.append(0.0)
+            # dz = 0.0
+            i1 = 0
+            i.append(0)
+        elif i1 == nzmet - 1:
+            dz.append(1.0)
+            # dz = 1.0
+            i1 = nzmet - 2
+            i.append(nzmet - 2)
+        else:
+            d = (logzd - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
+            dz.append(d)
+            i.append(i1)
+
+    for k in range(nemline):
+        for ii in range(ndat):
+            emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid2[i[ii]+1][j[ii]+1][k]
+
+            emline_int3[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid3[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid3[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid3[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid3[i[ii]+1][j[ii]+1][k]
 
     # Interpolate over ne
-    # Use gas density in disk lned
-    nebline_disk = 0.0
-    #print(len(lned))
-    #if lned > 2. and lned < 3.: # Interpolate between grids 2 and 3
-     #   dn = (lned-2.)/(3.-2.)
-      #  print(dn)
+    # use gas density in disk logned
+    for n in range(ndat):
+        if (lned[n] > 2. and lned[n] <= 3.):
+            dn = (lned[n] -2.)/(3. - 2.)
+            for k in range(nemline):
+                nebline_disk[k][n] = (1.-dn)*emline_int2[k][n] + (dn)*emline_int3[k][n]
+
+        elif (lned[n] > 1. and lned[n] <= 2.):
+            dn = (lned[n] -1.)/(2. - 1.)
+            for k in range(nemline):
+                nebline_disk[k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
+
+        elif (lned[n] > 3. and lned[n]<=4.):
+            dn = (lneb[n] - 3.)/(4. - 3.)
+            for k in range(nemline):
+                nebline_disk[k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
+            print('hay mayor que 3')
+
+        elif (lned[n] <= 1.):
+            for k in range(nemline):
+                nebline_disk[k][n] = emline_int1[k][n]
+        elif (lned[n] > 4.):
+            for k in range(nemline):
+                nebline_disk[k][n] = emline_int4[k][n]
+        else:
+            print('log(ne)disk out of limits','log(ne)disk = {}'.format(lned[n]))
+
+    # repeat interpolation for bulge if there is an ongoing burst
+    # HERE: check if there is an ongoing bulge with the masses
+
+    #BURST
+    # Interpolate over bulge ionisation parameter
+    emline_int1 = np.zeros((nemline,ndat))
+    emline_int2 = np.zeros((nemline, ndat))
+    emline_int3 = np.zeros((nemline, ndat))
+    emline_int4 = np.zeros((nemline, ndat))
+
+    nebline_bulge = np.zeros((nemline,ndat))
+
+    # Interpolate over disk ionisation parameter
+    du = []
+    j = []
+    for logub in lub:
+        j1 = locate_interval(logub,logubins)
+        if j1 == 0:
+            du.append(0.0)
+            j.append(0)
+            #du = 0.0
+            j1 = 0
+        elif j1 == nu - 1:
+            du.append(1.0)
+            j.append(nu-2)
+            #du = 1.0
+            j1 = nu - 2
+        else:
+            d = (logub - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
+            du.append(d)
+            j.append(j1)
+    #print(j, len(j))
+
+    # Interpolate over disk gas metallicity loh12d
+    dz = []
+    i = []
+    for logzb in loh12b:
+        i1 = locate_interval(logzb,lzmets_reduced)
+
+        if i1==0:
+            dz.append(0.0)
+            #dz = 0.0
+            i1 = 0
+            i.append(0)
+        elif i1 == nzmet_reduced-1:
+            dz.append(1.0)
+            #dz = 1.0
+            i1 = nzmet_reduced-2
+            i.append(nzmet_reduced-2)
+        else:
+            d = (logzb - lzmets_reduced[i1])/(lzmets_reduced[i1+1]-lzmets_reduced[i1])
+            dz.append(d)
+            i.append(i1)
+
+    for k in range(nemline):
+        for ii in range(ndat):
+            #emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))
+            #print(emline_grid1[i[ii]][j[ii]][k])
+            emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid1[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid1[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid1[i[ii]+1][j[ii]+1][k]
+
+            emline_int4[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid4[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid4[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid4[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid4[i[ii]+1][j[ii]+1][k]
 
 
+    # full metallicity grid for emlines_grid2 ne=100 and emlines_grid3 ne=1000
 
-    '''
-                if not line.strip(): continue
-                else:
-                    sline = line.strip()
-                    char1 = sline[0]
-                    word1 = sline.split()[0]
+    dz = []
+    i = []
+    for logzb in loh12b:
+        i1 = locate_interval(logzb, lzmets)
 
-                    if not (char1.isdigit()):
-                        if (char1!= '-'):
-                            continue
-                        else:
-                            try:
-                                float(word1)
-                            except: continue
-                    
-                    data = np.array((line.split()))
-                    xid = float(data[1])
-                    co = float(data[2])
-                    imf_cut = float(data[3])
-                    '''
+        if i1 == 0:
+            dz.append(0.0)
+            # dz = 0.0
+            i1 = 0
+            i.append(0)
+        elif i1 == nzmet - 1:
+            dz.append(1.0)
+            # dz = 1.0
+            i1 = nzmet - 2
+            i.append(nzmet - 2)
+        else:
+            d = (logzb - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
+            dz.append(d)
+            i.append(i1)
 
+    for k in range(nemline):
+        for ii in range(ndat):
+            emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid2[i[ii]+1][j[ii]+1][k]
 
+            emline_int3[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid3[i[ii]][j[ii]][k]+\
+                                 dz[ii]*(1-du[ii])*emline_grid3[i[ii]+1][j[ii]][k]+\
+                                 (1.-dz[ii])*du[ii]*emline_grid3[i[ii]][j[ii]+1][k]+\
+                                 dz[ii]*du[ii]*emline_grid3[i[ii]+1][j[ii]+1][k]
+
+    # Interpolate over ne
+    # use gas density in disk logned
+    for n in range(ndat):
+        if (lneb[n] > 2. and lneb[n] <= 3.):
+            dn = (lneb[n] -2.)/(3. - 2.)
+            for k in range(nemline):
+                nebline_bulge[k][n] = (1.-dn)*emline_int2[k][n] + (dn)*emline_int3[k][n]
+
+        elif (lneb[n] > 1. and lneb[n] <= 2.):
+            dn = (lneb[n] - 1.)/(2. - 1.)
+            for k in range(nemline):
+                nebline_bulge[k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
+
+        elif (lneb[n] > 3. and lneb[n]<=4.):
+            dn = (lneb[n] - 3.)/(4. - 3.)
+            for k in range(nemline):
+                nebline_bulge[k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
+            print('hay mayor que 3')
+        elif (lneb[n] <= 1.): #Use grid 1
+            for k in range(nemline):
+                nebline_bulge[k][n] = emline_int1[k][n]
+        elif (lneb[n] > 4.):
+            for k in range(nemline): #Use grid 4
+                nebline_bulge[k][n] = emline_int4[k][n]
+            print('hay mayor que 4')
+        else:
+            print('log(ne)bulge out of limits','log(ne)bulge = {}'.format(lneb[n]))
+
+    f = h5py.File(file,'a')
+
+    hfdat = f['data']
+    hfdat.create_dataset('nebline_disk', data = nebline_disk)
+    hfdat['nebline_disk'].dims[0].label = 'disk lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+    hfdat.create_dataset('nebline_bulge', data = nebline_bulge)
+    hfdat['nebline_bulge'].dims[0].label = 'burst lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+    f.close()
     lines = 'interpolations done'
 
 
