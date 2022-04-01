@@ -746,18 +746,14 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
     return lines
 
 
-def get_lines(infile, photmod='Gutkin16',verbose=False, Testing=False, Plotting=False):
-    #(in_loh12, in_lu, in_lne, photmods='Gutkin16', verbose=False, Testing=False, Plotting=False):
+def get_lines(photmod='gutkin16',verbose=False, Testing=False, Plotting=False):
     '''
-    Given 12+log(O/H), logU and logne,
-    get the interpolations for the emission lines
+    Get the emission lines
 
     Parameters
     ----------
-    infile: string
-        file with the data
-    photmods : string
-      Model to go from U, Z and ne to emission lines luminosities.
+    photomod : string
+      Name of the considered photoionisation model
     verbose : boolean
       Yes = print out messages
     Plotting : boolean
@@ -770,11 +766,8 @@ def get_lines(infile, photmod='Gutkin16',verbose=False, Testing=False, Plotting=
       emission lines : floats
     '''
 
-    # Hacer un loop sobre las tres arrays y que te las limpie el código.
-    # loh12 = clean_photarrray(in_loh12=,photmod=,prop=loh12) Hacer para los tres
-
-    if (photmod == 'Gutkin16'):
-        lines = get_lines_Gutkin(infile, verbose=verbose)
+    if (photmod == 'gutkin16'):
+        lines = get_lines_Gutkin(Testing = Testing, Plotting=Plotting, verbose=verbose)
     else:
         print('STOP (eml_photio): Unrecognised model to get emission lines.')
         print('                Possible photmod= {}'.format(const.photmods))
@@ -783,12 +776,3 @@ def get_lines(infile, photmod='Gutkin16',verbose=False, Testing=False, Plotting=
 
     return lines
 
-
-
-
-
-#if __name__== "__main__":
-    #print(Path.home())
-    #print(get_lines_Gutkin(verbose=True))
-    #print(get_limits(propname='U',photmod='gutkin16',verbose=True))
-    #print(mod_lim)
