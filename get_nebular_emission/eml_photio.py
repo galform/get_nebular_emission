@@ -1,42 +1,14 @@
-'''
-# 4 arrays of random numbers: lines. File with 4 columns. Plot BPT to read and plot.
-import numpy as np
-import os
-from matplotlib import pyplot as plt
-from get_nebular_emission.eml_style import style1
-import get_nebular_emission.eml_const as const
-bpt_data = 'C:/Users/Olivia/PRUEBAS/bpt_data.dat' # r"example_data/bpt_data.dat"
-header1 = 'line1   line2   line3   line4'
-
-a = np.random.randint(1, 10, size=10)
-b = np.random.randint(1, 10, size=10)
-c = np.random.randint(1, 10, size=10)
-d = np.random.randint(1, 10, size=10)
-
-datatofile=np.column_stack((a, b, c, d))
-
-with open(bpt_data,'w') as svfile:
-    np.savetxt(svfile,datatofile,delimiter=' ',header=header1)
-    svfile.closed
-'''
 import h5py
 import numpy as np
 from get_nebular_emission.eml_io import get_nheader, homedir, locate_interval
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import check_file
-from pathlib import Path
 
-
-
-# DICCIONARIO DE MODELOS DE PHOTOIO: Nombre del modelo y nombre del fichero con los límites
-# Si lía mucho matriz de strings
 
 mod_lim = {'gutkin16': r"nebular_data/gutkin_tables/limits_gutkin.txt"}
-#mod_lim = {'gutkin16': 'C:/Users/Olivia/get_nebular_emission/nebular_data/gutkin_tables/limits_gutkin.txt'}
-# mod_lim = {'gutkin16': [r"nebular_data/gutkin_tables/limits_gutkin.txt", 18}
+
 # print(mod_lim.keys()) # To show the keys
 
-#infile = r"nebular_data/gutkin_tables/nebular_emission_Z" + zname + ".txt"
 
 def get_zfile(zmet_str, photmod='gutkin16'):
 
@@ -67,22 +39,20 @@ def get_zfile(zmet_str, photmod='gutkin16'):
 
     return zfile
 
-
 def get_limits(propname, photmod = 'gutkin16',verbose=True):
     '''
     Given a file with a structure: property + lower limit + upper limit,
     gets the limits of the parameters of the photoionization model.
 
-    In the file we must find the properties well specified.
+    In the file we must find the properties well specified i.e U, Z and nH.
     The header lines have to start with '#'
 
     Parameters
     -------
-    infile: string
-        input file
-
     propname : string
         name of the property that we want
+    photomod : string
+        Name of the considered photoionisation model
 
     Returns
     -------
@@ -104,19 +74,13 @@ def get_limits(propname, photmod = 'gutkin16',verbose=True):
     nH               1               4
 
 
-    >> get_limits(infile, propname = 'Z'):
+    >> get_limits(propname = 'Z', photmod = 'gutkin16'):
         0.0001 0.04
 
-    >> get_limits(infile, propname = 'nH'):
+    >> get_limits(propname = 'nH', photmod = 'gutkin16'):
         1  4
 
     '''
-
-    # HERE: Hacer otra función que lea los límites.
-    # Como una iteración porque hay tres propiedades n_lim !! VER SLACK propname bucle
-    # Si hay una n en la string se considera que son los límites de la n.
-    # En esa función va a tomar logaritmos así está todo preparado.
-    # Iteración sobre las tres propiedades de forma que solo tenga una cosa.
 
     try:
         infile = mod_lim[photmod]
@@ -144,50 +108,25 @@ def get_limits(propname, photmod = 'gutkin16',verbose=True):
         return lower_limit,upper_limit
 
 def clean_photarray(photmod='gutkin16', verbose=True):
-    #clean_photarray(infile, in_Z, in_U, in_ne, photmod = 'gutkin16',verbose=True)
-    #infile: siempre va a ser el que salga de eml_une, se podría poner el enlace y ya
-    # lo que pasa es que solo tendríamos un archivo. Se podría introducir en el diccionario y así tener varios guardados
-    # dependiendo del modelo. La idea además es que sea hdf5, siempre.
-    #
-    # in_Z, in_U, in_ne: Los nombres de las propiedades para buscarlas directamente en el archivo de límites. Siempre
-    # van a ser las mismas columnas en el infile. Quizá ponerlo en un array: [Z, U, ne] = ['Z', 'U', 'nH']
-
-    # No estoy teniendo en cuenta disco y bulbo: ¿Cómo hacer?
-    # ¿Guardo en arrays loh12 = [disk, bulge], lu = [disk, bulge], lne = [disk, bulge]?
 
     '''
-    Given a file with a structure: property + lower limit + upper limit,
-    a file with the data, the name of the property that we want and its column in the file well specify,
-    gets the array of the data property with the necessary changes due to the limits.
-
+    Given the model, take the values outside the limits and give them the apropriate
+    value inside the limits depending on the model.
 
     Parameters
     ----------
-    limfile: string
-        file with the limits
-    infile: string
-        file with the data
-    col_prop: float
-        column of the property in the infile
-    propname: string
-        name of the property
-    photmod:  string
-        Model to get the luminosity lines for the interpolations
+    photomod : string
+        Name of the considered photoionisation model
+
     verbose : boolean
         Yes = print out messages
 
-
     Returns
     -------
-    prop : array
-        array of the property choose with all the data in the limits.
+    lu,lne,loh12 : arrays
+        array of the properties with all the data in the limits.
+        Two components [disk, bulge]
     '''
-
-    # Llama a la función que te dice los limites. Hacer otra función que limpie los límites.
-    # Aqui poner un if que si el modelo es tal que haga tal cambio de unidades.
-    # Para añadir un nuevo modelo, clean_photarray necesitará añadir cosas en el if respecto al cambio de unidades.
-    # Aquí da array limpios, array 5 => array 5, con los elementos en los límites.
-
 
 
     # Read the data file:
@@ -235,15 +174,6 @@ def clean_photarray(photmod='gutkin16', verbose=True):
 
     lowerl, upperl = get_limits(propname='U', photmod=photmod)
 
-    '''
-    for ii, u in enumerate(lu):
-        for iv in range(len(lu[ii])):
-            ind = np.where(lu[ii,iv]>upperl)
-            lu[ii, ind] = upperl
-            ind = np.where(lu[ii,iv]<lowerl)
-            lu[ii,ind] = lowerl
-    print(lu)
-    '''
     ind = np.where(lud > upperl)
     lud[ind] = upperl
     ind = np.where(lud < lowerl)
@@ -283,47 +213,25 @@ def clean_photarray(photmod='gutkin16', verbose=True):
     loh12 = np.stack((loh12d, loh12b))
 
     return lu, lne, loh12
-'''
-    else:
-        # Text file
-        ih = get_nheader(infile)
-        if ('.cvs' in infile):
-            deli = ','
-        else:
-            deli = None
-
-        
-        prop = np.loadtxt(infile, delimiter=deli, skiprows=ih,usecols = col_prop, unpack=True)
-
-    # Change of units
-    #if photmod == 'Gutkin16':
-     #   prop = np.log10(prop)  # Here: it works with nH but no with U, U is in log.
-    # It must be consistent the limits.txt and the data.
-'''
-
-
 
 def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
     '''
-    Given a file with the limits of the Gutkin model and a file with data,
-    get 12+log(O/H), logU and logne to
-    get the interpolations for the emission lines,
+    Get the interpolations for the emission lines,
     using the tables
     from Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)
 
-
     Parameters
     ----------
-    infile: string
-        file with the data
-    photmods : string
-      Model to go from U, Z and ne to emission lines luminosities.
+    Plotting : boolean
+      If True run verification plots with all data.
+    Testing : boolean
+      Yes = to only run over few entries for testing purposes
     verbose : boolean
       Yes = print out messages
 
     Returns
     -------
-    emission lines : floats
+    emission lines : hdf5 file
     '''
     zmet_str =['0001','0002','0005','001','002','004','006','008','010','014','017','020','030','040']
     zmets = np.full(len(zmet_str),const.notnum)
@@ -332,7 +240,7 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
     logubins = [-4., -3.5, -3., -2.5, -2., -1.5, -1.]
 
     nemline = 18
-    #nemline_reduced = 4
+
     nzmet = 14
     nu = 7
     nzmet_reduced = 4
@@ -366,7 +274,6 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
                 nH = float(data[2])
                 co = float(data[3])
                 imf_cut = float(data[4])
-
 
                 if xid==0.3 and co==1.and imf_cut==100:
                     if lu == -4.:
@@ -406,7 +313,7 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
                             if nH == 10000:
                                 emline_grid4[kred,l,j] = float(data[j+5])
         ff.close()
-    # Líneas de 201 a 212 no entiendo:
+    # From Carlton's code, I do not understand from line 201 to line 212:
     '''
     for kred in range(nzmet_reduced):
         for l in range(nu):
@@ -427,6 +334,7 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
             emline_grid3(k,l,5)
             emline_grid3(k,l,6)
     '''
+
     # log metallicity bins ready for interpolation:
 
     lzmets_reduced = np.full(len(zmets_reduced), const.notnum)
@@ -500,7 +408,6 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
 
     # Close the output file
     f.close()
-
 
 
     # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
@@ -814,16 +721,6 @@ def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
         #print(list(hfdat.keys()))
         f.close()
         print('interpolations test file done')
-        '''
-        f = h5py.File(file, 'r')
-        data = f['data']
-        lne = data['lned'][:]
-        lu = data['lud'][:]
-        loh12d = data['loh12d'][:]
-        nebline_disk = data['nebline_disk'][:]
-        #print(lne, lu, loh12d, nebline_disk)
-        f.close()
-        '''
 
 
     else:

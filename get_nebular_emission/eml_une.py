@@ -60,6 +60,10 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
       True = Do the change from Lyman Continuum photons to instantaneus SFR
     verbose : boolean
       Yes = print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
+    Testing : boolean
+      Yes = to only run over few entries for testing purposes
 
     Returns
     -------
