@@ -2,11 +2,12 @@ from get_nebular_emission.eml_io import get_data
 from get_nebular_emission.eml_io import get_reducedfile
 from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
-import get_nebular_emission.eml_plots as get_plot
+from get_nebular_emission.eml_photio import get_lines
+#import get_nebular_emission.eml_testplots as get_testplot
 
-def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
+def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 542.16**3.,
         unemod='kashino20',photmod='gutkin16',
-        LC2sfr=False,
+        LC2sfr=False, mtot2mdisk = True,
         verbose=False, Plotting=False, Testing=False):
     '''
     Calculate emission lines given the properties of model galaxies
@@ -31,6 +32,8 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
       Photoionisation model to be used for look up tables.
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
+    mtot2mdisk : boolean
+      Yes = transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
       Yes = print out messages
     Plotting : boolean
@@ -44,24 +47,17 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 500.**3.,
     '''
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0, LC2sfr=LC2sfr,
+    lms, lssfr, loh12 = get_data(infile, m_sfr_z, h0=h0, LC2sfr=LC2sfr, mtot2mdisk=mtot2mdisk,
                                  verbose=verbose, Plotting=Plotting, Testing=Testing)
 
-    #print(lms.min(), lms.max())
-
-
     # From the galaxy properties obtain the
-    # ionizing parameter, U, and electron density, ne
-    u, ne = get_une(lms, lssfr, loh12,
-                    unemod=unemod, verbose=verbose)
+    # ionizing parameter, log10(U), and electron density, log10(ne)
+    lu, lne = get_une(lms, lssfr, loh12,
+                    unemod=unemod, LC2sfr=LC2sfr, verbose=verbose,
+                    Plotting=Plotting, Testing=Testing)
+
 
     # From U and ne, obtain the emission lines from HII regions
 
-    if Plotting:
-        get_plot.get_plots(lms, lssfr, m_sfr_z, h0=h0, volume=volume, verbose=verbose, Plotting=Plotting)
-        #print(lms,lssfr)
-        #plt.show(get_plot.get_plots(lms, lssfr, verbose=verbose))
-    else:
-        print('This is a test that only run over a few entries')
 
-    
+    lines = get_lines(photmod=photmod,verbose=verbose,Testing=Testing,Plotting=Plotting)
