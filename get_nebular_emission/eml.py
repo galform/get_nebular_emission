@@ -2,6 +2,7 @@ from get_nebular_emission.eml_io import get_data
 from get_nebular_emission.eml_io import get_reducedfile
 from get_nebular_emission.eml_une import get_une
 import get_nebular_emission.eml_const as const
+from get_nebular_emission.eml_photio import get_lines
 #import get_nebular_emission.eml_testplots as get_testplot
 
 def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 542.16**3.,
@@ -58,7 +59,5 @@ def eml(infile, m_sfr_z=[0,1,2], h0=None, volume = 542.16**3.,
 
     # From U and ne, obtain the emission lines from HII regions
 
-    # HERE poner bonito.
-    #lines = get_lines(loh12, lu, lne,
-                    #photmod=photmod, verbose=verbose,
-                    #Plotting=Plotting, Testing=Testing)
+
+    lines = get_lines(photmod=photmod,verbose=verbose,Testing=Testing,Plotting=Plotting)
