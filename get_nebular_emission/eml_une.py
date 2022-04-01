@@ -56,6 +56,8 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
       12+log(O/H)
     unemod : string
       Model to go from galaxy properties to U and ne
+    LC2sfr : boolean
+      True = Do the change from Lyman Continuum photons to instantaneus SFR
     verbose : boolean
       Yes = print out messages
 
