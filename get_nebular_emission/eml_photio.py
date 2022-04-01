@@ -303,7 +303,7 @@ def clean_photarray(photmod='gutkin16', verbose=True):
 
 
 
-def get_lines_Gutkin(verbose=True):
+def get_lines_Gutkin(Testing=False, Plotting=False,verbose=True):
     '''
     Given a file with the limits of the Gutkin model and a file with data,
     get 12+log(O/H), logU and logne to
@@ -398,16 +398,35 @@ def get_lines_Gutkin(verbose=True):
                                 kred = 3
                         for j in range(nemline):
                             if nH == 10:
-                                emline_grid1[kred,l,j] = float(data[j+5]) #Revisar
+                                emline_grid1[kred,l,j] = float(data[j+5])
                             if nH == 100:
                                 emline_grid2[k,l,j] = float(data[j+5])
                             if nH == 1000:
                                 emline_grid3[k,l,j] = float(data[j+5])
                             if nH == 10000:
                                 emline_grid4[kred,l,j] = float(data[j+5])
-
-    # Líneas de 201 a 212 no entiendo
-
+        ff.close()
+    # Líneas de 201 a 212 no entiendo:
+    '''
+    for kred in range(nzmet_reduced):
+        for l in range(nu):
+            emline_grid1(kred,l,1)
+            emline_grid1(kred,l,3)
+            emline_grid1(kred,l,5)
+            emline_grid1(kred,l,6)
+    
+    for k in range(nzmet):
+        for l in range(nu):
+            emline_grid2(k,l,1)
+            emline_grid2(k,l,3)
+            emline_grid2(k,l,5)
+            emline_grid2(k,l,6)
+        
+            emline_grid3(k,l,1)
+            emline_grid3(k,l,3)
+            emline_grid3(k,l,5)
+            emline_grid3(k,l,6)
+    '''
     # log metallicity bins ready for interpolation:
 
     lzmets_reduced = np.full(len(zmets_reduced), const.notnum)
@@ -421,44 +440,59 @@ def get_lines_Gutkin(verbose=True):
     if (np.shape(ind)[1] > 0):
         lzmets[ind] = np.log10(zmets[ind])
 
-    #print(lzmets,lzmets_reduced)
 
     # now read GAlFORM output
-    file = r"output_data/output_kashino20.hdf5"
-    check_file(file,verbose=True)
+    if Testing and Plotting:
+        file = r"output_data/output_kashino20_test.hdf5"
+    else:
+        file = r"output_data/output_kashino20.hdf5"
+
+    check_file(file, verbose=True)
+
 
     f = h5py.File(file, 'r')
     header = f['header']
     data = f['data']
 
-    lu = data['lu'][:]
+    if Testing and Plotting:
+        lne = [[2,2],[2,2]]
+        #lne = data['lne'][2317:3544]
+
+        #lu = data['lu'][2317:3544]
+        lu = [[-3.2,-3.2],[0.,0.]]
+
+        #loh12 = data['loh12'][2317:3544] - const.ohsun
+        loh12 = [[np.log10(0.0005),np.log10(0.0005)],[np.log10(0.00001),np.log10(0.00001)]]
+
+    else:
+        lu = data['lu'][:]
+        lne = data['lne'][:]
+        loh12 = data['loh12'][:]
+
     lud = []; lub = []
 
     for ii, u in enumerate(lu):
         u1 = lu[ii]
-        u1 = u1.tolist()
+        #u1 = u1.tolist()
         lud.append(u1[0])
         lub.append((u1[1]))
     ndat = len(lud)  # 203436
     lud = np.array(lud)
     lub = np.array(lub)
 
-    lne = data['lne'][:]
     lned = []; lneb = []
     for ii, ne in enumerate(lne):
         ne1 = lne[ii]
-        ne1 = ne1.tolist()
+        #ne1 = ne1.tolist()
         lned.append(ne1[0])
         lneb.append((ne1[1]))
     lned = np.array(lned)
     lneb = np.array(lneb)
 
-
-    loh12 = data['loh12'][:] - const.ohsun
     loh12d = []; loh12b = []
     for ii, oh12 in enumerate(loh12):
         oh121 = loh12[ii]
-        oh121 = oh121.tolist()
+        #oh121 = oh121.tolist()
         loh12d.append(oh121[0])
         loh12b.append((oh121[1]))
     loh12d = np.array(loh12d)
@@ -466,6 +500,8 @@ def get_lines_Gutkin(verbose=True):
 
     # Close the output file
     f.close()
+
+
 
     # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
 
@@ -496,7 +532,6 @@ def get_lines_Gutkin(verbose=True):
             d = (logud - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
             du.append(d)
             j.append(j1)
-    #print(j, len(j))
 
     # Interpolate over disk gas metallicity loh12d
     dz = []
@@ -519,6 +554,7 @@ def get_lines_Gutkin(verbose=True):
             dz.append(d)
             i.append(i1)
 
+
     for k in range(nemline):
         for ii in range(ndat):
             #emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))
@@ -538,9 +574,9 @@ def get_lines_Gutkin(verbose=True):
 
     dz = []
     i = []
+
     for logzd in loh12d:
         i1 = locate_interval(logzd, lzmets)
-
         if i1 == 0:
             dz.append(0.0)
             # dz = 0.0
@@ -555,6 +591,7 @@ def get_lines_Gutkin(verbose=True):
             d = (logzd - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
             dz.append(d)
             i.append(i1)
+
 
     for k in range(nemline):
         for ii in range(ndat):
@@ -638,13 +675,13 @@ def get_lines_Gutkin(verbose=True):
         if i1==0:
             dz.append(0.0)
             #dz = 0.0
-            i1 = 0
             i.append(0)
+            i1 = 0
         elif i1 == nzmet_reduced-1:
             dz.append(1.0)
             #dz = 1.0
-            i1 = nzmet_reduced-2
             i.append(nzmet_reduced-2)
+            i1 = nzmet_reduced - 2
         else:
             d = (logzb - lzmets_reduced[i1])/(lzmets_reduced[i1+1]-lzmets_reduced[i1])
             dz.append(d)
@@ -675,13 +712,13 @@ def get_lines_Gutkin(verbose=True):
         if i1 == 0:
             dz.append(0.0)
             # dz = 0.0
-            i1 = 0
             i.append(0)
+            i1 = 0
         elif i1 == nzmet - 1:
             dz.append(1.0)
             # dz = 1.0
-            i1 = nzmet - 2
             i.append(nzmet - 2)
+            i1 = nzmet - 2
         else:
             d = (logzb - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
             dz.append(d)
@@ -727,14 +764,85 @@ def get_lines_Gutkin(verbose=True):
         else:
             print('log(ne)bulge out of limits','log(ne)bulge = {}'.format(lneb[n]))
 
-    f = h5py.File(file,'a')
 
-    hfdat = f['data']
-    hfdat.create_dataset('nebline_disk', data = nebline_disk)
-    hfdat['nebline_disk'].dims[0].label = 'disk lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
-    hfdat.create_dataset('nebline_bulge', data = nebline_bulge)
-    hfdat['nebline_bulge'].dims[0].label = 'burst lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
-    f.close()
+    if Testing and Plotting:
+        f = h5py.File(file, 'a')
+        hfdat = f['data']
+
+        if 'lud' in list(hfdat.keys()):
+            del hfdat['lud']
+        hfdat.create_dataset('lud', data=lud)
+        hfdat['lud'].dims[0].label = 'log10(U) (dimensionless) [disk]'
+
+        if 'lub' in list(hfdat.keys()):
+            del hfdat['lub']
+        hfdat.create_dataset('lub', data=lub)
+        hfdat['lub'].dims[0].label = 'log10(U) (dimensionless) [bulge]'
+
+        if 'lned' in list(hfdat.keys()):
+            del hfdat['lned']
+        hfdat.create_dataset('lned', data=lned)
+        hfdat['lned'].dims[0].label = 'log10(nH) (cm**-3) [disk]'
+
+        if 'lneb' in list(hfdat.keys()):
+            del hfdat['lneb']
+        hfdat.create_dataset('lneb', data=lneb)
+        hfdat['lneb'].dims[0].label = 'log10(nH) (cm**-3) [bulge]'
+
+
+        if 'loh12d' in list(hfdat.keys()):
+            del hfdat['loh12d']
+        hfdat.create_dataset('loh12d', data=loh12d)
+        hfdat['loh12d'].dims[0].label = 'metallicity 12+log(O/H) [disk]'
+
+        if 'loh12b' in list(hfdat.keys()):
+            del hfdat['loh12b']
+        hfdat.create_dataset('loh12b', data=loh12b)
+        hfdat['loh12b'].dims[0].label = 'metallicity 12+log(O/H) [bulge]'
+
+        if 'nebline_disk' in list(hfdat.keys()):
+            del hfdat['nebline_disk']
+            #print(list(hfdat.keys()))
+        hfdat.create_dataset('nebline_disk', data=nebline_disk)
+        hfdat['nebline_disk'].dims[0].label = 'disk lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+
+        if 'nebline_bulge' in list(hfdat.keys()):
+            del hfdat['nebline_bulge']
+            #print(list(hfdat.keys()))
+        hfdat.create_dataset('nebline_bulge', data=nebline_bulge)
+        hfdat['nebline_bulge'].dims[0].label = 'burst lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+        #print(list(hfdat.keys()))
+        f.close()
+        print('interpolations test file done')
+        '''
+        f = h5py.File(file, 'r')
+        data = f['data']
+        lne = data['lned'][:]
+        lu = data['lud'][:]
+        loh12d = data['loh12d'][:]
+        nebline_disk = data['nebline_disk'][:]
+        #print(lne, lu, loh12d, nebline_disk)
+        f.close()
+        '''
+
+
+    else:
+        f = h5py.File(file,'a')
+
+        hfdat = f['data']
+        if 'nebline_disk' in list(hfdat.keys()):
+            del hfdat['nebline_disk']
+            print(list(hfdat.keys()))
+        hfdat.create_dataset('nebline_disk', data = nebline_disk)
+        hfdat['nebline_disk'].dims[0].label = 'disk lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+
+        if 'nebline_bulge' in list(hfdat.keys()):
+            del hfdat['nebline_bulge']
+            print(list(hfdat.keys()))
+        hfdat.create_dataset('nebline_bulge', data = nebline_bulge)
+        hfdat['nebline_bulge'].dims[0].label = 'burst lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+        f.close()
+
     lines = 'interpolations done'
 
 
