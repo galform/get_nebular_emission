@@ -15,7 +15,7 @@ Get nebular emission
 **get_nebular_emission** is a Python package that given the metallicity of cold gas, the stellar mass and either the specific star formation or the number of ionizing photons, calculates the intensity of nebular emission lines from star forming HII regions.
 
 
-The code will read galaxy properties from an input text file with values separated by spaces. This can have a header, as long as the header lines start with characters (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).
+The code will read galaxy properties from an input text file with values separated by spaces. This can have a header, as long as the header lines start with characters or signs well specify (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).
 
 If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).
 
@@ -23,7 +23,7 @@ If a h0 value is specified, then the units will be assumed to be: stellar mass (
 Example
 -------
 
-The **example.py** runs over the given example data, producing a new file and a plot that compares the original and the prepared data. To run this
+The **example.py** and **example2.py** runs over the given example data, producing a new file and a plot that compares the original and the prepared data. To run this
 example, simply type: :code:`python example.py`.
 
 Tests
@@ -35,9 +35,9 @@ The test can be run using unittest:
 Requirements and Installation
 -----------------------------
 
-This code has been developed in Python 3.7.1 and it is compatible with Python above 3.5 versions. The code has been tested to run in Linux operating systems. 
+This code has been developed in Python 3.7.1 and it is compatible with Python above 3.5 versions. The code has been tested to run in Linux and Windows operating systems. 
 
-This code uses numpy as specified in docs/requirements.txt. The ploting routine from the *example.py* also requires the use of matplotlib.
+This code uses numpy as specified in docs/requirements.txt. The ploting routine from the *example.py* also requires the use of matplotlib. h5py is necessary to run over hdf5 files, from eml_photio it is mandatory.
 
 The code can be run directly from a cloned GitHub `repository`_ and then makeing a local installation from the main directory (where you can see `setup.py`:
 :code:`python3 setup.py install`.
@@ -73,13 +73,13 @@ ISSUES
 ------
 **eml_io**
 
-· Set the program to deal with hsf5 files.
+· Set the program to deal with hdf5 files.
 
 · Allow for (12 + log(O/H)) direct input.
 
 · Search a more efficient way to do the temporary file and allow to take more or less components.
 
-· Search a more efficient way to do the reduced_file, maybe matrix form. It is necessary the column stack for the header, maybe another function more efficient. There is a last row in the file to reduce that is not a list of floats, it is a sentence, so the code gives an error, we must think a way to do not take the last row if it is not make of floats.  
+· Search a more efficient way to do the reduced_file, maybe matrix form. It is necessary the column stack for the header, maybe another function more efficient. If there is a last row in the file to reduce, that is not a list of floats but a sentence, the code gives an error, we must think a way to do not take the last row if it is not make of floats.  
 
 · Explore star models for differents IMF for the conversion from the Lyman Continuum photons to the instantaneous SFR. Investigate the single stellar populations (SSP).
 
@@ -91,13 +91,20 @@ ISSUES
 
 · Allow more models to be chosen.
 
-· LC2sfr in the description.
 
 **eml_photio**
 
+· Add more things to the dicctionary to simplify the code. For example the temporary files from eml_une, we can distinguish them depending on the model. Useful in clean_photarray.
+
+· In get_limits allow the change of units depending of the model in needed.
+
+· Clean photarray is not too useful yet, the interpolations can be more efficient.
+
 · Improve the way to get the limits and to put other limits depending on the model.
 
-· Implement the interpolations.
+· In get_lines_Gutkin maybe introduce more variables in the description to give more liberty with the variables.
+
+· In get_lines_Gutkin allow to check if there is an ongoing bulge with the masses to do the bulge interpolations or not.
 
 · Allow the code to choose a photo-ionisation model and to deal with the interpolations.
 
@@ -111,8 +118,6 @@ ISSUES
 
 **eml_plots**
 
-· Change the paths to r"... (generic). (Search <<Here>> in the code to see where are.)
-
 · In test_sfrf set the program to allow several observation data and automate for every redshift, allow the change of units depending of the observational file choosen.
 
 · In test_sfrf there is a problem with the contours, the plot is not well in my opinion. Set the program to allow automate the levels of the contours. One way to do it: In SFRF search the bin with at least 100 galaxies (before divide the data by the volume) to be the minimum level, get the maximum value of phi to be the maximum level and take another one between these two. 
@@ -120,8 +125,6 @@ ISSUES
 · In test_medians the plots do not work, the legend is not show as wanted.
 
 · Add test_zm. Similar to test_sfrf but with the metallicity.
-
-· In plot_bpt, search a more efficent form to read the file.
 
 · Add the command to delete the temporary files after having done the plots.
 
