@@ -2,20 +2,16 @@
 
 .. inclusion-marker-do-not-remove
 
-TO DO
------
-[] Calculate Bulge and Disk separately and then add the fluxes from the 2 contributions.
-[] Adding AGN lines. From Cedric: For Galform, we should try to do this in a way that the spectrum and luminosity of the ionizing radiation assumed in the emission lines calculation is consistent with the AGN SED assumed in Galform. Currently we use an AGN template spectrum from Marconi, for which the shape depends on the AGN bolometric luminosity. Andrew updated the Galform code so that it calculated observer-frame magnitudes for any bands of interest, along with observer-frame luminosities in hard and soft X-ray bands, for outputs at snapshots, based on the Marconi template (which depends on bolometric luminosity). We should check that this is properly included in the main version of Galform on the archive, and that it works correctly. Andrew was still working on calculating AGN luminosities correctly on lightcones (the issue being that AGN luminosities do not vary smoothly between snapshots) when he left, so I don't think there is code for that yet.
-
-
+This code is in beta. Please report issues and be patient with the incomplete documentation.
    
 Get nebular emission
 ======================
 
 **get_nebular_emission** is a Python package that given the metallicity of cold gas, the stellar mass and either the specific star formation or the number of ionizing photons, calculates the intensity of nebular emission lines from star forming HII regions.
 
+The current version of the code is based on the Fortran90 one used for the paper Baugh, Lacey, Gonzalez-Perez and Manzoni 2022 (https://arxiv.org/abs/2112.00129).
 
-The code will read galaxy properties from an input text file with values separated by spaces. This can have a header, as long as the header lines start with characters or signs well specify (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).
+The code reads galaxy properties from an input text file with values separated by spaces. This can have a header, as long as the header lines start with characters or signs well specify (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).
 
 If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).
 
