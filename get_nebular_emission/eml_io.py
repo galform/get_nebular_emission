@@ -53,11 +53,15 @@ def get_nheader(infile,firstchar=None): # firstchar=None default
     Given a file with a structure: header+data, 
     counts the number of header lines
 
-    Args:
-    infile: string, input file
+    Parameters
+    -------
+    infile : string
+        Input file
 
-    Returns:
-    ih: integer, number of lines with the header text
+    Returns
+    -------
+    ih : integer
+        Number of lines with the header text
     '''
 
 
@@ -97,13 +101,14 @@ def get_ncomponents(cols):
     '''
     Get the number of components to estimate the emission lines from
 
-    Parameters:
+    Parameters
     ----------
     cols : list
       List of columns with M*, SFR, Z, per components
 
-    Return:
-    ncomp : int
+    Returns
+    -------
+    ncomp : integer
       Number of components (for example 2 for bulge and disk)
     '''
     ncomp = 1
@@ -123,14 +128,17 @@ def locate_interval(val, edges):
     '''
     Get the index, i, of the interval with edges.
 
-    Parameters:
+    Parameters
+    ----------
     val : int or float
         Value
     edges : array of int or floats
         Array of the edges of the intervals
-    Returns:
+        
+    Returns
+    -------
     ind : integer
-       Index of the interval. If outside: index of the limits
+        Index of the interval. If outside: index of the limits
     '''
 
     ind = const.notnum
@@ -417,7 +425,7 @@ def get_reducedfile(infile, outfile, indcol, verbose=False):
     Returns
     -------
     outfile : string
-    Path to the reduced output file.
+      Path to the reduced output file.
     '''
 
     check_file(infile,verbose=verbose)

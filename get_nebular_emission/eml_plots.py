@@ -82,11 +82,10 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=None, volume
        verbose : boolean
          Yes = print out messages
 
-       Returns
+       Notes
        -------
-       plot(log10(SFR),log10(Mstar)), plot GSMF and plot SFRF,
-       all three in one grid.
-       Save it in the outplot path.
+       It makes plot(log10(SFR),log10(Mstar)), plot GSMF and plot SFRF,
+       all three in one grid and saves it in the outplot path.
     '''
 
 
@@ -397,18 +396,12 @@ def test_medians(outplot, verbose=False):
     '''
 
     # Prepare the plots
-
+    
     SFR = ['avSFR', 'LC']
     U_ne = ['u', 'ne']
     col_une = [0,2] # [U, ne]
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
-    color = []
-
-    # Read the data
-    tempfile_io = r"example_data/tmp_LC.dat"
-
-    ih = get_nheader(tempfile_io)
-    lms = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
+    #color = []
 
     # Prepare the bins
     mmin = 8.5
@@ -421,11 +414,19 @@ def test_medians(outplot, verbose=False):
     for iu, une in enumerate(U_ne):
 
         # Prepare the figures
+        plt.figure()
         plotf = outplot + '/test_medians_'+ une+'.pdf'
-        col = cm(iu)
-        color.append(col)  # col change for each iteration
 
         for ii,sfr in enumerate(SFR):
+            
+            # Read the data
+            tempfile_io = r"example_data/tmp_" + sfr + ".dat"
+
+            ih = get_nheader(tempfile_io)
+            lms = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True)
+            
+            col = cm(ii)
+            #color.append(col)  # col change for each iteration
             tempfile_une = r"example_data/tmp_une_" + sfr + ".dat"
             # ih = get_nheader(tempfile_une) : Not necessary, it is the same that tempfile_io always.
             data = np.loadtxt(tempfile_une,skiprows=ih,usecols=col_une,unpack=True) # data[0] = lu, data[1] = lne
@@ -435,16 +436,20 @@ def test_medians(outplot, verbose=False):
 
 
             # QUARTILES:
-            up_qu = perc_2arrays(mbins, lms, data[iu], 0.75)
+            up_qu = perc_2arrays(mbins, lms, data[iu], 0.55)
             #qup[ii] = up_qu
-            low_qu = perc_2arrays(mbins, lms, data[iu], 0.25)
+            low_qu = perc_2arrays(mbins, lms, data[iu], 0.45)
             #qlow[ii] = low_qu
+            
+            qu = np.append([low_qu],[up_qu],axis=0)
 
             ind = np.where(median>const.notnum)
 
             plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
-            plt.legend()
+            #plt.errorbar(mhist[ind],median[ind],yerr=qu,marker='o',elinewidth=0.5, color=col, label='Calculated from the ' + SFR[ii] + '')
+        plt.legend()
         plt.savefig(plotf)
+        plt.close()
 
 
 
@@ -471,9 +476,9 @@ def test_bpt(outplot, photmod='gutkin16',verbose=False):
         print('                  Possible photmod = {}'.format(const.photmods))
         exit()
 
-    Z = ['0001', '0002', '0005', '001', '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
+    Z = ['0001', '0002', '0005', '001'] #, '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
 
-    zz = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
+    zz = [0.0001, 0.0002, 0.0005, 0.001] #, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
 
     uu = [-1., -1.5, -2., -2.5, -3., -3.5, -4.]
 
@@ -515,7 +520,7 @@ def test_bpt(outplot, photmod='gutkin16',verbose=False):
                 outf.closed
 
     cols = []
-    for iz, lz in enumerate(zz):
+    for iz, lz in enumerate(uu):
         col = cm(iz)
         cols.append(col)
 
@@ -529,7 +534,7 @@ def test_bpt(outplot, photmod='gutkin16',verbose=False):
         x = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
         y = np.loadtxt(infile, skiprows=ih, usecols=(3), unpack=True)
 
-        os.remove(infile)
+        #os.remove(infile)
 
         file = r"output_data/output_kashino20_test.hdf5"
         check_file(file, verbose=True)
@@ -573,6 +578,7 @@ def test_bpt(outplot, photmod='gutkin16',verbose=False):
 
         # DIFERENTS COLORS FOR U:
 
+        plt.figure()
         for iu, lu in enumerate(uu):
             ind = np.where(u == uu[iu])
             plt.plot(x[ind], y[ind], marker='.', linewidth=0, color=cols[iu], label='U = ' + str(lu) + '')
@@ -590,15 +596,17 @@ def test_bpt(outplot, photmod='gutkin16',verbose=False):
         plt.legend()
 
         plt.savefig(plotnom)
+        plt.close()
         #plt.show()
 
         # DIFFERENTS COLORS FOR Z:
 
+        plt.figure()
         for iz, lz in enumerate(zz):
             ind = np.where(z == zz[iz])
             plt.plot(x[ind], y[ind], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
 
-        labelsZ = ['Z = {}'.format(10 ** (loh12_disk[0])), 'Z = {}'.format(10 ** (loh12_disk[1]))]
+        labelsZ = ['Z = {:.1E}'.format(10 ** (loh12_disk[0])), 'Z = {:.1E}'.format(10 ** (loh12_disk[1]))]
         plt.plot(my_x, my_y, marker='o', linewidth=0, color='black')
 
         plt.xlabel('log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)')
@@ -609,5 +617,8 @@ def test_bpt(outplot, photmod='gutkin16',verbose=False):
         plt.legend()
 
         plt.savefig(plotnom)
+        plt.close()
+        
+        f.close()
         #plt.show()
         #os.remove(file)
