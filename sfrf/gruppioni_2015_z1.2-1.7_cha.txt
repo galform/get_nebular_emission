@@ -1,0 +1,7 @@
+#Gruppioni+2015: https://arxiv.org/pdf/1506.01518.pdf
+#The paper assumed h=0.71, Chabrier IMF
+#1.2<z<1.7
+#log(SFR/(Msun/yr))_low  log(SFR/(Msun/yr))_high  log(Phi/Mpc^3 dex^-1) error (Gruppioni+ 2015)
+ 1.5 2.0 -2.76 0.13
+ 2.0 2.5 -3.90 0.04
+ 2.5 3.0 -5.23 0.08
