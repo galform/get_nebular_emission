@@ -1,6 +1,8 @@
 """
 .. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
+import time
+import h5py
 import sys
 import os
 import numpy as np
@@ -12,7 +14,12 @@ homedir = Path.home()
 
 def stop_if_no_file(infile):
     '''
-    Stop if the file does not exist
+    It stops the program if a file does not exists
+
+    Parameters
+    -------
+    infile : string
+        Input file
     '''
     if (not os.path.isfile(infile)):
         print('STOP: no input file {}'.format(infile)) 
@@ -22,8 +29,21 @@ def stop_if_no_file(infile):
 
 def check_file(infile,verbose=False):
     '''
-    Return True if the file exists
+    It checks if a file exists
+
+    Parameters
+    -------
+    infile : string
+        Input file
+    verbose : boolean
+        If True print out messages
+
+    Returns
+    -------
+    file_fine : boolean
+        True when the file exists.
     '''
+    
     file_fine = True  
     if (not os.path.isfile(infile)):
         file_fine = False
@@ -34,18 +54,19 @@ def check_file(infile,verbose=False):
     return file_fine
 
 
-def create_dir(outdir):
-    '''
-    Return True if directory has been created
-    '''
-    if not os.path.exists(outdir):
-        try:
-            os.makedirs(outdir)
-        except:
-            print('WARNING (eml_io.create_dir): problem creating directory ',
-                  outdir)
-            return False
-    return True
+# def create_dir(outdir):
+#     '''
+#     Return True if directory has been created
+#     '''
+    
+#     if not os.path.exists(outdir):
+#         try:
+#             os.makedirs(outdir)
+#         except:
+#             print('WARNING (eml_io.create_dir): problem creating directory ',
+#                   outdir)
+#             return False
+#     return True
 
 
 def get_nheader(infile,firstchar=None): # firstchar=None default
@@ -66,33 +87,32 @@ def get_nheader(infile,firstchar=None): # firstchar=None default
 
 
     ih = 0
-    ff = open(infile,'r')
-    for line in ff:
-        if not line.strip():
-            # Count any empty lines in the header
-            ih += 1
-        else:
-            sline = line.strip()
-            
-            # Check that the first character is not a digit
-            char1 = sline[0]
-            word1 = sline.split()[0]
-            if not firstchar:
-                if (not char1.isdigit()):
-                    if (char1 != '-'):
-                        ih += 1
-                    else:
-                        try:
-                            float(word1)
-                            return ih
-                        except:
-                            ih += 1
-                else:
-                    return ih
+    with open(infile,'r') as ff:
+        for line in ff:
+            if not line.strip():
+                # Count any empty lines in the header
+                ih += 1
             else:
-                if char1 == firstchar:
-                    ih+=1
-
+                sline = line.strip()
+                
+                # Check that the first character is not a digit
+                char1 = sline[0]
+                word1 = sline.split()[0]
+                if not firstchar:
+                    if (not char1.isdigit()):
+                        if (char1 != '-'):
+                            ih += 1
+                        else:
+                            try:
+                                float(word1)
+                                return ih
+                            except:
+                                ih += 1
+                    else:
+                        return ih
+                else:
+                    if char1 == firstchar:
+                        ih+=1
     return ih
         
 
@@ -163,269 +183,375 @@ def locate_interval(val, edges):
 
     return ind
 
+def read_data(infile, cols, inputformat='HDF5',Plotting=False, Testing=False, verbose=True):
+    '''
+    It reads star masses, star formation rates and metallicities from a file.
 
-def get_data(infile, cols, h0=None, inoh=False, LC2sfr=False, mtot2mdisk=True, verbose=False, Plotting=False, Testing=False):
+    Parameters
+    ----------
+    infile : string
+     - Name of the input file. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    cols : list
+     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
+     - Expected : component1 = total or disk, component2 = bulge
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    attmod : string
+      Model of dust attenuation.
+    verbose : boolean
+      If True print out messages
+    Plotting : boolean
+      If True run verification plots with all data.
+    Testing : boolean
+      If True only run over few entries for testing purposes
+
+    Returns
+    -------
+    lms, lssfr, loh12 : floats
+    '''
+    
+    if verbose:
+        print(infile)
+    
+    check_file(infile, verbose=verbose)
+
+    ncomp = get_ncomponents(cols)
+    
+    # if ('.hdf5' not in infile):
+    #     from get_nebular_emission.eml_io import hdf5_from_text
+    #     outfile = infile[:-4] + '.hdf5' #This expects a file with an extension of 3 characters.
+    #     hdf5_from_text(infile,outfile)
+    #     infile = outfile
+        
+    if inputformat not in const.inputformats:
+        if verbose:
+            print('STOP (eml_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(const.inputformats))
+        sys.exit()
+    elif inputformat=='HDF5':
+        if (Testing and not Plotting):
+            limit = 50
+        else:
+            limit = None
+
+        #------------
+        with h5py.File(infile, 'r') as f:
+            hf = f['data']
+            
+            ### TEMPORAL
+            #-----------------
+            if 'emlines' in infile:
+                r = hf['mag_SDSS_r_o_t'][:] + 38.034
+                cut = np.where(r<19.8)[0]
+            else:
+                Mvir = hf['Mvir'][:]
+                cut = np.where(Mvir>20*1.25*1e9)[0]
+            #-----------------
+                
+            if limit:
+                for i in range(ncomp):
+                    if i==0:
+                        lms = [hf[cols[i][0]][:limit]]
+                        lssfr = [hf[cols[i][1]][:limit]]
+                        loh12 = [hf[cols[i][2]][:limit]]
+                    else:
+                        lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
+                        lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
+                        loh12 = np.append(loh12,[hf[cols[i][2]][:limit]],axis=0)
+            else:
+                for i in range(ncomp):
+                    if i==0:
+                        lms = np.array([hf[cols[i][0]]])
+                        lssfr = np.array([hf[cols[i][1]]])
+                        loh12 = np.array([hf[cols[i][2]]])
+                    else:
+                        lms = np.append(lms,[hf[cols[i][0]]],axis=0)
+                        lssfr = np.append(lssfr,[hf[cols[i][1]]],axis=0)
+                        loh12 = np.append(loh12,[hf[cols[i][2]]],axis=0)
+    elif inputformat=='textfile':
+        ih = get_nheader(infile)
+
+        r = np.loadtxt(infile,usecols=19,skiprows=ih) + 38.034
+        cut = np.where(r<19.8)[0]
+        
+        for i in range(ncomp):
+            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
+            
+            Y = np.loadtxt(infile,skiprows=ih).T
+            
+            print(X[0]==Y[11])
+            
+            if i==0:
+                lms = [X[0]]
+                lssfr = [X[1]]
+                loh12 = [X[2]]
+                print(cols)
+            else:
+                lms = np.append(lms,[X[0]],axis=0)
+                lssfr = np.append(lssfr,[X[1]],axis=0)
+                loh12 = np.append(loh12,[X[2]],axis=0)
+    else:
+        if verbose:
+            print('STOP (eml_io.read_data): ',
+                  'Input file has not been found.')
+        sys.exit()
+        
+    lms = lms.T
+    lssfr = lssfr.T
+    loh12 = loh12.T
+            
+    return lms[cut], lssfr[cut], loh12[cut], cut
+
+###### old_get_data
+# Text file
+# ih = get_nheader(infile)
+# # Jump the header and read the provided columns
+# with open(infile, "r") as ff:
+#     for il, line in enumerate(ff):
+#         # Read until the data starts
+#         if (il<ih): continue
+
+#         # Read data
+#         if ('.csv' in infile):
+#             allcols = line.split(',')
+#         else:
+#             allcols = line.split()
+
+#         if (il == ih):
+#             lms   = np.array([[float(allcols[cols[ic][0]]) for ic in range(ncomp)]])
+#             lssfr = np.array([[float(allcols[cols[ic][1]]) for ic in range(ncomp)]])
+#             loh12 = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
+#         else:
+#             comp = np.array([[float(allcols[cols[ic][0]]) for ic in range(ncomp)]])
+#             lms = np.append(lms,comp,axis=0)
+
+#             comp = np.array([[float(allcols[cols[ic][1]]) for ic in range(ncomp)]])
+#             lssfr= np.append(lssfr,comp,axis=0)
+
+#             comp = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
+#             loh12= np.append(loh12,comp,axis=0)
+
+#         if (Testing and not Plotting and il>ih+50): break
+
+
+def get_data(infile, cols, h0=None, inputformat='HDF5', IMF=['Kennicut','Top-heavy'], 
+             attmod='GALFORM', LC2sfr=False, Zloh12=False, mtot2mdisk=True, 
+             verbose=False, Plotting=False, Testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units
 
     Parameters
     ----------
     infile : string
-      Name of the input file. 
-      In text files (*.dat, *txt, *.cat), columns separated by ' '.
-      In csv files (*.csv), columns separated by ','.
+     - Name of the input file. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
     cols : list
-      [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-      Expected : component1 = total or disk, component2 = bulge
-      For text or csv files: list of integers with column position.
-      For hdf5 files: list of data names.
+     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
+     - Expected : component1 = total or disk, component2 = bulge
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
     h0 : float
       If not None: value of h, H0=100h km/s/Mpc.
-    inoh : boolean
-      If yes, the metallicity has already been provided as 12+log(O/H)
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
     mtot2mdisk : boolean
-      Yes = transform the total mass into the disk mass. disk mass = total mass - bulge mass.
+      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
-      Yes = print out messages
+      If True print out messages
     Plotting : boolean
       If True run verification plots with all data.
     Testing : boolean
-      Yes = to only run over few entries for testing purposes
+      If True only run over few entries for testing purposes
 
     Returns
     -------
     mstars, ssfr, oh : floats
     '''
-
-    check_file(infile, verbose=verbose)
+    
+    lms,lssfr,loh12,cut = read_data(infile, cols=cols, inputformat=inputformat, 
+                                Plotting=Plotting, Testing=Testing, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
 
-    if ('.hdf5' in infile):
-        print('Program not set to deal with hdf5 files yet, input a text file')
+    # Set to a default value if negative stellar masses
+    ind = np.where(lms<=1.)
+    lms[ind] = const.notnum
+    lssfr[ind] = const.notnum
+    loh12[ind] = const.notnum
+
+    if LC2sfr: # Avoid positives magnitudes of LC photons
+        ind = np.where(lssfr>0)
+        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
+
+
+    else: # Avoid other negative SFR
+        ind = np.where(lssfr<=0)
+        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
+
+
+
+    ind = np.where(loh12<=0) # Avoid other negative Z
+    loh12[ind] = const.notnum
+
+    # Calculate the disk mass if we have only the total and bulge mass
+
+    if mtot2mdisk:
+        if ncomp!=2:
+            if verbose:
+                print('STOP (eml_io.get_data): ',
+                      'mtot2mdisk can only be True with two components.')
+            sys.exit()
+                
+        lms_tot = lms[:,0]
+
+        # Calculate the disk mass :
+        lmsdisk = lms[:,0] - lms[:,1]
+        lms = np.column_stack((lmsdisk,lms[:,1]))     
+
+        # Take the log of the total stellar mass
+        ind = np.where(lms_tot > 0.)
+        lms_tot[ind] = np.log10(lms_tot[ind])
+
+        # Take the log of the stellar mass:
+        ind = np.where(lms > 0.)
+        lms[ind] = np.log10(lms[ind])
+
     else:
-        # Text file
-        ih = get_nheader(infile)
-        # Jump the header and read the provided columns
-        with open(infile, "r") as ff:
-            for il, line in enumerate(ff):
-                # Read until the data starts
-                if (il<ih): continue
-
-                # Read data
-                if ('.csv' in infile):
-                    allcols = line.split(',')
-                else:
-                    allcols = line.split()
-
-                if (il == ih):
-                    lms   = np.array([[float(allcols[cols[ic][0]]) for ic in range(ncomp)]])
-                    lssfr = np.array([[float(allcols[cols[ic][1]]) for ic in range(ncomp)]])
-                    loh12 = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
-                else:
-                    comp = np.array([[float(allcols[cols[ic][0]]) for ic in range(ncomp)]])
-                    lms = np.append(lms,comp,axis=0)
-
-                    comp = np.array([[float(allcols[cols[ic][1]]) for ic in range(ncomp)]])
-                    lssfr= np.append(lssfr,comp,axis=0)
-
-                    comp = np.array([[float(allcols[cols[ic][2]]) for ic in range(ncomp)]])
-                    loh12= np.append(loh12,comp,axis=0)
-
-                if (Testing and not Plotting and il>ih+50): break
-
-
-        # Set to a default value if negative stellar masses
-        ind = np.where(lms<=1.)
-        lms[ind] = const.notnum
-        lssfr[ind] = const.notnum
-        loh12[ind] = const.notnum
-
-
-
-        if LC2sfr: # Avoid positives magnitudes of LC photons
-            ind = np.where(lssfr>0)
-            lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
-
-
-        else: # Avoid other negative SFR
-            ind = np.where(lssfr<=0)
-            lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
-
-
-
-        ind = np.where(loh12<=0) # Avoid other negative Z
-        loh12[ind] = const.notnum
-
-        # Calculate the disk mass if we have only the total and bulge mass
-
-        if mtot2mdisk:
-            lms_tot = lms[:,0]
-
-            # Calculate the disk mass :
-            lmsdisk = lms[:,0] - lms[:,1]
-            lms = np.column_stack((lmsdisk,lms[:,1]))
-
-            # Take the log of the total stellar mass
-            ind = np.where(lms_tot > 0.)
-            lms_tot[ind] = np.log10(lms_tot[ind])
-
-            # Take the log of the stellar mass:
-            ind = np.where(lms > 0.)
-            lms[ind] = np.log10(lms[ind])
-
-        else:
-            lms_tot = lms[:,0] + lms[:,1]
-
+        if ncomp!=1:
+            lms_tot = np.sum(lms,axis=1)
+    
             # Take the log of the total stellar mass:
             ind = np.where(lms_tot > 0.)
             lms_tot[ind] = np.log10(lms_tot[ind])
+    
+        # Take the log of the stellar mass:
+        ind = np.where(lms > 0.)
+        lms[ind] = np.log10(lms[ind])
 
-            # Take the log of the stellar mass:
-            ind = np.where(lms > 0.)
-            lms[ind] = np.log10(lms[ind])
+    # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
 
-
-        # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
-
-        lssfrd = np.zeros(len(lssfr))
-        lssfrb = np.zeros(len(lssfr))
-        ssfrd = np.zeros(len(lssfr))
-        ssfrb = np.zeros(len(lssfr))
-        lssfr_tot = np.zeros(len(lssfr))
-
-        if LC2sfr:
-            # DISK:
+    if LC2sfr:
+        
+        for comp in range(ncomp):
             ins = np.zeros(len(lssfr))
-            ind = np.where(lssfr[:, 0] != const.notnum)
-            ins[ind] = 1.02*(10.**(-0.4*lssfr[ind, 0]-4.))
+            ind = np.where(lssfr[:, comp] != const.notnum)
+            ins[ind] = const.IMFparam[IMF[comp]]*(10.**(-0.4*lssfr[ind,comp]-4.))
             ind = np.where(ins > 0)
-            lssfrd[ind] = np.log10(ins[ind]) - 9. - lms[ind, 0]
+            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
             ind = np.where(ins < 0)
-            lssfrd[ind] = const.notnum
+            lssfr[ind,comp] = const.notnum
+    
+            ind = np.where(lssfr[:, comp] == const.notnum)
+            lssfr[ind,comp] = const.notnum
+            
+        if ncomp!=1:
+            lssfr_tot = np.zeros(len(lssfr))
+            ssfr = np.zeros(lssfr.shape)
+            
+            for comp in range(ncomp):
+                ind = np.where(lssfr[:,comp] != const.notnum)
+                ssfr[ind,comp] = 10. ** lssfr[ind,comp]
 
-            ind = np.where(lssfr[:, 0] == const.notnum)
-            lssfrd[ind] = const.notnum
-
-            # Calculate sSFR disk
-            ind = np.where(lssfrd != const.notnum)
-            ssfrd[ind] = 10. ** lssfrd[ind]
-
-            # BULGE:
-            ind = np.where(lssfr[:, 1] != const.notnum)
-            ins[ind] = 0.360*(10.**(-0.4*lssfr[ind, 1]-4.))
-            ind = np.where(ins > 0)
-            lssfrb[ind] = np.log10(ins[ind]) - 9. - lms[ind, 1]
-            ind = np.where(ins < 0)
-            lssfrb[ind] = const.notnum
-
-            ind = np.where(lssfr[:,1] == const.notnum)
-            lssfrb[ind] = const.notnum
-
-            # Calculate sSFR bulge
-            ind = np.where(lssfrb != const.notnum)
-            ssfrb[ind] = 10.**lssfrb[ind]
-
-            # Final Vector and Total
-            lssfr = np.column_stack((lssfrd,lssfrb))
-            ins = ssfrd + ssfrb
+            ins = np.sum(ssfr,axis=1)
             ind = np.where(ins > 0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-        # If instantaneous SFR as input:
-        else:
-            # Take the log of the ssfr:
-            ind = np.where(lssfr > 0.)
-            lssfr[ind] = np.log10(lssfr[ind]) - 9. - lms[ind]
+    # If instantaneous SFR as input:
+    else:
+        # Take the log of the ssfr:
+        ind = np.where(lssfr > 0.)
+        lssfr[ind] = np.log10(lssfr[ind]) - lms[ind] #- 9. 
 
-            # Total
-            ind = np.where(lssfr[:,0]!=const.notnum)
-            ssfrd[ind] = 10.**(lssfr[ind,0])
+        if ncomp!=1:
+            lssfr_tot = np.zeros(len(lssfr))
+            ssfr = np.zeros(lssfr.shape)
+            for comp in range(ncomp):
+                ind = np.where(lssfr[:,comp]!=const.notnum)
+                ssfr[ind,comp] = 10.**(lssfr[ind,comp])
 
-            ind = np.where(lssfr[:,1]!=const.notnum)
-            ssfrb[ind] = 10.**(lssfr[ind,1])
-
-            ins = ssfrd + ssfrb
+            ins = np.sum(ssfr,axis=1)
             ind = np.where(ins>0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-        if h0:
-            # Correct the units of the stellar mass
-            lms = lms - np.log10(h0)
+    if h0:
+        # Correct the units of the stellar mass
+        ind = np.where(lms > 0.)
+        lms[ind] = lms[ind] - np.log10(h0)
+        if ncomp!=1:
             lms_tot = lms_tot - np.log10(h0)
 
-        if Plotting:
-            lsfr = lssfr_tot+lms_tot
+    if ncomp!=1:
+        lsfr = lssfr_tot+lms_tot
+    else:
+        lsfr = lssfr + lms
 
-
-        # Obtain 12+log10(O/H) from Z=MZcold/Mcold
-        ind = np.where(loh12>0)
+    # Obtain 12+log10(O/H) from Z=MZcold/Mcold
+    ind = np.where(loh12>0)
+    if Zloh12==False: #THIS HAS YET TO BE PROPERLY TESTED
         loh12[ind] = np.log10(loh12[ind]) + const.ohsun - np.log10(const.zsun)
 
-        oh12d = np.zeros(len(loh12))
-        oh12b = np.zeros(len(loh12))
+    if ncomp!=1:
+        oh12 = np.zeros(loh12.shape)
         loh12_tot = np.zeros(len(loh12))
 
-        # Total :
-        ind = np.where(loh12[:,0] != const.notnum)
-        oh12d[ind] = 10. ** (loh12[ind, 0])
-
-        ind = np.where(loh12[:, 1] != const.notnum)
-        oh12b[ind] = 10. ** (loh12[ind, 1])
-
-        ins = oh12d+oh12b
+        for comp in range(ncomp):
+            ind = np.where(loh12[:,comp] != const.notnum)
+            oh12[ind,comp] = 10. ** (loh12[ind,comp])
+    
+        ins = np.sum(oh12,axis=1)
         ind = np.where(ins>0)
         loh12_tot[ind] = np.log10(ins[ind])
 
-        # Here: allow for loh12 direct input
 
 
-
-        if Testing and Plotting: # here : Search more efficient form. Allow more components in the header
+    if Plotting: # here : Search more efficient form. Allow more components in the header
+        if ncomp==2:
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
                       ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
                       '(12 + log(O/H))_tot, (12 + log (O/H))_disk, (12 + log (O/H))_bulge'
             datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,loh12_tot,loh12))
+        elif ncomp==1:
+            header1 = 'log(mstars), ' \
+                      'log(SFR), log(sSFR) ' \
+                      '(12 + log(O/H))'
+            datatofile=np.column_stack((lms,lsfr,lssfr,loh12))
 
-            if LC2sfr:
-                outfil = r"example_data/tmp_LC.dat"
-            else:
-                outfil = r"example_data/tmp_avSFR.dat"
+        if LC2sfr:
+            outfil = r"example_data/tmp_LC_SAGE.dat"
+        else:
+            outfil = r"example_data/tmp_avSFR_SAGE.dat"
 
-            with open(outfil, 'w') as outf:
-                np.savetxt(outf, datatofile, delimiter=' ', header=header1)
-                outf.closed
+        with open(outfil, 'w') as outf:
+            np.savetxt(outf, datatofile, delimiter=' ', header=header1)
+            outf.closed
 
 
                     
-    return lms,lssfr,loh12
+    return lms,lssfr,loh12,cut
 
 
 def get_reducedfile(infile, outfile, indcol, verbose=False):
     '''
-    Get reduced file with only the wanted columns data.
+    Get reduced file with only the wanted columns data
 
     Parameters
     ----------
     infile : string
-      Name of the input file.
-      In text files (*.dat, *txt, *.cat), columns separated by ' '.
-      In csv files (*.csv), columns separated by ','.
+     - Name of the input file.
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
     outfile : string
-      Name of the output file.
-      Text file (*.dat, *txt, *.cat), columns separated by ' '.
+     - Name of the output file.
+     - Text file (*.dat, *txt, *.cat), columns separated by ' '.
     indcol : list
-      [mstars_total, mstars_bulge, mstardot, mstardot_burst, mag_LC_r_disk, mag_LC_r_bulge, zcold, zcold_burst]
-      For text or csv files: list of integers with column position.
-      For hdf5 files: list of data names.
+     - [mstars_total, mstars_bulge, mstardot, mstardot_burst, mag_LC_r_disk, mag_LC_r_bulge, zcold, zcold_burst]
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
     verbose : boolean
-      Yes = print out messages
-    Returns
-    -------
-    outfile : string
-      Path to the reduced output file.
+      If True print out messages
     '''
 
     check_file(infile,verbose=verbose)
@@ -489,3 +615,163 @@ def get_reducedfile(infile, outfile, indcol, verbose=False):
     #outfile = print(outf, 'Output file :{}'.format(outfile))
 
     return
+
+def hdf5_from_text(infile, outfile, galform=True, verbose=True):
+    '''
+    Create a .hdf5 file from a .dat file.
+
+    Parameters
+    ----------
+    infile : string
+     - Name of the input file.
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    cols : list
+     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
+     - Expected : component1 = total or disk, component2 = bulge
+     - For text or csv files: list of integers with column position.
+    verbose : boolean
+      If True print out messages
+    '''
+
+    check_file(infile, verbose=verbose)
+
+    ih = get_nheader(infile)
+    
+    X = np.loadtxt(infile,skiprows=ih).T
+    
+    if galform:
+        
+        # for ii, header in enumerate(headers):
+        #     if header[-1] == '_':
+        #         headers[ii] = headers[ii] + 'ext'
+        #     elif header[-2:] == '_e':
+        #         headers[ii] = headers[ii] + 'xt'
+        #     elif header[-2:] == '_ex':
+        #         headers[ii] = headers[ii] + 't'
+        #     elif header == 'mstardot_avera':
+        #         headers[ii] = 'mstardot_average'
+        
+        # QUEDARÍA ADAPTAR LAS LÍNEAS CORTADAS
+        
+        # headers_copy = []
+        # for i in range(numcol):
+        #     for j in range(len(headers_copy)):
+        #         if headers[i][0] == 'L':
+        #             if (headers[i] in headers_copy[j]) or (headers_copy[j] in headers[i]):
+        #                 sum1 = np.sum(comp_array[j])
+        #                 sum2 = np.sum(comp_array[i])
+        #                 if sum1 >= sum2:
+        #                     headers[i] = headers[j] + '_ext'
+        #                 else:
+        #                     headers[j] = headers[i] + '_ext'
+        #     headers_copy.append(headers[i])
+            
+        headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
+                   'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
+                   'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
+                   'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
+                   'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
+                   'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
+                   'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
+                   'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
+                   'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
+                   'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
+                   'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
+                   'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
+                   'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
+    else:
+        with open(infile, "r") as ff:
+            for il, line in enumerate(ff):
+                # Read until the data starts
+                if (il<ih-1): continue
+            
+                # Read data
+                if ('.csv' in infile):
+                    allcols = line.split(',')
+                else:
+                    allcols = line.split()
+                
+                if (il==ih-1):
+                    headers = np.copy(allcols[1:])
+                    headers = headers.astype('<U30')
+                    break
+        
+    with h5py.File(outfile, 'w') as f:
+        head = f.create_dataset('header',(1,))
+        hf = f.create_group('data')
+        for i in range(len(headers)):
+            hf.create_dataset(headers[i],data=X[i])
+            
+    return X
+
+def write_data(lms,lssfr,lu,lne,loh12,nebline,nebline_att,outfile,attmod='GALFORM',
+               unemod='kashino20',photmod='gutkin16',first=True):
+    '''
+    Create a .hdf5 file from a .dat file.
+
+    Parameters
+    ----------
+    lines : floats
+      Array with the flux of the lines for each component. [disk_fluxes, bulge_fluxes]
+    outfile : string
+      HDF5 file with flux of the lines.
+    verbose : boolean
+      If True print out messages
+    '''
+    
+    if first: 
+        with h5py.File(outfile,'w') as hf:
+            head = hf.create_dataset('header',(1,))
+            head.attrs[u'HII model'] = unemod
+            head.attrs[u'Lines model'] = photmod
+            head.attrs[u'Attenuation model'] = attmod
+    
+            # Data
+            hfdat = hf.create_group('data')
+            
+            hfdat.create_dataset('lms', data=lms, maxshape=(None,None))
+            hfdat['lms'].dims[0].label = 'log10(M*) (Msun)'
+            
+            hfdat.create_dataset('lssfr', data=lssfr, maxshape=(None,None))
+            hfdat['lssfr'].dims[0].label = 'log10(SFR/M*) (1/yr)'
+    
+            hfdat.create_dataset('lu', data=lu, maxshape=(None,None))
+            hfdat['lu'].dims[0].label = 'log10(U) (dimensionless)'
+    
+            hfdat.create_dataset('lne',data=lne, maxshape=(None,None))
+            hfdat['lne'].dims[0].label = 'log10(nH) (cm**-3)'
+    
+            hfdat.create_dataset('loh12', data=loh12, maxshape=(None,None))
+            hfdat['loh12'].dims[0].label = 'metallicity 12+log(O/H)'
+            
+            hfdat.create_dataset('nebline', data = nebline, maxshape=(None,None,None))
+            hfdat['nebline'].dims[0].label = 'disk lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+            
+            hfdat.create_dataset('nebline_att', data = nebline_att, maxshape=(None,None,None))
+            hfdat['nebline_att'].dims[0].label = 'disk lines units: [3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+    else:
+        with h5py.File(outfile,'a') as hf:
+            hfdat = hf['data']
+            
+            hfdat['lu'].resize((hfdat['lu'].shape[0] + lu.shape[0]),axis=0)
+            hfdat['lu'][-lu.shape[0]:] = lu
+            
+            hfdat['lne'].resize((hfdat['lne'].shape[0] + lne.shape[0]),axis=0)
+            hfdat['lne'][-lne.shape[0]:] = lne
+            
+            hfdat['lms'].resize((hfdat['lms'].shape[0] + lms.shape[0]),axis=0)
+            hfdat['lms'][-lms.shape[0]:] = lms
+            
+            hfdat['lssfr'].resize((hfdat['lssfr'].shape[0] + lssfr.shape[0]),axis=0)
+            hfdat['lssfr'][-lssfr.shape[0]:] = lssfr
+            
+            hfdat['loh12'].resize((hfdat['loh12'].shape[0] + loh12.shape[0]),axis=0)
+            hfdat['loh12'][-loh12.shape[0]:] = loh12
+            
+            hfdat['nebline'].resize((hfdat['nebline'].shape[2] + nebline.shape[2]),axis=2)
+            hfdat['nebline'][:,:,-nebline.shape[2]:] = nebline
+            
+            hfdat['nebline_att'].resize((hfdat['nebline_att'].shape[2] + nebline_att.shape[2]),axis=2)
+            hfdat['nebline_att'][:,:,-nebline_att.shape[2]:] = nebline_att
+        

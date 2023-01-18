@@ -15,17 +15,15 @@ from get_nebular_emission.eml_io import get_reducedfile as reducedfile
 # reducedfile(infile,outfile,indcol=[11,15,13,14,0,1,2,4],verbose=True)
 
 '''TEST PLOT SFRF'''
-def plot_sfrf(plot2file = r'pruebaplotfeb.pdf',
-              SFRfile = r'sfrf/gruppioni_2015_z2.0-2.5_cha.txt',
-              GMSfile = r'gsmf/henriques_2014_z2_cha.txt',
-              obs_labels = ['Henriques+2014, z = 2.0', 'Gruppioni+2015, z = 2.0-2.5']): # (gsmf observed, sfrf observed)
+def plot_sfrf(plot2file = r'sfrf.pdf',
+              SFRfile = r'sfrf/gruppioni_2015_z0.3-0.45_cha.txt',
+              GMSfile = r'gsmf/henriques_2014_z0_cha.txt',
+              obs_labels = ['Henriques+2014, z = 0', 'Gruppioni+2015, z = 0.3-0.45']): # (gsmf observed, sfrf observed)
     
     from get_nebular_emission.eml_plots import test_sfrf
     
     test_sfrf(obsGSM=GMSfile,obsSFR=SFRfile, colsSFR=[0,1,2,3],colsGSM=[0,1,2,3],
-          labelObs=obs_labels, outplot=plot2file, h0=0.6777,volume = const.vol_pm,verbose=True)
-    
-    
+          labelObs=obs_labels, outplot=plot2file, h0=const.h,volume = const.vol_pm,verbose=True)
 
 
 '''TEST PLOT MEDIANS'''

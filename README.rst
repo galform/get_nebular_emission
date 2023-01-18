@@ -67,25 +67,19 @@ The functions in the package can be used after importing novonix_add, for exampl
 
 ISSUES
 ------
+**eml**
+. Introduce IMF and SSP as input.
+
 **eml_io**
 
 · Set the program to deal with hdf5 files.
 
-· Allow for (12 + log(O/H)) direct input.
-
-· Search a more efficient way to do the temporary file and allow to take more or less components.
-
-· Search a more efficient way to do the reduced_file, maybe matrix form. It is necessary the column stack for the header, maybe another function more efficient. If there is a last row in the file to reduce, that is not a list of floats but a sentence, the code gives an error, we must think a way to do not take the last row if it is not make of floats.  
+· Allow for (12 + log(O/H)) direct input. -> Done (need testing)
 
 · Explore star models for differents IMF for the conversion from the Lyman Continuum photons to the instantaneous SFR. Investigate the single stellar populations (SSP).
 
-· The Baught et al. (2021) constants for the transformation from the Lyman Continuum photons to the instantaneous sSFR depend of the IMF and the SSP. We must think how it depends and move them to the eml_const module, to, in the future, allow the model to choose the constants taking into account the IMF and the SSP. 
-    
-**eml_une**
-
-· Search a more efficient way to do the temporary file. Allow more or less components in the header. change the names of the header.
-
-· Allow more models to be chosen.
+· The Baught et al. (2021) constants for the transformation from the Lyman Continuum photons to the instantaneous sSFR depend of the IMF and the SSP. 
+We must think how it depends and move them to the eml_const module, to, in the future, allow the model to choose the constants taking into account the IMF and the SSP. 
 
 
 **eml_photio**
@@ -110,7 +104,7 @@ ISSUES
 
 **eml_dust**
 
-· Create a dust module with the line attenuations.
+· Test Cardelli's model.
 
 **eml_plots**
 
@@ -118,11 +112,11 @@ ISSUES
 
 · In test_sfrf there is a problem with the contours, the plot is not well in my opinion. Set the program to allow automate the levels of the contours. One way to do it: In SFRF search the bin with at least 100 galaxies (before divide the data by the volume) to be the minimum level, get the maximum value of phi to be the maximum level and take another one between these two. 
 
-· In test_medians the plots do not work, the legend is not show as wanted.
+· In test_medians the plots do not work, the legend is not show as wanted. -> DONE
 
 · Add test_zm. Similar to test_sfrf but with the metallicity.
 
-· Add the command to delete the temporary files after having done the plots.
+· Add the command to delete the temporary files after having done th - donee plots.
 
 · In test_sfrf verify the limits for the SFR and the mass. 
 
@@ -136,11 +130,13 @@ ISSUES
 
 **eml_const**
 
-· Add the constants for the IMF and the SSP, D and B of the equations 2 and 3 of the overleaf.
+· Add the constants for the IMF and the SSP, D and B of the equations 2 and 3 of the overleaf. Lacey 2016.
 
 **Others**
 
 · example2.py is an example of how to run the function get_reducedfile from eml_io and the test_plots.
 
 · Allow the escape fraction vary: (100-escf)*LyC
+
+
 

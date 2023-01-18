@@ -3,12 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to get_nebular_emission's documentation!
+Documentation for ``get_nebular_emission``
 ================================================
 
 .. toctree::
+   :hidden:
+
+   self
+
+.. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   
+   readme_include.rst
+   overview.rst
+   features.rst
+   source/modules.rst
+
+.. include:: ../README.rst
 
 
 

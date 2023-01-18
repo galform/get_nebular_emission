@@ -7,18 +7,30 @@ listed below in alphabetical order. The list contains the module name
 followed by the function name with the expected input parameters in
 brackets.
 
--  ``sflines.gutkin(infile,verbose=False)``: Given
-   a file, ``infile``, generate lines.
+-  ``eml.eml(infile, m_sfr_z, h0=None, volume = 542.16**3.,
+   unemod='kashino20',photmod='gutkin16',
+   LC2sfr=False, mtot2mdisk = True,
+   verbose=False, Plotting=False, Testing=False)``: 
+   Master function of the ``get_nebular_emission`` package that
+   calculate emission lines given the properties of model galaxies.
+   This function follows the flow chart presented in
+   :ref:`chart`.
 
 In what follows, the above functions will be referred by simply their
 name, without stating the modules they belong to.
 
-.. _get_nebular_emission:
+   
+.. _chart:
 
-The ``gutkin`` function
---------------------------------
-The `get_nebular_emission`_ package ... The function ``gutkin`` allows.
+Flow chart
+----------
+
+.. figure:: flow_chart.png
+   :align: center
+   :alt: Flow chart
+
+Flow chart for the ``eml`` function (within the
+``eml`` module) which contains all the functionality of the
+`get_nebular_emission`_ package presented here.
 
 .. _get_nebular_emission: https://github.com/galform/get_nebular_emission
-
-.. _module index: https://get_nebular_emission.readthedocs.io/en/latest/py-modindex.html
