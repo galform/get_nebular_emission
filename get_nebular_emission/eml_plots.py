@@ -322,7 +322,7 @@ def test_medians(infile, outplot, verbose=False):
      If True print out messages
 
 
-    Returns
+    Notes
     -------
     Medians U and ne for each bin of mass in two differents plots.
 
@@ -420,8 +420,8 @@ def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=F
     verbose : boolean
      If True print out messages.
 
-    Returns
-    -------´
+    Notes
+    -------
     Plot of several BPT diagrams.
     '''
     
