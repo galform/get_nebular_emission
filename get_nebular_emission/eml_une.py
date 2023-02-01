@@ -1,24 +1,22 @@
 import sys
 
-import h5py
 import numpy as np
 import get_nebular_emission.eml_const as const
 
-def get_une_kashino20(lms, lssfr, loh12, verbose=False):
+def get_une_withmodel(lms, lssfr, loh12, unemod, verbose=False):
     '''
     Given log10(Mstar), log10(sSFR) and 12+log(O/H),
     get the ionizing parameter, logU, and the electron density, logne,
-    using the coefficients in Table 2
-    from Kashino and Inoue 2019 (https://arxiv.org/pdf/1812.06939.pdf)
+    using the specified model.
 
     Parameters
     ----------
-    lms : float
-      log10(Mstar/Msun)
-    lssfr : float
-      log10(sSFR/yr), it should be an instantaneous measurement
-    loh12 : float 
-      12+log(O/H)
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    loh12 : floats
+     Metallicity of the galaxies per component (12+log(O/H)).
     unemod : string
       Model to go from galaxy properties to U and ne
     verbose : boolean
@@ -26,7 +24,7 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
 
     Returns
     -------
-    u, ne : floats
+    lu, lne, loh12 : floats
     '''
     
     lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
@@ -34,26 +32,31 @@ def get_une_kashino20(lms, lssfr, loh12, verbose=False):
     ind = np.where((lssfr > const.notnum) &
                    (lms > const.notnum) &
                    (loh12 > const.notnum))
-    if (np.shape(ind)[1]>1):
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
-
-        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr[ind] + 9.)
-
-    return lu, lne
     
-def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, Testing=False, Plotting=False):
+    if unemod == 'kashino20': #Coefficients in Table 2 from Kashino and Inoue 2019 (https://arxiv.org/pdf/1812.06939.pdf)
+        if (np.shape(ind)[1]>1):
+            lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
+    
+            lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr[ind] + 9.)
+            # lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)
+        loh12[ind] = loh12[ind] - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
+    
+
+    return lu, lne, loh12
+    
+def get_une(lms, lssfr, loh12, unemod='kashino20', LC2sfr=False, Testing=False, Plotting=False, verbose=True):
     '''
     Given log10(Mstar), log10(sSFR) and 12+log(O/H),
     get the ionizing parameter, U, and the electron density, ne.
 
     Parameters
     ----------
-    lms : float
-      log10(Mstar/Msun)
-    lssfr : float
-      log10(sSFR/yr), it should be an instantaneous measurement
-    loh12 : float 
-      12+log(O/H)
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    loh12 : floats
+     Metallicity of the galaxies per component (12+log(O/H)).
     unemod : string
       Model to go from galaxy properties to U and ne
     LC2sfr : boolean
@@ -67,55 +70,32 @@ def get_une(lms, lssfr, loh12, unemod='kashino20',LC2sfr=False, verbose=False, T
 
     Returns
     -------
-    lu, lne : floats
+    lu, lne, loh12 : floats
     '''
 
-    lu = None ; lne = None
+    ncomp = len(lms[0])
     
-    if (unemod == 'kashino20'):
-        lu, lne = get_une_kashino20(lms,lssfr,loh12,verbose=verbose)
-        if Testing and Plotting:
-            thefile = r"output_data/output_kashino20_test.hdf5"
-        else:
-            thefile = r"output_data/output_kashino20.hdf5"
-
-        hf = h5py.File(thefile,'w')
-
-        # Header
-        head = hf.create_dataset('header',(1,))
-        head.attrs[u'HII model'] = unemod
-
-        # Data
-        hfdat = hf.create_group('data')
-
-        hfdat.create_dataset('lu', data=lu)
-        hfdat['lu'].dims[0].label = 'log10(U) (dimensionless) [disk, bulge]'
-
-        hfdat.create_dataset('lne',data=lne)
-        hfdat['lne'].dims[0].label = 'log10(nH) (cm**-3) [disk, bulge]'
-
-        hfdat.create_dataset('loh12', data=loh12)
-        hfdat['loh12'].dims[0].label = 'metallicity 12+log(O/H) [disk, bulge]'
-
-        #header1 = 'log(u_disk),log(u_bulge), log(ne_disk), log(ne_bulge), (12 + log(O/H))_disk, (12 + log(O/H))_bulge'
-        #tofile = np.column_stack((lu,lne,loh12))
-        #with open(outfile,'w') as outf:
-        #    np.savetxt(outf, tofile, delimiter=' ', header=header1)
-        hf.close()
-    else:
-        print('STOP (eml_une): Unrecognised model to get U and ne.')
-        print('                Possible unemod= {}'.format(const.unemods))
+    if unemod not in const.unemods:
+        if verbose:
+            print('STOP (eml_une): Unrecognised model to get U and ne.')
+            print('                Possible unemod= {}'.format(const.unemods))
         sys.exit()
+    elif (unemod == 'kashino20'):
+        lu, lne, loh12 = get_une_withmodel(lms,lssfr,loh12,unemod,verbose=verbose)
 
-    if Testing and Plotting:  # here : Search more efficient form. Allow more components in the header
-        header1 = 'log(u_disk),log(u_bulge),log(ne_disk),log(ne_bulge)'
-        datatofile = np.append(lu, lne, axis=1)
+    if Plotting:
+        if ncomp==2:
+            header1 = 'log(u_disk),log(u_bulge),log(ne_disk),log(ne_bulge)'
+            datatofile = np.append(lu, lne, axis=1)
+        elif ncomp==1:
+            header1 = 'log(u), log(ne)'
+            datatofile = np.append(lu, lne, axis=1)
+            
         if LC2sfr:
-            outfil = r"example_data/tmp_une_LC.dat"
+            outfil = r"example_data/tmp_une_LC_SAGE.dat"
         else:
-            outfil = r"example_data/tmp_une_avSFR.dat"
+            outfil = r"example_data/tmp_une_avSFR_SAGE.dat"
         with open(outfil, 'w') as outf:
             np.savetxt(outf, datatofile, delimiter=' ', header=header1)
-            outf.closed
         
-    return lu, lne
+    return lu, lne, loh12
