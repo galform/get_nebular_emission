@@ -14,12 +14,13 @@ vol_pm = 542.16**3. # Volume of the P-Millenium simulation
 unemods = ['kashino20']
 
 photmods = ['gutkin16']
+mod_lim = {'gutkin16': r"nebular_data/gutkin_tables/limits_gutkin.txt"}
 
 attmods = ['ratios', 'cardelli89']
 
 inputformats = ['textfile','HDF5']
 
-# From Kennicut IMF -> M(Kenn) = corr * M(IMF)
+# For Kennicut IMF -> M(Kenn) = corr * M(IMF)
 # ---------------------------
 # Salpeter 0.47
 # Kroupa 0.74
@@ -34,9 +35,18 @@ inputformats = ['textfile','HDF5']
 # Baldry & Glazebrook 2.26
 # Top-heavy IMF (x=1) 3.13
 
-# Constants for IMF and SSP
-IMFparam = {'Kennicut': 1.02, 'Salpeter': 0.51, 'Kroupa': 0.51, 'Chabrier': 0.53, 
-            'Baldry&Glazebrook': 0.38, 'Top-heavy': 0.36}
+IMF_M = {'Kennicut': 1, 'Salpeter': 0.47, 'Kroupa': 0.74, 'Chabrier': 0.81, 
+            'Baldry&Glazebrook': 0.85, 'Top-heavy': 1.11}
+
+IMF_SFR = {'Kennicut': 1, 'Salpeter': 0.94, 'Kroupa': 1.49, 'Chabrier': 1.57, 
+            'Baldry&Glazebrook': 2.26, 'Top-heavy': 3.13}
+
+# FOR CONVERSION FROM LYMANN CONTINUUM PHOTONS TO SFR
+# It is assumed that a SFR of 1 Msun/yr produces 9.85 · 10^52 photons/s for Kennicut IMF.
+# Reference: Chomiuk & Povich 2011, pag. 2: "According to Kennicutt et al. (1994) and Kennicutt
+# (1998a), a SFR of 1 M⊙ yr−1 produces a Lyman continuum photon rate Nc = 9.26 × 1052 photon s−1
+# for the Salpeter (1955) IMF (assuming a mass range of 0.1–100 Msun)."
+# Reescaled to Kennicut, it gives our number.
 
 zmet = {
     "gutkin16" : np.array([0.0001,
@@ -93,7 +103,13 @@ wavelength_model = {
                            1666,1883,1888,1908])
     }
 
+#------------------------------------------------------------------------------------
+#   GALFORM:
+#------------------------------------------------------------------------------------
 # GALFORM tables have [0,1,3,5,6,7,8] of the gutkin16 model.
+
+line_headers = ['L_tot_', 'L_disk_', 'L_bulge_']
+att_ext = '_ext'
 
 #------------------------------------------------------------------------------------
 #   Cosmology:

@@ -9,12 +9,15 @@ import get_nebular_emission.eml_style as style
 from get_nebular_emission.stats import perc_2arrays
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import get_nheader, check_file
-from get_nebular_emission.eml_photio import get_lines_Gutkin
+from get_nebular_emission.eml_photio import get_lines_Gutkin, get_limits
 from numpy import random
+from scipy import stats
+import sys
 
 plt.style.use(style.style1)
 
-def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, volume=const.vol_pm, verbose=False):
+def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
+              colsGSM=[0,1,2,3], labelObs=None, specific=False, h0=const.h, volume=const.vol_pm, verbose=False):
 
     '''
     
@@ -68,6 +71,9 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
     outplot : string
       - Name of the output file.
       - Image-type files (*.pdf, *.jpg, ...)
+      
+    specific : boolean
+      If True it makes the plots with the sSFR. Otherwise, it makes the plots with the SFR.
  
     h0 : float
       If not None: value of h, H0=100h km/s/Mpc.
@@ -97,13 +103,11 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
             else:
                 return '%.1f' % self.__float__()
     # -----------------------------------------------------
-    
-    volume = 1*(1000**3)/1 #1*(542.16**3)/200
 
 
     # Correct the units of the simulation volume to Mpc^3:
-    # if h0:
-    #     volume=volume*(h0**3)
+    if h0:
+        volume=volume/(h0**3)
 
     #Prepare the plot
     lsty = ['-',(0,(2,3))] # Line form
@@ -112,7 +116,7 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
     al = np.sort(nds)
 
     SFR = ['avSFR']
-    labels = ['average SFR']
+    labels = ['SFR']
 
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
@@ -122,17 +126,17 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
 
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
-    mmin = 8.5 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
-    mmax = 15 #15. 11.9
+    mmin = 8 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
+    mmax = 15 
     dm = 0.1
     mbins = np.arange(mmin, mmax, dm)
     mhist = mbins + dm * 0.5
     gsmf = np.zeros((len(mhist)))
 
     # Initialize SSFRF
-    smin = -5.
-    smax = 0.8
-    ds = 0.1
+    smin = -5
+    smax = 2.5
+    ds = 0.5
     sbins = np.arange(smin, smax, ds)
     shist = sbins + ds * 0.5
     ssfrf = np.zeros((len(shist)))
@@ -149,9 +153,12 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
     ax = plt.subplot(gs[1:, :-1])
 
     # Fig. sSFR vs M
-    xtit = "log$_{10}(\\rm M_{*}/M_{\odot}h^{-1})$"
-    ytit = "log$_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
-    xmin = mmin; xmax = 11.9; ymin = smin;  ymax = 0.9
+    xtit = "log$_{10}(\\rm M_{*}/M_{\odot})$"
+    if specific:
+        ytit = "log$_{10}(\\rm sSFR Gyr^{-1})$"
+    else:
+        ytit = "log$_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
+    xmin = mmin; xmax = 12; ymin = smin;  ymax = smax
     ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
     ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
@@ -159,14 +166,14 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
     axm = plt.subplot(gs[0, :-1],sharex=ax)
     ytit="log$_{10}(\Phi(M_*))$" ; axm.set_ylabel(ytit)
     axm.set_autoscale_on(False) ;  axm.minorticks_on()
-    axm.set_ylim(-5.5,-1.)
+    axm.set_ylim(-8,-1)
     plt.setp(axm.get_xticklabels(), visible=False)
 
     # SSFRF
     axs = plt.subplot(gs[1:, 2], sharey=ax)
     xtit = "log$_{10}(\Phi(SFR))$"; axs.set_xlabel(xtit)
     axs.set_autoscale_on(False); axs.minorticks_on()
-    axs.set_xlim(-4.4, 0.0)
+    axs.set_xlim(-5.5, 0.0)
     start, end = axs.get_xlim()
     axs.xaxis.set_ticks(np.arange(-4., end, 1.))
     plt.setp(axs.get_yticklabels(), visible=False)
@@ -186,6 +193,7 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
 
     dex = dataSFR[1]-dataSFR[0]
     histSFR = dataSFR[1]-0.5*dex
+    errorSFR = dataSFR[3]
 
     # GSM observed
 
@@ -200,31 +208,26 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
     dex = dataGSM[1] - dataGSM[0]
 
     # Change the units from h^-2 Msun to Msun.
-    histGSM = dataGSM[1] + 2*np.log10(h0) - 0.5*dex
+    histGSM = dataGSM[1] - 2*np.log10(h0) - 0.5*dex
 
     # Change the units from h^3 Mpc^-3 to Mpc^-3
-    freqGSM = np.log10((dataGSM[2]))- 3 * np.log10(h0)
+    freqGSM = np.log10((dataGSM[2])) + 3 * np.log10(h0)
+    
+    lowGSM = np.log10(dataGSM[2]-dataGSM[3]) + 3 * np.log10(h0)
+    
+    lowGSM = abs(lowGSM - freqGSM)
 
-
-    for ii, sfr in enumerate(SFR):
-        with h5py.File('output_data/emlines_SAGE_total.hdf5','r') as file:
-            data = file['data']
-            
-            lms = data['lms'][:,0] + np.log10(const.h)
-            lsfr = data['lssfr'][:,0] + lms
-            
+    for ii in range(len(inputdata)):
+        with h5py.File(inputdata[ii],'r') as file:
+            data = file['data']          
+            lms = np.log10(10**data['lms'][:,0]+10**data['lms'][:,1])
+            print(lms)
+            if specific:
+                lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
+            else: 
+                lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + lms
+            # lms = lms + np.log10(h0)     
             del data
-        
-        # tempfile = r"example_data/tmp_"+sfr+"_SAGE.dat"
-        # if not os.path.isfile(tempfile): continue
-
-        # ih = get_nheader(tempfile) # Number of lines in header
-
-        # # Jump the header and read the provided columns
-        # lms = np.loadtxt(tempfile, skiprows=ih, usecols=(0), unpack=True) + np.log10(const.h)
-        # lsfr = np.loadtxt(tempfile, skiprows=ih, usecols=(3), unpack=True) # 3
-        lssfr = lsfr - lms + 9
-        # loh12 = np.loadtxt(tempfile, skiprows=ih, usecols=(6), unpack=True). Not necessary in this plot
 
 
         # Make the histograms
@@ -248,7 +251,7 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
         ind = np.where(smf > 0.)
         zz[ind] = np.log10(smf[ind])
         
-        print(zz[ind])
+        # print(zz[ind])
 
         ind = np.where(zz > const.notnum)
 
@@ -271,7 +274,9 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
                  linestyle=lsty[ii], label=labels[ii])
 
         # Plot observations GSMF
-        axm.plot(histGSM, freqGSM, 'o', color=color[ii + 1])
+        if obsGSM:
+            axm.errorbar(histGSM, freqGSM, yerr=lowGSM, marker='o', color=color[ii + 1],
+                         label=''+ labelObs[0] +'')
 
 
         # Plot SFRF
@@ -279,22 +284,30 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
         y = shist[ind]; x = np.log10(px[ind])
         ind = np.where(x < 0.)
         axs.plot(x[ind], y[ind], color=color[ii],
-                 linestyle=lsty[ii], label=labels[ii])
-
+                 linestyle=lsty[ii])
+        
         # Plot observations SFRF
-        axs.plot(dataSFR[2], histSFR, 'o', color=color[ii + 2],
-                  label=''+ labelObs[ii] +'')
+        if obsSFR:
+            axs.errorbar(dataSFR[2], histSFR, xerr=errorSFR, marker='o', color=color[ii + 2],
+                      label=''+ labelObs[1] +'')
 
-    # leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
-    #                  handlelength=1.2, handletextpad=0.4)
-    # # for item in leg.legendHandles:
-    # # item.set_visible(True)
-    # leg.get_texts()
-    # leg.draw_frame(False)
+    leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
+                      handlelength=1.2, handletextpad=0.4)
+    # for item in leg.legendHandles:
+    # item.set_visible(True)
+    leg.get_texts()
+    leg.draw_frame(False)
+    
+    leg2 = axm.legend(bbox_to_anchor=(0.135, -0.34, 1.5, 1.4), fontsize='small',
+                      handlelength=1.2, handletextpad=0.4)
+    # for item in leg.legendHandles:
+    # item.set_visible(True)
+    leg2.get_texts()
+    leg2.draw_frame(False)
 
     # for col,text in zip(color,leg.get_texts()):
     #   text.set_color(color)
-    #  leg.draw_frame(False)
+    #   leg.draw_frame(False)
 
     plotf = outplot
 
@@ -305,78 +318,7 @@ def test_sfrf(obsSFR, obsGSM, colsSFR,colsGSM,labelObs, outplot, h0=const.h, vol
     # os.remove(r"example_data/tmp_LC.dat")
     # os.remove(r"example_data/tmp_avSFR.dat")
 
-def test_zm(obsZF, obsGSM, colsZ ,colsGSM,labelObs,outplot,h0=None, volume=const.vol_pm, verbose=False):
-
-    '''
-    Given log10(Mstar) and (12 + log(O/H)) get the plots to compare (12 + log(O/H)) vs log10(Mstar).
-    Get the GSMF and the ZF plots.
-    Given the observations, compare the plots with the observations too.
-
-    Parameters
-    ----------
-    obsGSM : string
-      - Name of the input file for the Z data observed.
-      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-      - In csv files (*.csv), columns separated by ','.
-      - Expected histogram mode:
-       - A column with the low value of the bin
-       - A column with the high value of the bin
-       - A column with the frequency in the bin
-       - A column with the error
-       
-    obsGSM : string
-      - Name of the input file for the GSM data observed.
-      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-      - In csv files (*.csv), columns separated by ','.
-      - Expected histogram mode:
-       - A column with the low value of the bin
-       - A column with the high value of the bin
-       - A column with the frequency in the bin
-       - A column with the error
-       
-    colsZ : list
-     - Columns with the data required to do the observational histogram of Z.
-     - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
-      - column1 is the column with the low values of the bins
-      - column2 with the high values of the bins
-      - column3 with the frequency
-      - column4 with the error  
-      
-    colsGSM : list
-      - Columns with the data required to do the observational histogram of the GSM.
-      - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
-       - column1 is the column with the low values of the bins, in h^-2Msun
-       - column2 with the high values of the bins, in h^-2Msun
-       - column3 with the frequency, in h^-3 Mpc^-3
-       - column4 with the error, in h^-3 Mpc^-3
-       
-    labelObs : list of strings
-      - For the legend, add the name to cite the observational data source.
-      - ['GSM observed', 'Z observed']
-      
-    outplot : string
-      - Name of the output file.
-      - Image-type files (*.pdf, *.jpg, ...)
-      
-    h0 : float
-      If not None: value of h, H0=100h km/s/Mpc.
-      
-    volume : float
-      - Carlton model default value = 542.16^3 Mpc^3/h^3.
-      - table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract
-      - If not 542.16**3. : valume of the simulation volume in Mpc^3/h^3
-      
-    verbose : boolean
-      If True print out messages
-
-    Returns
-    -------
-    plot((12 + log(O/H)),log10(Mstar)), plot GSMF and plot ZF,
-    all three in one grid.
-    Save it in the outplot path.
-    '''
-
-def test_medians(outplot, verbose=False):
+def test_medians(infile, outplot, verbose=False):
     '''
     Given U and ne calculated from the Mstar and the SFR in eml_une.
     get the plot of the medians of these quantities in masses bins.
@@ -401,14 +343,13 @@ def test_medians(outplot, verbose=False):
     
     SFR = ['avSFR']
     U_ne = ['u', 'ne']
-    col_une = [0,2] # [U, ne]
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
 
     # Prepare the bins
     mmin = 8.5
     mmax = 11.5
-    dm = 0.1
+    dm = 0.2
     mbins = np.arange(mmin, (mmax + dm), dm)
     mbinsH = np.arange(mmin, mmax, dm)
     mhist = mbinsH + dm * 0.5
@@ -418,7 +359,7 @@ def test_medians(outplot, verbose=False):
         # Prepare the figures
         plt.figure()
         plt.xlabel(r'$\log M_*/h^{-1} (M_\odot)$',size=15)
-        plotf = outplot + '/test_medians_'+ une+'_subvol.pdf'
+        plotf = outplot + '/test_medians_'+ une+'.pdf'
         col = cm(iu)
         color.append(col)  # col change for each iteration
         
@@ -431,27 +372,17 @@ def test_medians(outplot, verbose=False):
 
         for ii,sfr in enumerate(SFR):
             
-            # Read the data
-            tempfile_io = r"example_data/tmp_" + sfr + ".dat"
-
-            ih = get_nheader(tempfile_io)
-            lms = np.loadtxt(tempfile_io, skiprows=ih, usecols=(0), unpack=True) + np.log10(const.h)
-            
-            lms = np.load('lms.npy')[:4424] + np.log10(const.h)
-            
-            col = cm(ii)
-            #color.append(col)  # col change for each iteration
-            tempfile_une = r"example_data/tmp_une_" + sfr + ".dat"
-            # ih = get_nheader(tempfile_une) : Not necessary, it is the same that tempfile_io always.
-            data = np.loadtxt(tempfile_une,skiprows=ih,usecols=col_une,unpack=True) # data[0] = lu, data[1] = lne
-
-            lu = np.load('lu.npy')[:4424]
-            lne = np.load('lne.npy')[:4424]
+            with h5py.File(infile,'r') as file:
+                print(infile)
+                f = file['data']
+                lu = f['lu'][:,0]
+                lne = f['lne'][:,0]   
+                lms = f['lms'][:,0]  + np.log10(const.h)
             
             data = np.append([lu], [lne], axis=0)
             print(data.shape)
             
-            cut = np.where(lms>7)
+            cut = np.where((lms>7)&(lu!=const.notnum)&(lne!=const.notnum))
             
             # MEDIANS:
             median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
@@ -471,264 +402,248 @@ def test_medians(outplot, verbose=False):
             #plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
             #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
             #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
-            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, color=col, label='Calculated from the ' + SFR[ii] + '')
-        plt.legend()
+            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, color=col)#, label='Calculated from the ' + SFR[ii] + '')
+        # plt.legend()
         plt.savefig(plotf)
         plt.close()
 
 
 
-def test_bpt(outplot, photmod='gutkin16',verbose=False):
+def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=False, file_folder='output_data', verbose=False):
     '''
     Run a test of the interpolations done in eml_photio.
     Two plots, one to verify the U interpolation and the other one to verify the Z interpolation
     
     Parameters
     ----------
+    infile : string
+     Name of the input file. 
     outplot : string
      Path to the folder plot.
+    photmod : string
+      Photoionisation model to be used for look up tables.
+    plot_phot : boolean
+     If True it plots points from the photoionization tables.
+    create_file : boolean
+     If True it creates textfiles to read the photoionization tables.
+    file_folder : string
+     Folder where the textfiles to read the tables will be/are stored.
     verbose : boolean
-     If True print out messages
+     If True print out messages.
 
     Returns
-    -------
-    Plot of BPT diagram with the photoionisation model data and two points of our interpolation
+    -------´
+    Plot of several BPT diagrams.
     '''
-
-    # if photmod == 'gutkin16':
-    #     print(get_lines_Gutkin(Testing=True,Plotting=True,verbose=True))
-    # else:
-    #     print('STOP (eml_plots): Unrecognised model to get the interpolations ({})'.format(photmod))
-    #     print('                  Possible photmod = {}'.format(const.photmods))
-    #     exit()
-
-    Z = ['0001', '0002', '0005', '001', '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
-
-    zz = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
     
+    check_file(infile, verbose=True)
+    f = h5py.File(infile, 'r')
+    data = f['data']
+
+    lu_disk = data['lu'][:,0]
+    lne_disk = data['lne'][:,0]
+    loh12_disk = (data['loh12'][:,0])
     
-    # Z = ['0001', '002', '014', '030']
-    # zz = [0.0001,0.002,0.014,0.030]
-
-    uu = [-1., -1.5, -2., -2.5, -3., -3.5, -4.]
-
-    ne = ['100']  # ['10', '100', '1000','10000']
-
-    cm = plt.get_cmap('tab20') # Colour map to draw colours from
-
-    for iz, zname in enumerate(Z):
-        infile = r"nebular_data/gutkin_tables/nebular_emission_Z" + zname + ".txt"
-
-        ih = get_nheader(infile)
-
-        datane = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
-        datalu = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
-
-        OIII5007 = np.loadtxt(infile, skiprows=ih, usecols=(8), unpack=True)
-        Hb = np.loadtxt(infile, skiprows=ih, usecols=(6), unpack=True)
-        NII6548 = np.loadtxt(infile, skiprows=ih, usecols=(9), unpack=True)
-        Ha = np.loadtxt(infile, skiprows=ih, usecols=(10), unpack=True)
-
-        for ii, nh in enumerate(ne):
-            outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-
-            header1 = 'Z, U, NII6584[ind]/Ha[ind]  OIII5007[ind]/Hb[ind]'
-
-            ind = np.where(datane == float(nh))
-            x = np.log10(NII6548[ind] / Ha[ind])
-            y = np.log10(OIII5007[ind] / Hb[ind])
-            u = datalu[ind]
-            z = np.full(np.shape(u), zz[iz])
-
-            tofile = np.column_stack((z, u, x, y))
-
-            with open(outfile, 'a') as outf:
-                if iz == 0:
-                    np.savetxt(outf, tofile, delimiter=' ', header=header1)
-                else:
-                    np.savetxt(outf, tofile, delimiter=' ')
-                outf.closed
-
-    cols = []
-    for iz, lz in enumerate(zz):
-        col = cm(iz)
-        cols.append(col)
-
-    for ii, nh in enumerate(ne):
-        infile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-
-        ih = get_nheader(infile)
-
-        z = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
-        u = np.loadtxt(infile, skiprows=ih, usecols=(1), unpack=True)
-        x = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
-        y = np.loadtxt(infile, skiprows=ih, usecols=(3), unpack=True)
-
-        #os.remove(infile)
-
-        file = r"output_data/emlines_SAGE.hdf5"
-        check_file(file, verbose=True)
-        f = h5py.File(file, 'r')
-        header = f['header']
-        data = f['data']
-
-        print(list(data.keys()))
-
-        lu_disk = data['lu'][:,0]
-        #lu_bulge = data['lu'][:,1]
-        lne_disk = data['lne'][:,0]
-        #lne_bulge = data['lne'][:,1]
-        loh12_disk = (data['loh12'][:,0])
-        #loh12_bulge = (data['loh12'][:,1])
-        neblines_disk = data['nebline'][0,:]
-        #neblines_bulge = data['nebline'][1,:]
-
-        print(np.shape(neblines_disk)) ###### SHAPE neblines_disk >>> (18,n) 18 lines n data for each line
-
-        # Take the galaxies with ne >= 2:
-        ind = np.where((lne_disk >= 1.5)&(lu_disk < -1)&(lne_disk <= 2.5))
-        ind = np.array(ind[0])
-        
-        # ind2 = np.copy(ind)
-        
-        # while len(ind2)!=4:
-        #     randn = random.rand(len(ind))
-        #     ind2 = ind[(randn<0.02)&(np.log10(neblines_disk[4][ind]/neblines_disk[5][ind])<-1.6)]
-        #     print(len(ind2))
-        
-        # ind = ind2
-        # print(ind) #[578, 2259, 3442, 1539]
-        
-        cm2 = plt.get_cmap('tab20b')
-        cols2 = []
-        for i in range(len(ind)):
-            col = cm2(i*5)
-            cols2.append(col)
-
-        # lne_disk = lne_disk[ind]
-        # #lne_bulge = lne_bulge[ind]
-        # loh12_disk = loh12_disk[ind]
-        # #loh12_bulge = loh12_bulge[ind]
-        # lu_disk = lu_disk[ind]
-        #lu_bulge = lu_bulge[ind]
-
-        # DIFERENTS COLORS FOR U:
-
-        plt.figure(figsize=(15,15))
-        for iu, lu in enumerate(uu):
-            ind2 = np.where(u == uu[iu])
-            plt.plot(x[ind2], y[ind2], marker='.', linewidth=0, color=cols[iu], label='U = ' + str(lu) + '')
-
-        labelsU = []
-        for elem in lu_disk: labelsU.append('U = {}'.format(np.round(elem,2)))
-        
-        Hbeta = neblines_disk[1][ind]
-        OIII5007 = neblines_disk[3][ind]
-        NII6548 = neblines_disk[4][ind]
-        Halpha = neblines_disk[5][ind]
-        
-        print(len(ind), len(Hbeta), len(neblines_disk[1]))
-        
-        my_x = np.log10(NII6548 / Halpha)
-        my_y = np.log10(OIII5007 / Hbeta)
-        
-        # for i in range(len(ind)):
-            #plt.plot(my_x[i], my_y[i], marker='o', markersize=10, linewidth=0, color=cols2[i])
-            # plt.plot(my_x[i], my_y[i], marker='o', markersize=5, linewidth=0, color='black')
+    minU, maxU = get_limits(propname='U', photmod=photmod)
+    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
+    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
+    
+    ind = np.where((lu_disk!=minU)&(lu_disk!=maxU)&(loh12_disk!=np.log10(minZ))&(loh12_disk!=np.log10(maxZ))&
+                      (lne_disk!=np.log10(minnH))&(lne_disk!=np.log10(maxnH))) #We ignore the galaxies in the limits.
+    
+    Hbeta = np.sum(data['Hbeta_att'],axis=0)[ind]
+    OIII5007 = np.sum(data['OIII5007_att'],axis=0)[ind]
+    NII6548 = np.sum(data['NII6583_att'],axis=0)[ind]
+    Halpha = np.sum(data['Halpha_att'],axis=0)[ind]
+    SII6717_6731 = np.sum(data['SII6717_att'],axis=0)[ind] + np.sum(data['SII6731_att'],axis=0)[ind]
+    
+    # Hbeta = Hbeta[::10000]
+    # OIII5007 = OIII5007[::10000]
+    # NII6548 = NII6548[::10000]
+    # Halpha = Halpha[::10000]
+    # SII6717_6731 = SII6717_6731[::10000]
+    
+    ind2 = np.where((Hbeta!=0)&(OIII5007!=0)&(NII6548!=0)&(Halpha!=0)&(SII6717_6731!=0))
+    
+    print(len(ind[0]),len(ind2[0]))
+    
+    Hbeta = Hbeta[ind2]
+    OIII5007 = OIII5007[ind2]
+    NII6548 = NII6548[ind2]
+    Halpha = Halpha[ind2]
+    SII6717_6731 = SII6717_6731[ind2]
+    
+    bpt_x = ['log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)','log$_{10}$([SII]$\\lambda$(6717+6731)/H$\\alpha$)']
+    my_x = [np.log10(NII6548 / Halpha),np.log10(SII6717_6731 / Halpha)]
+    
+    bpt_y = ['log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)','log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)']
+    my_y = [np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / Hbeta)]
+    
+    if not plot_phot:
+        for i in range(2):
+            plt.figure(figsize=(15,15))
             
-        print(my_x.shape,my_y.shape)
-        plt.plot(my_x, my_y, marker='o', markersize=2, linewidth=0, color='black')
-        
-        plt.xlabel('log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)')
-        plt.ylabel('log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)')
-
-        # for i, label in enumerate(labelsU):
-        #     plt.annotate(label, (my_x[i], my_y[i]))
-        plotnom = outplot + '/BPTplot_n_' + nh + '_U_test_SAGE.png'
-        plt.legend()
-        
-        # cut = np.load('cut_GALFORM_subvol8.npy')
-        # limits = np.load('limits_GALFORM_subvol8.npy')
-        
-        # Hbeta = np.load('Hbeta_sub8.npy')
-        # OIII5007 = np.load('OIII_sub8.npy')
-        # NII6548 = np.load('NII_sub8.npy')
-        # Halpha = np.load('Halpha_sub8.npy')
-        
-        # Hbeta = Hbeta[cut]
-        # OIII5007 = OIII5007[cut]
-        # NII6548 = NII6548[cut]
-        # Halpha = Halpha[cut]
-        
-        # Hbeta = Hbeta[limits]
-        # OIII5007 = OIII5007[limits]
-        # NII6548 = NII6548[limits]
-        # Halpha = Halpha[limits]
-        
-        # Hbeta = Hbeta[ind]
-        # OIII5007 = OIII5007[ind]
-        # NII6548 = NII6548[ind]
-        # Halpha = Halpha[ind]
-        
-        # my_x = np.log10(NII6548 / Halpha)
-        # my_y = np.log10(OIII5007 / Hbeta)
-        
-        # for i in range(len(ind)):
-        #     #plt.plot(my_x[i], my_y[i], marker='o', markersize=10, linewidth=0, color=cols2[i])
-        #     plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='blue')
-
-        plt.savefig(plotnom)
-        plt.close()
-        #plt.show()
-
-        # DIFFERENTS COLORS FOR Z:
-
-        plt.figure(figsize=(15,15))
-        for iz, lz in enumerate(zz):
-            ind2 = np.where(z == zz[iz])
-            plt.plot(x[ind2], y[ind2], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
-
-        labelsZ = []
-        for elem in loh12_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
-        
-        # Hbeta = neblines_disk[1][ind]
-        # OIII5007 = neblines_disk[3][ind]
-        # NII6548 = neblines_disk[4][ind]
-        # Halpha = neblines_disk[5][ind]
-        
-        # my_x = np.log10(NII6548 / Halpha)
-        # my_y = np.log10(OIII5007 / Hbeta)
-        
-        # # for i in range(len(ind)):
-        #     #plt.plot(my_x[i], my_y[i], marker='o', markersize=10, linewidth=0, color=cols2[i])
-        #     # plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
+            xmin=-2.5
+            xmax=1
+            ymin=-2
+            ymax=2
             
-        # print(my_x.shape,my_y.shape)
-        plt.plot(my_x, my_y, marker='o', markersize=2, linewidth=0, color='black')
+            # X1, Y1 = np.mgrid[xmin:xmax:68j, ymin:ymax:68j]
+            # positions = np.vstack([X1.ravel(), Y1.ravel()])
+            # values = np.vstack([my_x[i], my_y[i]])
+            # kernel = stats.gaussian_kde(values,0.75)
+            # BPT = np.reshape(kernel(positions).T, X1.shape)
+            # plt.imshow(BPT, cmap=plt.cm.gist_earth_r,extent=[xmin, xmax, ymin, ymax],aspect=(xmax-xmin)/(ymax-ymin))#,vmin=0,vmax=1)
+            
+            plt.plot(my_x[i], my_y[i], marker='o', markersize=1, linewidth=0, color='black')
+            
+            plt.xlabel(bpt_x[i],size=30)
+            plt.ylabel(bpt_y[i],size=30)
+            plt.xticks(fontsize=30)
+            plt.yticks(fontsize=30)
+            
+            plt.xlim((xmin,xmax))
+            plt.ylim((ymin,ymax))
+            plt.grid()
+            
+            plotnom = outplot + '/BPTplot_' + str(i) + '.png'
         
-        # for i, label in enumerate(labelsZ):
-        #     plt.annotate(label, (my_x[i], my_y[i]))
-        plotnom = outplot + '/BPTplot_n_' + nh + '_Z_test_SAGE.png'
-        plt.legend()
+            plt.savefig(plotnom)
+            plt.close()
+    
+    if plot_phot:       
+        if photmod not in const.photmods:
+            if verbose:
+                print('STOP (eml_photio.test_bpt): Unrecognised model to get emission lines.')
+                print('                Possible photmod= {}'.format(const.photmods))
+            sys.exit()
+        elif (photmod == 'gutkin16'):
+            
+            Z = ['0001', '0002', '0005', '001', '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
         
-        # Hbeta = np.load('Hbeta_sub8.npy')[ind]
-        # OIII5007 = np.load('OIII_sub8.npy')[ind]
-        # NII6548 = np.load('NII_sub8.npy')[ind]
-        # Halpha = np.load('Halpha_sub8.npy')[ind]
-
-        # my_x = np.log10(NII6548 / Halpha)
-        # my_y = np.log10(OIII5007 / Hbeta)
+            zz = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
         
-        # for i in range(len(ind)):
-        #     #plt.plot(my_x[i], my_y[i], marker='o', markersize=10, linewidth=0, color=cols2[i])
-        #     plt.plot(my_x[i], my_y[i], marker='o', markersize=5, linewidth=0, color='blue')
-
-        plt.xlabel('log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)')
-        plt.ylabel('log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)')
-
-        plt.savefig(plotnom)
-        plt.close()
+            uu = [-1., -1.5, -2., -2.5, -3., -3.5, -4.]
         
-        f.close()
-        plt.show()
-        #os.remove(file)
+            ne = ['100']  # ['10', '100', '1000','10000']
+        
+            cm = plt.get_cmap('tab20') # Colour map to draw colours from
+        
+            if create_file:
+                for iz, zname in enumerate(Z):
+                    infile = r"nebular_data/gutkin_tables/nebular_emission_Z" + zname + ".txt"
+            
+                    ih = get_nheader(infile)
+            
+                    datane = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
+                    datalu = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
+            
+                    OIII5007_model = np.loadtxt(infile, skiprows=ih, usecols=(8), unpack=True)
+                    Hb_model = np.loadtxt(infile, skiprows=ih, usecols=(6), unpack=True)
+                    NII6548_model = np.loadtxt(infile, skiprows=ih, usecols=(9), unpack=True)
+                    Ha_model = np.loadtxt(infile, skiprows=ih, usecols=(10), unpack=True)
+                    SII6717_6731_model = np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True) + np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True)
+            
+                    for ii, nh in enumerate(ne):
+                        outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
+                        if iz==0 and os.path.exists(outfile):
+                            os.remove(outfile)
+            
+                        header1 = 'Z, U, NII6584/Ha  OIII5007/Hb, SII(6717+6731)/Ha'
+            
+                        ind = np.where(datane == float(nh))
+                        x = np.log10(NII6548_model[ind] / Ha_model[ind])
+                        y = np.log10(OIII5007_model[ind] / Hb_model[ind])
+                        p = np.log10(SII6717_6731_model[ind] / Ha_model[ind])
+                        u = datalu[ind]
+                        z = np.full(np.shape(u), zz[iz])
+            
+                        tofile = np.column_stack((z, u, x, y, p))
+            
+                        with open(outfile, 'a') as outf:
+                            if iz == 0:
+                                np.savetxt(outf, tofile, delimiter=' ', header=header1)
+                            else:
+                                np.savetxt(outf, tofile, delimiter=' ')
+                            outf.closed
+            else:
+                for ii, nh in enumerate(ne):
+                    outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
+                    if not os.path.exists(outfile):
+                        print('STOP (eml_photio.test_bpt): Textfiles for table reading dont exist.')
+                        print('Create them with create_file = True.')
+        
+            cols = []
+            for iz, lz in enumerate(zz):
+                col = cm(iz)
+                cols.append(col)
+        
+            for ii, nh in enumerate(ne):
+                infile = r"output_data/Gutkinfile_n_" + nh + ".txt"
+        
+                ih = get_nheader(infile)
+        
+                z = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
+                u = np.loadtxt(infile, skiprows=ih, usecols=(1), unpack=True)
+                x = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
+                y = np.loadtxt(infile, skiprows=ih, usecols=(3), unpack=True)
+                p = np.loadtxt(infile, skiprows=ih, usecols=(4), unpack=True)
+                
+                comp_x = [x,p]
+                comp_y = [y,y]
+        
+                # DIFERENTS COLORS FOR U:
+                    
+                for i in range(2):
+                    plt.figure(figsize=(15,15))
+        
+                    for iu, lu in enumerate(uu):
+                        ind2 = np.where(u == uu[iu])
+                        plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iu], label='U = ' + str(lu) + '')
+            
+                    labelsU = []
+                    for elem in lu_disk: labelsU.append('U = {}'.format(np.round(elem,2)))
+                    
+                    plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
+                    
+                    plt.xlabel(bpt_x[i],size=30)
+                    plt.ylabel(bpt_y[i],size=30)
+                    plt.xticks(fontsize=30)
+                    plt.yticks(fontsize=30)
+                    plt.grid()
+                    plt.legend()
+                    
+                    plotnom = outplot + '/BPTplot_U_' + str(i) + '.png'
+                    
+                    print('U', str(i))
+                
+                    plt.savefig(plotnom)
+                    plt.close()
+        
+                # DIFFERENTS COLORS FOR Z:
+                    
+                for i in range(2):
+                    plt.figure(figsize=(15,15))
+        
+                    for iz, lz in enumerate(zz):
+                        ind2 = np.where(z == zz[iz])
+                        plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
+            
+                    labelsZ = []
+                    for elem in loh12_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
+                    
+                    plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
+                    
+                    plt.xlabel(bpt_x[i],size=30)
+                    plt.ylabel(bpt_y[i],size=30)
+                    plt.xticks(fontsize=30)
+                    plt.yticks(fontsize=30)
+                    plt.grid()
+                    plt.legend()
+                    
+                    plotnom = outplot + '/BPTplot_Z_' + str(i) + '.png'
+                    
+                    print('Z', str(i))
+                
+                    plt.savefig(plotnom)
+                    plt.close()

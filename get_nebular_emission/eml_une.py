@@ -11,12 +11,12 @@ def get_une_withmodel(lms, lssfr, loh12, unemod, verbose=False):
 
     Parameters
     ----------
-    lms : float
-      log10(Mstar/Msun)
-    lssfr : float
-      log10(sSFR/yr), it should be an instantaneous measurement
-    loh12 : float 
-      12+log(O/H)
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    loh12 : floats
+     Metallicity of the galaxies per component (12+log(O/H)).
     unemod : string
       Model to go from galaxy properties to U and ne
     verbose : boolean
@@ -24,7 +24,7 @@ def get_une_withmodel(lms, lssfr, loh12, unemod, verbose=False):
 
     Returns
     -------
-    u, ne : floats
+    lu, lne, loh12 : floats
     '''
     
     lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
@@ -38,7 +38,8 @@ def get_une_withmodel(lms, lssfr, loh12, unemod, verbose=False):
             lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
     
             lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr[ind] + 9.)
-        loh12[ind] = loh12[ind] - const.ohsun + np.log10(const.zsun)
+            # lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)
+        loh12[ind] = loh12[ind] - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
     
 
     return lu, lne, loh12
@@ -50,12 +51,12 @@ def get_une(lms, lssfr, loh12, unemod='kashino20', LC2sfr=False, Testing=False, 
 
     Parameters
     ----------
-    lms : float
-      log10(Mstar/Msun)
-    lssfr : float
-      log10(sSFR/yr), it should be an instantaneous measurement
-    loh12 : float 
-      12+log(O/H)
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    loh12 : floats
+     Metallicity of the galaxies per component (12+log(O/H)).
     unemod : string
       Model to go from galaxy properties to U and ne
     LC2sfr : boolean
@@ -69,11 +70,9 @@ def get_une(lms, lssfr, loh12, unemod='kashino20', LC2sfr=False, Testing=False, 
 
     Returns
     -------
-    lu, lne : floats
+    lu, lne, loh12 : floats
     '''
 
-    lu = None ; lne = None
-    
     ncomp = len(lms[0])
     
     if unemod not in const.unemods:
@@ -82,9 +81,9 @@ def get_une(lms, lssfr, loh12, unemod='kashino20', LC2sfr=False, Testing=False, 
             print('                Possible unemod= {}'.format(const.unemods))
         sys.exit()
     elif (unemod == 'kashino20'):
-        lu, lne = get_une_withmodel(lms,lssfr,loh12,unemod,verbose=verbose)
+        lu, lne, loh12 = get_une_withmodel(lms,lssfr,loh12,unemod,verbose=verbose)
 
-    if Plotting:  # here : Search more efficient form. Allow more components in the header
+    if Plotting:
         if ncomp==2:
             header1 = 'log(u_disk),log(u_bulge),log(ne_disk),log(ne_bulge)'
             datatofile = np.append(lu, lne, axis=1)
@@ -92,14 +91,11 @@ def get_une(lms, lssfr, loh12, unemod='kashino20', LC2sfr=False, Testing=False, 
             header1 = 'log(u), log(ne)'
             datatofile = np.append(lu, lne, axis=1)
             
-        # print(ncomp)
-            
         if LC2sfr:
             outfil = r"example_data/tmp_une_LC_SAGE.dat"
         else:
             outfil = r"example_data/tmp_une_avSFR_SAGE.dat"
         with open(outfil, 'w') as outf:
             np.savetxt(outf, datatofile, delimiter=' ', header=header1)
-            # outf.closed
         
-    return lu, lne
+    return lu, lne, loh12

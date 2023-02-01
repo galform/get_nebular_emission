@@ -7,10 +7,13 @@ listed below in alphabetical order. The list contains the module name
 followed by the function name with the expected input parameters in
 brackets.
 
--  ``eml.eml(infile, m_sfr_z, h0=None, volume = 542.16**3.,
-   unemod='kashino20',photmod='gutkin16',
-   LC2sfr=False, mtot2mdisk = True,
-   verbose=False, Plotting=False, Testing=False)``: 
+-  ``eml.eml(infile, outfile, m_sfr_z, h0=None, cutcols=[None], mincuts=[None], 
+        maxcuts=[None], att_param=['Rvir','ColdGas'],
+        volume = 542.16**3.,inputformat='HDF5',
+        IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
+        attmod='cardelli89',unemod='kashino20',photmod='gutkin16',
+        LC2sfr=False, cutlimits=False, mtot2mdisk = True,
+        verbose=True, Plotting=False, Testing=False)``: 
    Master function of the ``get_nebular_emission`` package that
    calculate emission lines given the properties of model galaxies.
    This function follows the flow chart presented in

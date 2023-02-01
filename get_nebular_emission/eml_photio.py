@@ -5,11 +5,7 @@ import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import check_file
 import sys
 import warnings
-
-
-mod_lim = {'gutkin16': r"nebular_data/gutkin_tables/limits_gutkin.txt"}
-
-# print(mod_lim.keys()) # To show the keys
+from cosmology import emission_line_flux
 
 #------------------------------------------------------------------------------------
 #   Cardelli et al. 1989 extinction laws in FIR and IR/OPT:
@@ -73,7 +69,7 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, costheta=
     
     return coef_att
 
-def coef_att_galform(infile,cols,lines=[0,1,3,5,6,7,8],photmod='gutkin16',verbose=True):
+def coef_att_galform(infile,cols,inputformat='HDF5',photmod='gutkin16',verbose=True):
     '''
     It reads luminosities of lines with and without attenuation
     from GALFORM data and it returns the attenuation coefficients.
@@ -82,9 +78,17 @@ def coef_att_galform(infile,cols,lines=[0,1,3,5,6,7,8],photmod='gutkin16',verbos
     Parameters
     ----------
     infile : string
-      Name of the input file. Expects an hdf5 file.
+     Name of the input file. Expects an hdf5 file.
+    inputformat : string
+     Format of the input file.
+    cols : list
+     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
+     - Expected : component1 = total or disk, component2 = bulge
+     - For text or csv files: list of integers with column position.
+    photmod : string
+     Photoionisation model to be used for look up tables.
     verbose : boolean
-      If True print out messages
+     If True print out messages
 
     Returns
     -------
@@ -95,41 +99,122 @@ def coef_att_galform(infile,cols,lines=[0,1,3,5,6,7,8],photmod='gutkin16',verbos
     
     ncomp = len(cols)
     
-    if ('.hdf5' not in infile):
-        infile = infile[:-4] + '.hdf5' #This expects a .txt or a .dat
-    
-    lines = const.lines_model[photmod][lines]
-    
+    if ncomp>2:
+        if verbose:
+            print('STOP (eml_photio.coef_att_galform): ',
+                  'GALFORM does not have more than two components.')
+        sys.exit()
+        
+    lines = const.lines_model[photmod]
     numlines = len(lines)
     
-    with h5py.File(infile, 'r') as f:
-        hf = f['data']
+    if inputformat=='HDF5':
+        with h5py.File(infile, 'r') as f:
+            hf = f['data']
+            
+            coef_att = np.empty((ncomp,numlines,len(hf[const.line_headers[0] + lines[0]])))
+            coef_att.fill(1)
         
-        coef_att = np.empty((ncomp,numlines,len(hf['L_disk_' + lines[0]])))
+            for i in range(numlines):
+                
+                if ncomp==2:
+                    line_disk = const.line_headers[1] + lines[i]
+                    line_bulge = const.line_headers[2] + lines[i]
+                    att_disk = line_disk + const.att_ext
+                    att_bulge = line_bulge + const.att_ext
+                    try:
+                        indd = np.where(hf[line_disk][:] > 0.)[0] 
+                        indb = np.where(hf[line_bulge][:] > 0.)[0]
+                        
+                        coef_att[0,i,indd] = hf[att_disk][indd]/hf[line_disk][indd]
+                        coef_att[1,i,indb] = hf[att_bulge][indb]/hf[line_bulge][indb]
+                        
+                        coef_att[0,i][(coef_att[0,i]>1.)&(coef_att[0,i]-1 < 0.01)] = 1.
+                        coef_att[1,i][(coef_att[1,i]>1.)&(coef_att[1,i]-1 < 0.01)] = 1.
+                    except:
+                        coef_att[0,i] = const.notnum
+                        coef_att[1,i] = const.notnum
+                else:
+                    line = const.line_headers[0] + lines[i]
+                    att = line + const.att_ext
+                    try:
+                        ind = np.where(hf[line][:] > 0.)[0]
+                        
+                        coef_att[0,i,ind] = hf[att][ind]/hf[line][ind]
+                        
+                        coef_att[0,i][(coef_att[0,i]>1.)&(coef_att[0,i]-1 < 0.01)] = 1.
+                    except:
+                        coef_att[0,i] = const.notnum
+    elif inputformat=='textfile':
+        headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
+                   'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
+                   'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
+                   'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
+                   'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
+                   'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
+                   'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
+                   'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
+                   'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
+                   'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
+                   'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
+                   'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
+                   'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
+        
+        ih = get_nheader(infile)        
+        X = np.loadtxt(infile,skiprows=ih).T
+        
+        coef_att = np.empty((ncomp,numlines,len(X[0])))
         coef_att.fill(1)
     
-        if ncomp==2:
-            for i in range(numlines):
-                indd = np.where(hf['L_disk_' + lines[i]][:] > 0.)[0]
-                indb = np.where(hf['L_bulge_' + lines[i]][:] > 0.)[0]
+        for i in range(numlines):
+            
+            if ncomp==2:
+                line_disk = const.line_headers[1] + lines[i]
+                line_bulge = const.line_headers[2] + lines[i]
+                att_disk = line_disk + const.att_ext
+                att_bulge = line_bulge + const.att_ext
                 
-                coef_att[0,i,indd] = hf['L_disk_' + lines[i] + '_ext'][indd]/hf['L_disk_' + lines[i]][indd]
-                coef_att[1,i,indb] = hf['L_bulge_' + lines[i] + '_ext'][indb]/hf['L_bulge_' + lines[i]][indb]
+                for j, elem in enumerate(headers):
+                    if elem == line_disk:
+                        line_disk = j
+                    elif elem == line_bulge:
+                        line_bulge = j
+                    elif elem == att_disk:
+                        att_disk = j
+                    elif elem == att_bulge:
+                        att_bulge = j
+                try:
+                    indd = np.where(X[line_disk] > 0.)[0]
+                    indb = np.where(X[line_bulge] > 0.)[0]
+                    
+                    coef_att[0,i,indd] = X[att_disk][indd]/X[line_disk][indd]
+                    coef_att[1,i,indb] = X[att_bulge][indb]/X[line_bulge][indb]
+                    
+                    coef_att[0,i][(coef_att[0,i]>1.)&(coef_att[0,i]-1 < 0.01)] = 1.
+                    coef_att[1,i][(coef_att[1,i]>1.)&(coef_att[1,i]-1 < 0.01)] = 1.
+                except:
+                    coef_att[0,i] = const.notnum
+                    coef_att[1,i] = const.notnum
+            else:
+                line = const.line_headers[0] + lines[i]
+                att = line + const.att_ext
                 
-                coef_att[0,i][(coef_att[0,i]>1.)&(coef_att[0,i]-1 < 0.01)] = 1.
-                coef_att[1,i][(coef_att[1,i]>1.)&(coef_att[1,i]-1 < 0.01)] = 1.
-        elif ncomp==1:
-            for i in range(numlines):
-                ind = np.where(hf['L_tot_' + lines[i]][:] > 0.)[0]
-                
-                coef_att[0,i,ind] = hf['L_tot_' + lines[i] + '_ext'][ind]/hf['L_tot_' + lines[i]][ind]
-                
-                coef_att[0,i][(coef_att[0,i]>1.)&(coef_att[0,i]-1 < 0.01)] = 1.
-        else:
-            if verbose:
-                print('STOP (eml_photio.coef_att_galform): ',
-                      'GALFORM does not have more than two components.')
-                sys.exit()
+                for j, elem in enumerate(headers):
+                    if elem == line:
+                        line = j
+                    elif elem == att:
+                        att = j
+                try:
+                    ind = np.where(X[line] > 0.)[0]
+                    
+                    coef_att[0,i,ind] = X[att][ind]/X[line][ind]
+                    
+                    coef_att[0,i][(coef_att[0,i]>1.)&(coef_att[0,i]-1 < 0.01)] = 1.
+                except:
+                    coef_att[0,i] = const.notnum
+                    
+        del X
+        
     
     return coef_att
 
@@ -163,7 +248,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
 
     return zfile
 
-def clean_photarray(lu, lne, loh12, photmod='gutkin16', verbose=True):
+def clean_photarray(lms, lssfr, lu, lne, loh12, cutlimits=False, photmod='gutkin16', verbose=True):
 
     '''
     Given the model, take the values outside the limits and give them the apropriate
@@ -171,106 +256,54 @@ def clean_photarray(lu, lne, loh12, photmod='gutkin16', verbose=True):
 
     Parameters
     ----------
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lu : floats
+     U of the galaxies per component.
+    lne : floats
+     ne of the galaxies per component (cm^-3).
+    loh12 : floats
+     Metallicity of the galaxies per component (12+log(O/H))
+    cutlimits : boolean
+     If True the galaxies with U, ne and Z outside the photoionization model's grid limits won't be considered.
     photomod : string
      Name of the considered photoionisation model
-
     verbose : boolean
      If True print out messages
 
     Returns
     -------
-    lu,lne,loh12 : arrays
-     - Array of the properties with all the data in the limits.
-     - Two components [disk, bulge]
+    lms,lssfr,lu,lne,loh12 : floats
+    limits : integers
     '''
 
-
-    # Read the data file:
-    # infile = r"output_data/U_ne_loh12.hdf5"
-
-    # check_file(infile, verbose=verbose)
-
-    # f = h5py.File(infile,'r')
-    # header = f['header']
-    # data = f['data']
-
-    # lu = data['lu'][:]
-    lud=[]; lub=[]
-
-    for ii, u in enumerate(lu):
-        u1 = lu[ii]
-        u1 = u1.tolist()
-        lud.append(u1[0])
-        lub.append((u1[1]))
-    lud = np.array(lud)
-    lub = np.array(lub)
-
-
-    # lne = data['lne'][:]
-    lned=[];lneb=[]
-    for ii, ne in enumerate(lne):
-        ne1 = lne[ii]
-        ne1 = ne1.tolist()
-        lned.append(ne1[0])
-        lneb.append((ne1[1]))
-    lned = np.array(lned)
-    lneb = np.array(lneb)
-
-
-    # loh12 = data['loh12'][:]
-    loh12d=[];loh12b=[]
-    for ii, oh12 in enumerate(loh12):
-        oh121 = loh12[ii]
-        oh121 = oh121.tolist()
-        loh12d.append(oh121[0])
-        loh12b.append((oh121[1]))
-    loh12d = np.array(loh12d)
-    loh12b = np.array(loh12b)
-
-
-    lowerl, upperl = get_limits(propname='U', photmod=photmod)
-
-    ind = np.where((lud > upperl)&(lud != const.notnum))
-    lud[ind] = upperl
-    ind = np.where((lud < lowerl)&(lud != const.notnum))
-    lud[ind] = lowerl
-
-    ind = np.where((lub > upperl)&(lub != const.notnum))
-    lub[ind] = upperl
-    ind = np.where((lub < lowerl)&(lub != const.notnum))
-    lub[ind] = lowerl
-
-    lu = np.stack((lud, lub))
-
-    lowerl, upperl = get_limits(propname='nH', photmod=photmod)
+    minU, maxU = get_limits(propname='U', photmod=photmod)
+    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
+    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
     
-    ind = np.where((lned > upperl)&(lned != const.notnum))
-    lned[ind] = upperl
-    ind = np.where((lned < lowerl)&(lned != const.notnum))
-    lned[ind] = lowerl
-
-    ind = np.where((lneb > upperl)&(lneb != const.notnum))
-    lneb[ind] = upperl
-    ind = np.where((lneb < lowerl)&(lneb != const.notnum))
-    lneb[ind] = lowerl
-
-    lne = np.stack((lned, lneb))
-
-    lowerl, upperl = get_limits(propname='Z', photmod=photmod)
+    limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(loh12[:,0]>np.log10(minZ))&(loh12[:,0]<np.log10(maxZ))&
+                      (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=const.notnum))[0]
     
-    ind = np.where((loh12d > upperl)&(loh12d != const.notnum))
-    loh12d[ind] = upperl
-    ind = np.where((loh12d < lowerl)&(loh12d != const.notnum))
-    loh12d[ind] = lowerl
-
-    ind = np.where((loh12b > upperl)&(loh12b != const.notnum))
-    loh12b[ind] = upperl
-    ind = np.where((loh12b < lowerl)&(loh12b != const.notnum))
-    loh12b[ind] = lowerl
-
-    loh12 = np.stack((loh12d, loh12b))
-
-    return lu.T, lne.T, loh12.T
+    if cutlimits:
+        lms = lms[limits]
+        lssfr = lssfr[limits]
+        loh12 = loh12[limits]
+        lu = lu[limits]
+        lne = lne[limits]
+    else:
+        for i in range(lu.shape[1]):        
+                lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != const.notnum)] = maxU
+                lu[:,i][(lu[:,i] < minU)&(lu[:,i] != const.notnum)] = minU
+                
+                lne[:,i][(lne[:,i] > np.log10(maxnH))&(lne[:,i] != const.notnum)] = np.log10(maxnH)
+                lne[:,i][(lne[:,i] < np.log10(minnH))&(lne[:,i] != const.notnum)] = np.log10(minnH)
+                
+                loh12[:,i][(loh12[:,i] > np.log10(maxZ))&(loh12[:,i] != const.notnum)] = np.log10(maxZ)
+                loh12[:,i][(loh12[:,i] < np.log10(minZ))&(loh12[:,i] != const.notnum)] = np.log10(minZ)
+                
+    return lms, lssfr, lu, lne, loh12, limits
 
 def get_limits(propname, photmod = 'gutkin16',verbose=True):
     '''
@@ -310,10 +343,10 @@ def get_limits(propname, photmod = 'gutkin16',verbose=True):
     '''
 
     try:
-        infile = mod_lim[photmod]
+        infile = const.mod_lim[photmod]
     except KeyError:
         print('STOP (eml_photio): the {}'.format(photmod) + ' model is an unrecognised model in the dictionary mod_lim')
-        print('                  Possible photmod= {}'.format(mod_lim.keys()))
+        print('                  Possible photmod= {}'.format(const.mod_lim.keys()))
         exit()
 
     # Check if the limits file exists:
@@ -343,11 +376,11 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     Parameters
     ----------
     lu : floats
-      Ionization parameter, log10(U) (dimensionless) [disk, bulge]
+     U of the galaxies per component.
     lne : floats
-      Electron density, log10(nH) (cm**-3) [disk, bulge]
+     ne of the galaxies per component (cm^-3).
     loh12 : floats
-      Metallicity, 12+log(O/H) [disk, bulge]
+     Metallicity of the galaxies per component (12+log(O/H))
     Plotting : boolean
       If True run verification plots with all data.
     Testing : boolean
@@ -357,8 +390,8 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
       
     Returns
     -------
-    nebline_disk, nebline_bulge : floats
-      Fluxes of the lines for the disk and bulge components.
+    nebline : floats
+     Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     '''
     
     zmet_str = const.zmet_str['gutkin16']
@@ -443,27 +476,6 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                             if nH == 10000:
                                 emline_grid4[kred,l,j] = float(data[j+5])
         ff.close()
-    # From Carlton's code, I do not understand from line 201 to line 212:
-    '''
-    for kred in range(nzmet_reduced):
-        for l in range(nu):
-            emline_grid1(kred,l,1)
-            emline_grid1(kred,l,3)
-            emline_grid1(kred,l,5)
-            emline_grid1(kred,l,6)
-    
-    for k in range(nzmet):
-        for l in range(nu):
-            emline_grid2(k,l,1)
-            emline_grid2(k,l,3)
-            emline_grid2(k,l,5)
-            emline_grid2(k,l,6)
-        
-            emline_grid3(k,l,1)
-            emline_grid3(k,l,3)
-            emline_grid3(k,l,5)
-            emline_grid3(k,l,6)
-    '''
 
     # log metallicity bins ready for interpolation:
 
@@ -483,6 +495,8 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
     
     for comp in range(ncomp):
+        
+        ind = np.where(lu[:,comp] != const.notnum)[0]
 
         emline_int1 = np.zeros((nemline,ndat))
         emline_int2 = np.zeros((nemline, ndat))
@@ -508,7 +522,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                 d = (logu - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
                 du.append(d)
                 j.append(j1)
-    
+
         # Interpolate over disk gas metallicity loh12[comp]
         dz = []
         i = []
@@ -532,7 +546,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     
     
         for k in range(nemline):
-            for ii in range(ndat):
+            for ii in ind:
                 #emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))
                 #print(emline_grid1[i[ii]][j[ii]][k])
                 emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
@@ -570,7 +584,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     
     
         for k in range(nemline):
-            for ii in range(ndat):
+            for ii in ind:
                 emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
                                      dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
                                      (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
@@ -583,7 +597,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     
         # Interpolate over ne
         # use gas density in disk logned
-        for n in range(ndat):
+        for n in ind:
             if (lne[:,comp][n] > 2. and lne[:,comp][n] <= 3.):
                 dn = (lne[:,comp][n] -2.)/(3. - 2.)
                 for k in range(nemline):
@@ -621,11 +635,11 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True, Testing=False, P
     Parameters
     ----------
     lu : floats
-      Ionization parameter, log10(U) (dimensionless) [disk, bulge]
+     U of the galaxies per component.
     lne : floats
-      Electron density, log10(nH) (cm**-3) [disk, bulge]
+     ne of the galaxies per component (cm^-3).
     loh12 : floats
-      Metallicity, 12+log(O/H) [disk, bulge]
+     Metallicity of the galaxies per component (12+log(O/H))
     photomod : string
       Name of the considered photoionisation model
     verbose : boolean
@@ -637,8 +651,8 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True, Testing=False, P
 
     Returns
     -------
-    nebline_disk, nebline_bulge : floats
-      Fluxes of the lines for the disk and bulge components.
+    nebline : floats
+     Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     '''
     
     #lu,lne,loh12 = clean_photarray(lu,lne,loh12,photmod=photmod,verbose=verbose)
@@ -654,53 +668,69 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True, Testing=False, P
 
     return nebline
 
-def attenuation(nebline, m_sfr_z, att_param=['Rvir','ColdGas'], attmod='GALFORM', 
-                photmod='gutkin16', infile=None, cut=None, limits=None, verbose=True):
+def attenuation(nebline, m_sfr_z, att_param=['Rvir','ColdGas'], inputformat='HDF5', attmod='GALFORM', 
+                photmod='gutkin16', infile=None, cut=None, limits=None, cutlimits=False, verbose=True):
     '''
     Get the attenuated emission lines from the raw ones.
 
     Parameters
     ----------
-    nebline_disk, nebline_bulge : floats
-      Fluxes of the lines for the disk and bulge components.
+    nebline : floats
+     Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr).
+    infile : string
+     - Name of the input file. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    m_sfr_z : list
+     - [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    att_param : list
+     Parameters to look for calculating attenuation. See eml_const to know what each model expects.
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    inputformat : string
+     Format of the input file.
+    attmod : string
+     Attenuation model.
+    photmod : string
+     Photoionisation model to be used for look up tables.
+    cut : integers
+     Indeces of the cutted galaxies.
+    limits : integers
+     Indeces of the galaxies with U, ne and Z outside the limits of the photoionization model
+     after the initial cut.
+    cutlimits : boolean
+     If True the galaxies with U, ne and Z outside the photoionization model's grid limits won't be considered.
+    verbose : boolean
+     If True print out messages.
 
     Returns
     -------
     nebline_att : floats
-      Fluxes of the attenuated lines for the disk and bulge components.
-      
+      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     lines : floats
       Array with indexes of the lines whose fluxes will be stored in the output file.
       
     Notes
     -------
-    In general, lines will cover all the lines in the model. It will only eliminate the lines
-    for which, for any reason, attenuation can not be calculated.
+    It will ignore the lines for which, for any reason, attenuation can not be calculated.
     '''
     
     ncomp = len(nebline)
     
-    if ('.hdf5' not in infile):
-        infile = infile[:-4] + '.hdf5' #This expects a .txt or a .dat 
-        
     if attmod not in const.attmods:
         if verbose:
             print('STOP (eml_photio.attenuation): Unrecognised model for attenuation.')
             print('                Possible attmod= {}'.format(const.attmods))
         sys.exit()
     elif attmod=='ratios':
-        lines = []
-        with h5py.File(infile,'r') as f:
-            hf = f['data']
-            for i, line in enumerate(const.lines_model[photmod]):
-                if any(line in key for key in hf.keys()):
-                    lines.append(i)
-        coef_att = coef_att_galform(infile,m_sfr_z, lines=lines,photmod=photmod,verbose=verbose)
+        coef_att = coef_att_galform(infile,m_sfr_z,inputformat=inputformat,photmod=photmod,verbose=verbose)
         
-        coef_att = coef_att[:,:,cut]
-        coef_att = coef_att[:,:,limits]
+        coef_att = coef_att[:,:,cut]        
+        if cutlimits:
+            coef_att = coef_att[:,:,limits]
     elif attmod=='cardelli89':
-        lines = np.arange(len(nebline[0,:]))
         with h5py.File(infile,'r') as f:
             Rvir = f['data'][att_param[0]][:]
             Mcold_disc = f['data'][att_param[1]][:]
@@ -710,13 +740,10 @@ def attenuation(nebline, m_sfr_z, att_param=['Rvir','ColdGas'], attmod='GALFORM'
             Mcold_disc = Mcold_disc[cut]
             Z_disc = Z_disc[cut]
             
-            Rvir = Rvir[:1153192]
-            Mcold_disc = Mcold_disc[:1153192]
-            Z_disc = Z_disc[:1153192]
-            
-            Rvir = Rvir[limits]
-            Mcold_disc = Mcold_disc[limits]
-            Z_disc = Z_disc[limits]
+            if cutlimits: 
+                Rvir = Rvir[limits]
+                Mcold_disc = Mcold_disc[limits]
+                Z_disc = Z_disc[limits]
             
             coef_att = np.empty(nebline.shape)
         for i, line in enumerate(const.lines_model[photmod]):
@@ -734,8 +761,8 @@ def attenuation(nebline, m_sfr_z, att_param=['Rvir','ColdGas'], attmod='GALFORM'
             print('                Possible attmod= {}'.format(const.attmods))
         sys.exit()
         
-    nebline_att = nebline[:,lines]*coef_att
+    nebline_att = nebline*coef_att
     
     
-    return nebline_att, coef_att, lines
+    return nebline_att, coef_att
 
