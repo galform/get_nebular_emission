@@ -182,46 +182,46 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 
     # SFR observed
 
-    ih = get_nheader(obsSFR)
-
-    dataSFR = [0]*len(colsSFR)
-
-    for ii, col in enumerate(colsSFR):
-        #print(ii,col,colsSFR[ii])
-        data = np.loadtxt(obsSFR,skiprows=ih, usecols=col, unpack=True)
-        dataSFR[ii] = np.array(data)
-
-    dex = dataSFR[1]-dataSFR[0]
-    histSFR = dataSFR[1]-0.5*dex
-    errorSFR = dataSFR[3]
+    if obsSFR:
+        ih = get_nheader(obsSFR)
+    
+        dataSFR = [0]*len(colsSFR)
+    
+        for ii, col in enumerate(colsSFR):
+            #print(ii,col,colsSFR[ii])
+            data = np.loadtxt(obsSFR,skiprows=ih, usecols=col, unpack=True)
+            dataSFR[ii] = np.array(data)
+    
+        dex = dataSFR[1]-dataSFR[0]
+        histSFR = dataSFR[1]-0.5*dex
+        errorSFR = dataSFR[3]
 
     # GSM observed
-
-    ih = get_nheader(obsGSM)
-
-    dataGSM = [0]*len(colsGSM)
-
-    for ii, col in enumerate(colsGSM):
-        data = np.loadtxt(obsGSM,skiprows=ih, usecols=col, unpack=True)
-        dataGSM[ii] = np.array(data)
-
-    dex = dataGSM[1] - dataGSM[0]
-
-    # Change the units from h^-2 Msun to Msun.
-    histGSM = dataGSM[1] - 2*np.log10(h0) - 0.5*dex
-
-    # Change the units from h^3 Mpc^-3 to Mpc^-3
-    freqGSM = np.log10((dataGSM[2])) + 3 * np.log10(h0)
+    if obsGSM:
+        ih = get_nheader(obsGSM)
     
-    lowGSM = np.log10(dataGSM[2]-dataGSM[3]) + 3 * np.log10(h0)
+        dataGSM = [0]*len(colsGSM)
     
-    lowGSM = abs(lowGSM - freqGSM)
+        for ii, col in enumerate(colsGSM):
+            data = np.loadtxt(obsGSM,skiprows=ih, usecols=col, unpack=True)
+            dataGSM[ii] = np.array(data)
+    
+        dex = dataGSM[1] - dataGSM[0]
+    
+        # Change the units from h^-2 Msun to Msun.
+        histGSM = dataGSM[1] - 2*np.log10(h0) - 0.5*dex
+    
+        # Change the units from h^3 Mpc^-3 to Mpc^-3
+        freqGSM = np.log10((dataGSM[2])) + 3 * np.log10(h0)
+        
+        lowGSM = np.log10(dataGSM[2]-dataGSM[3]) + 3 * np.log10(h0)
+        
+        lowGSM = abs(lowGSM - freqGSM)
 
     for ii in range(len(inputdata)):
         with h5py.File(inputdata[ii],'r') as file:
             data = file['data']          
             lms = np.log10(10**data['lms'][:,0]+10**data['lms'][:,1])
-            print(lms)
             if specific:
                 lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
             else: 
@@ -272,11 +272,16 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 
         axm.plot(x[ind], y[ind], color=color[ii],
                  linestyle=lsty[ii], label=labels[ii])
-
-        # Plot observations GSMF
+    
+            # Plot observations GSMF
         if obsGSM:
             axm.errorbar(histGSM, freqGSM, yerr=lowGSM, marker='o', color=color[ii + 1],
-                         label=''+ labelObs[0] +'')
+                             label=''+ labelObs[0] +'')
+                
+            leg2 = axm.legend(bbox_to_anchor=(0.135, -0.34, 1.5, 1.4), fontsize='small',
+                              handlelength=1.2, handletextpad=0.4)
+            leg2.get_texts()
+            leg2.draw_frame(False)
 
 
         # Plot SFRF
@@ -285,38 +290,22 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
         ind = np.where(x < 0.)
         axs.plot(x[ind], y[ind], color=color[ii],
                  linestyle=lsty[ii])
-        
-        # Plot observations SFRF
+            
+            # Plot observations SFRF
         if obsSFR:
             axs.errorbar(dataSFR[2], histSFR, xerr=errorSFR, marker='o', color=color[ii + 2],
-                      label=''+ labelObs[1] +'')
+                          label=''+ labelObs[1] +'')
 
-    leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
-                      handlelength=1.2, handletextpad=0.4)
-    # for item in leg.legendHandles:
-    # item.set_visible(True)
-    leg.get_texts()
-    leg.draw_frame(False)
-    
-    leg2 = axm.legend(bbox_to_anchor=(0.135, -0.34, 1.5, 1.4), fontsize='small',
-                      handlelength=1.2, handletextpad=0.4)
-    # for item in leg.legendHandles:
-    # item.set_visible(True)
-    leg2.get_texts()
-    leg2.draw_frame(False)
-
-    # for col,text in zip(color,leg.get_texts()):
-    #   text.set_color(color)
-    #   leg.draw_frame(False)
+            leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
+                              handlelength=1.2, handletextpad=0.4)
+            leg.get_texts()
+            leg.draw_frame(False)
 
     plotf = outplot
 
     # Save figures
     print('Plot: {}'.format(plotf))
     fig.savefig(plotf)
-
-    # os.remove(r"example_data/tmp_LC.dat")
-    # os.remove(r"example_data/tmp_avSFR.dat")
 
 def test_medians(infile, outplot, verbose=False):
     '''
