@@ -5,10 +5,10 @@ import glob
 
 # The r" " are needed to handle Windows paths
 # otherwise ' ' can be enough to include the path.
-infile = glob.glob(r"example_data/emlines_lc16_PMILL_iz245_ivol*.hdf5")
-# infile = glob.glob(r"example_data/SAGE_z0.142_*.hdf5")
+# infile = glob.glob(r"example_data/emlines_lc16_PMILL_iz245_ivol*.hdf5")
+infile = glob.glob(r"example_data/SAGE_z0.142_1.hdf5")
 
-outfile = r"output_data/emlines_GALFORM.hdf5"
+outfile = r"output_data/emlines_SAGE_1_Orsi.hdf5"
 
 # Calculate the nebular emission lines
 # The columns where the stellar mass, SFR and Zcold=Mzcold/Mcold are
@@ -31,8 +31,8 @@ else:
 # SFR: Msun/(yr*h)
 # Zcold: MZcold/Mcold
 
-IMF_i = ['Kennicut','Kennicut'] # Input IMF
-IMF_f = ['Kennicut','Top-heavy'] # IMF to which transform each component
+IMF_i = ['Chabrier','Chabrier'] # Input IMF
+IMF_f = ['Kroupa','Top-heavy'] # IMF to which transform each component
 # Kennicut, Salpeter, Kroupa, Chabrier, Baldry&Glazebrook, Top-heavy
 # Kashino asumes Kroupa.
 
@@ -52,10 +52,10 @@ else:
     mincuts = [20*1.25*1e9]
     maxcuts = [None]
     
-eml.eml(infile, outfile, m_sfr_z=cols, cutcols=cutcols, mincuts=mincuts, 
+lms = eml.eml(infile, outfile, m_sfr_z=cols, cutcols=cutcols, mincuts=mincuts, 
                   maxcuts=maxcuts, att_param=att_param, h0=const.h, 
                   IMF_i=IMF_i, IMF_f=IMF_f, inputformat=inputformat,
                   cutlimits=False, mtot2mdisk=True, LC2sfr=LC2sfr,
-                  attmod='ratios', unemod='kashino20', photmod='gutkin16',
-                  verbose=True, Plotting=True, Testing=False)
+                  attmod='cardelli89', unemod='orsi14', photmod='gutkin16',
+                  gamma=2.3, verbose=True, Plotting=False, Testing=False)
 

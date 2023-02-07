@@ -4,6 +4,12 @@ output/
 example_data/compare_vct.pdf
 __pycache__/
 */__pycache__/
+plots/*
+docs/*
+for_reference/*
+output_data/*
+temporal/*
+*.png
 *.py[cod]
 *$py.class
 plot.pdf

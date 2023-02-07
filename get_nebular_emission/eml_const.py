@@ -4,14 +4,24 @@ import numpy as np
 notnum = -999.
 
 mp = 1.67e-27 #Proton mass, kg
+c = 2.998e10 #Light velocity, cm/s
 
 zsun = 0.0134 # Asplund 2009
 # zsum = 0.014 #CMB constant ref ?
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 vol_pm = 542.16**3. # Volume of the P-Millenium simulation
+vol_sage = 1000**3 # Volume of the UNITSIM1
 
-unemods = ['kashino20']
+unemods = ['kashino20', 'orsi14']
+
+#------------------------------------------------------------------------------------
+#   Orsi14:
+#------------------------------------------------------------------------------------
+Z0 = 0.012
+q0 = 2.8e7 # cm/s
+
+# FROM WHERE ARE THESE VALUES?
 
 photmods = ['gutkin16']
 mod_lim = {'gutkin16': r"nebular_data/gutkin_tables/limits_gutkin.txt"}
@@ -110,6 +120,20 @@ wavelength_model = {
 
 line_headers = ['L_tot_', 'L_disk_', 'L_bulge_']
 att_ext = '_ext'
+
+gal_headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
+           'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
+           'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
+           'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
+           'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
+           'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
+           'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
+           'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
+           'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
+           'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
+           'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
+           'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
+           'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
 
 #------------------------------------------------------------------------------------
 #   Cosmology:

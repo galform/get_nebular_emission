@@ -11,7 +11,7 @@ def eml(infile, outfile, m_sfr_z, h0=None, cutcols=[None], mincuts=[None],
         volume = 542.16**3.,inputformat='HDF5',
         IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
         attmod='cardelli89',unemod='kashino20',photmod='gutkin16',
-        LC2sfr=False, cutlimits=False, mtot2mdisk = True,
+        gamma=None, LC2sfr=False, cutlimits=False, mtot2mdisk = True,
         verbose=True, Plotting=False, Testing=False):
     '''
     Calculate emission lines given the properties of model galaxies
@@ -92,6 +92,8 @@ def eml(infile, outfile, m_sfr_z, h0=None, cutcols=[None], mincuts=[None],
                                      IMF_i=IMF_i, IMF_f=IMF_f, verbose=verbose, 
                                      Plotting=Plotting, Testing=Testing)
         
+        # return lms
+        
         if verbose:
             print('Data read.')
         
@@ -105,7 +107,7 @@ def eml(infile, outfile, m_sfr_z, h0=None, cutcols=[None], mincuts=[None],
         #                     Plotting=Plotting, Testing=Testing)
         
         lu, lne, loh12 = get_une(lms, lssfr, loh12,
-                            unemod=unemod, LC2sfr=LC2sfr, verbose=verbose,
+                            unemod=unemod, gamma=gamma, LC2sfr=LC2sfr, verbose=verbose,
                             Plotting=Plotting, Testing=Testing)
         
         if verbose:

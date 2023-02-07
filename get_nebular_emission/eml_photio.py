@@ -146,19 +146,7 @@ def coef_att_galform(infile,cols,inputformat='HDF5',photmod='gutkin16',verbose=T
                     except:
                         coef_att[0,i] = const.notnum
     elif inputformat=='textfile':
-        headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
-                   'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
-                   'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
-                   'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
-                   'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
-                   'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
-                   'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
-                   'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
-                   'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
-                   'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
-                   'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
-                   'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
-                   'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
+        headers = const.gal_headers
         
         ih = get_nheader(infile)        
         X = np.loadtxt(infile,skiprows=ih).T

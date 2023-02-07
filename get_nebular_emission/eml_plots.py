@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib
 import os.path
 import h5py
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_style as style
@@ -431,7 +431,7 @@ def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=F
 
     lu_disk = data['lu'][:,0]
     lne_disk = data['lne'][:,0]
-    loh12_disk = (data['loh12'][:,0])
+    loh12_disk = data['lz'][:,0]
     
     minU, maxU = get_limits(propname='U', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
@@ -495,7 +495,7 @@ def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=F
             plt.ylim((ymin,ymax))
             plt.grid()
             
-            plotnom = outplot + '/BPTplot_' + str(i) + '.png'
+            plotnom = outplot + '/BPTplot2_' + str(i) + '.png'
         
             plt.savefig(plotnom)
             plt.close()

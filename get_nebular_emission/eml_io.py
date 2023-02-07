@@ -492,7 +492,7 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
 
     # Obtain 12+log10(O/H) from Z=MZcold/Mcold
     ind = np.where(loh12>0)
-    loh12[ind] = np.log10(loh12[ind]) + const.ohsun - np.log10(const.zsun)
+    loh12[ind] = np.log10(loh12[ind]) #+ const.ohsun - np.log10(const.zsun)
 
     if ncomp!=1:
         oh12 = np.zeros(loh12.shape)
@@ -512,18 +512,18 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
         if ncomp==2:
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
                       ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
-                      '(12 + log(O/H))_tot, (12 + log (O/H))_disk, (12 + log (O/H))_bulge'
+                      'log(Z)_tot, log(Z)_disk, log(Z)_bulge'
             datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,loh12_tot,loh12))
         elif ncomp==1:
             header1 = 'log(mstars), ' \
                       'log(SFR), log(sSFR) ' \
-                      '(12 + log(O/H))'
+                      'log(Z)'
             datatofile=np.column_stack((lms,lsfr,lssfr,loh12))
 
         if LC2sfr:
-            outfil = r"example_data/tmp_LC_SAGE.dat"
+            outfil = r"example_data/tmp_LC.dat"
         else:
-            outfil = r"example_data/tmp_avSFR_SAGE.dat"
+            outfil = r"example_data/tmp_avSFR.dat"
 
         with open(outfil, 'w') as outf:
             np.savetxt(outf, datatofile, delimiter=' ', header=header1)
@@ -642,19 +642,7 @@ def hdf5_from_text(infile, outfile, galform=True, verbose=True):
     X = np.loadtxt(infile,skiprows=ih).T
     
     if galform:
-        headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
-                   'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
-                   'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
-                   'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
-                   'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
-                   'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
-                   'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
-                   'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
-                   'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
-                   'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
-                   'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
-                   'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
-                   'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
+        headers = const.gal_headers
     else:
         with open(infile, "r") as ff:
             for il, line in enumerate(ff):
@@ -733,8 +721,8 @@ def write_data(lms,lssfr,lu,lne,loh12,nebline,nebline_att,outfile,attmod='ratios
             hfdat.create_dataset('lne',data=lne, maxshape=(None,None))
             hfdat['lne'].dims[0].label = 'log10(nH) (cm**-3)'
     
-            hfdat.create_dataset('loh12', data=loh12, maxshape=(None,None))
-            hfdat['loh12'].dims[0].label = 'metallicity 12+log(O/H)'
+            hfdat.create_dataset('lz', data=loh12, maxshape=(None,None))
+            hfdat['lz'].dims[0].label = 'log10(Z)'
             
             for i in range(len(const.lines_model[photmod])):           
                 hfdat.create_dataset(const.lines_model[photmod][i], 
@@ -761,8 +749,8 @@ def write_data(lms,lssfr,lu,lne,loh12,nebline,nebline_att,outfile,attmod='ratios
             hfdat['lssfr'].resize((hfdat['lssfr'].shape[0] + lssfr.shape[0]),axis=0)
             hfdat['lssfr'][-lssfr.shape[0]:] = lssfr
             
-            hfdat['loh12'].resize((hfdat['loh12'].shape[0] + loh12.shape[0]),axis=0)
-            hfdat['loh12'][-loh12.shape[0]:] = loh12
+            hfdat['lz'].resize((hfdat['lz'].shape[0] + loh12.shape[0]),axis=0)
+            hfdat['lz'][-loh12.shape[0]:] = loh12
             
             for i in range(len(const.lines_model[photmod])): 
                 hfdat[const.lines_model[photmod][i]].resize((hfdat[const.lines_model[photmod][i]].shape[1] + nebline.shape[2]),axis=1)
