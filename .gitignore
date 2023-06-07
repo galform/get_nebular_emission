@@ -13,7 +13,6 @@ temporal/*
 *.py[cod]
 *$py.class
 *.pdf
-*.txt
 *.npy
 AGN_test*/
 BPT_tests.py
