@@ -15,13 +15,6 @@ The code reads galaxy properties from an input text file with values separated b
 
 If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).
 
-
-Example
--------
-
-The **example.py** and **example2.py** runs over the given example data, producing a new file and a plot that compares the original and the prepared data. To run this
-example, simply type: :code:`python example.py`.
-
 Tests
 -----
 
