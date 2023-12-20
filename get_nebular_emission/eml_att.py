@@ -204,9 +204,8 @@ def coef_att_ratios(infile,cols_notatt,cols_att,cols_photmod,inputformat='HDF5',
     
     return coef_att
 
-def attenuation(nebline, att_param=None, 
-                redshift=0, attmod='cardelli89',
-                cols_notatt=None,cols_att=None,cols_photmod=None,
+def attenuation(nebline, att_param=None, att_ratio_lines=None,
+                redshift=0, attmod='cardelli89',origin='sfr',
                 photmod='gutkin16', cut=None, verbose=True):
     '''
     Get the attenuated emission lines from the raw ones.
@@ -259,6 +258,7 @@ def attenuation(nebline, att_param=None,
     '''
     
     ncomp = len(nebline)
+    coef_att = np.full(nebline.shape,const.notnum)
     
     if att_param[0][0] != None:
         if attmod not in const.attmods:
@@ -266,31 +266,40 @@ def attenuation(nebline, att_param=None,
                 print('STOP (eml_photio.attenuation): Unrecognised model for attenuation.')
                 print('                Possible attmod= {}'.format(const.attmods))
             sys.exit()
-        # elif attmod=='ratios':
-        #     coef_att = coef_att_ratios(infile,cols_notatt=cols_notatt,
-        #                                cols_att=cols_att,cols_photmod=cols_photmod,
-        #                                inputformat=inputformat,photmod=photmod,verbose=verbose)
-            
-        #     coef_att = coef_att[:,:,cut]               
-        #     coef_att[coef_att!=coef_att] = 1.
+        elif attmod=='ratios':
+            for i, line in enumerate(const.lines_model[photmod]):
+                if line in att_ratio_lines:
+                    ind = np.where(np.array(att_ratio_lines)==line)[0]
+                else:
+                    continue
+                
+                for comp in range(ncomp):
+                    if comp==0:
+                        coef_att[comp,i] = att_param[ind] * const.line_att_coef_all(redshift)
+                    else:
+                        if origin=='sfr':
+                            coef_att[comp,i] = coef_att[0,i]
+                        else:
+                            coef_att[comp,i] = 1.
+            coef_att[(coef_att!=coef_att)&(coef_att!=const.notnum)] = 1.
         elif attmod=='cardelli89':
-            Rvir = att_param[0]
+            Rhm = att_param[0]
             Mcold_disc = att_param[1]
             Z_disc = att_param[2]
                 
-            coef_att = np.empty(nebline.shape)
+            coef_att = np.full(nebline.shape,const.notnum)
             for comp in range(ncomp):
                 for i, line in enumerate(const.lines_model[photmod]):
                     if comp==0:
                         coef_att[comp,i] = coef_att_cardelli(const.wavelength_model[photmod][i], 
-                                    Mcold_disc=Mcold_disc, rhalf_mass_disc=Rvir, 
-                                    Z_disc=Z_disc, costheta=0.3, albedo=0.56)
+                                    Mcold_disc=Mcold_disc, rhalf_mass_disc=Rhm, 
+                                    Z_disc=Z_disc, costheta=0.3, albedo=0.56) * const.line_att_coef_all(redshift)
                     else:
                         coef_att[comp,i] = coef_att[0,i]
-            coef_att[coef_att!=coef_att] = 1.
-    else:
-        coef_att = np.full(nebline.shape,const.notnum)
+            coef_att[(coef_att!=coef_att)&(coef_att!=const.notnum)] = 1.
     
-    nebline_att = nebline*coef_att * const.line_att_coef_all(redshift)
+    nebline_att = np.full(nebline.shape,const.notnum)
+    ind = np.where((coef_att!=const.notnum))
+    nebline_att[ind] = nebline[ind]*coef_att[ind]
     
     return nebline_att, coef_att

@@ -97,7 +97,7 @@ def perc_2arrays(xedges, xarray, yarray, val, weights=None, nmin=None):
         if (np.shape(ind)[1] >= nmin):
             data = yarray[ind]
 
-            if len(data)<20:
+            if len(data)<5:
                 apercentile[i] = -999.
             elif (weights is None):
                 apercentile[i] = percentiles(val, data)

@@ -7,6 +7,16 @@ from scipy.stats import gaussian_kde
 from get_nebular_emission.stats import perc_2arrays
 from get_nebular_emission.eml_io import get_nheader
 
+
+def bursttobulge(lms,Lagn_param):
+    ind = np.where(Lagn_param[-1]>0)
+    lms[:,1] = const.notnum
+    lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
+    
+    
+def epsilon_MZ(lms,lz,a=const.epsilon_a_sfr,b=const.epsilon_b_sfr):
+    return a*lms + b*lz
+
 def Z_blanc(logM_or):
     logZ = np.zeros(logM_or.shape)
     logM = logM_or - 9.35
@@ -25,44 +35,60 @@ def Z_blanc(logM_or):
     
     return logZ
 
-def Z_tremonti(logM): # Ms and Z scale relation from Tremonti et. al. 2004
+def Z_tremonti(logM,logZ,Lagn_param=[[None],[None]]): # Ms and Z scale relation from Tremonti et. al. 2004
     
-    logZ = -1.492 + 1.847*logM - 0.08026*logM**2
+    # logZ = -1.492 + 1.847*logM - 0.08026*logM**2
     try:
         if logZ.shape[1] > 1:
-            logMt = np.log10(10**logM[:,0] + 10**logM[:,1])
+            if Lagn_param[-1][0] != None:
+                logMt = np.log10(10**logM[:,0] + Lagn_param[-1])
+            else:
+                logMt = np.log10(10**logM[:,0] + 10**logM[:,1])
             logZ[:,0] = -1.492 + 1.847*logMt - 0.08026*logMt**2
+            # logZ[:,1] = -1.492 + 1.847*logMt - 0.08026*logMt**2
     except:
-        pass
+        logZ = -1.492 + 1.847*logM - 0.08026*logM**2
     
     logZ = logZ - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
     
-    return logZ
+    return logMt, logZ
 
-def Z_tremonti2(logZ,logM): # Correction in bins to Z values using the Ms and Z scale relation from Tremonti et. al. 2004
+def Z_tremonti2(logM,logZ,minZ,maxZ,Lagn_param=[[None],[None]]): # Correction in bins to Z values using the Ms and Z scale relation from Tremonti et. al. 2004
     
-    logZt = Z_tremonti(logM)
+    logZt = np.copy(logZ)    
+
+    logMtot, logZt = Z_tremonti(logM,logZt,Lagn_param)
     # logZt = Z_blanc(logM)
     
+    logZtot = logZ[:,0]
+    logZt = logZt[:,0]
+    
+    ind_lims = np.where((logZtot > np.log10(minZ)) & (logZtot < np.log10(maxZ)))[0]
+    
     smin = 7
-    smax = 11
+    smax = 12
     ds = 0.1
     sbins = np.arange(smin, (smax + ds), ds)
     sbinsH = np.arange(smin, smax, ds)
     shist = sbinsH + ds * 0.5
 
-    median = perc_2arrays(sbins, logM, logZ, 0.5)
-    median_t = perc_2arrays(sbins, logM, logZt, 0.5)
+    median = perc_2arrays(sbins, logMtot[ind_lims], logZtot[ind_lims], 0.5)
+    median_t = perc_2arrays(sbins, logMtot[ind_lims], logZt[ind_lims], 0.5)
     ind_med = np.where(median != -999.)[0]
 
     shist = shist[ind_med]
     median = median[ind_med]
     median_t = median_t[ind_med]
-
+    
+    final_bin = sbins[ind_med[-1]+1]
+    sbins = sbins[ind_med]
+    sbins = np.append(sbins,final_bin)
+    
     dif = median_t - median
 
     for i in range(len(sbins)-1):
-        ind = np.where((logM>sbins[i])&(logM<sbins[i+1]))
+        ind = np.where((logMtot>sbins[i])&(logMtot<sbins[i+1]))
+        # print(sbins[i],sbins[i+1],median[i],median_t[i],dif[i])
         logZ[ind] = logZ[ind] + dif[i]
     
     return logZ
@@ -700,8 +726,9 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
     epsilon : floats
     '''
     
-    if epsilon_param.shape[0] == 2:
+    if epsilon_param.shape[0] == 2: #2
         Mg, r = epsilon_param
+        # Mg = Mg + Mg_bulge
         ind_epsilon = np.where((Mg>5e-5)&(r>5e-5))
         epsilon = np.zeros(Mg.shape)
         ng = np.zeros(Mg.shape)
@@ -740,13 +767,22 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
     epsilon[epsilon>1] = 1
     return epsilon
 
-def n_ratio(n,n_z0):
+def n_ratio2(n,n_z0):
     ratio = np.full(n.shape,1.)
     ind = np.where((n>0)&(n_z0>0))[0]
     
     ratio[ind]  = n[ind]/n_z0[ind]
     
     return ratio
+
+def n_ratio(n,n_z0):
+    ratio = np.full(n.shape,1.)
+    ind = np.where((n>0)&(n_z0>0))[0]
+    
+    mean = np.mean(n[ind])
+    mean_0 = np.mean(n_z0[ind])
+    
+    return mean/mean_0
     
 
 def Zagn(logM,logz):
@@ -765,9 +801,16 @@ def Zagn(logM,logz):
     logz : floats
     '''
     
+    if logz.shape[1] >= 2:
+        ind = np.where(logz[:,1]>const.notnum)
+        logz[ind,0] = np.copy(logz[ind,1])
+        logz[:,1] = const.notnum
+    
     Ms = 10**logM
     Ms = np.sum(Ms,axis=1)
-    Ms = np.log10(Ms)
+    
+    ind = np.where(Ms>0)
+    Ms[ind] = np.log10(Ms[ind])
     
     # logz = logz + 0.1
     
@@ -775,11 +818,11 @@ def Zagn(logM,logz):
         if Ms[i]<9.5:
             continue
         elif Ms[i]<10:
-            logz[i] = logz[i] + 0.1
+            logz[i,0] = logz[i,0] + 0.1
         elif Ms[i]<10.5:
-            logz[i] = logz[i] + 0.1
+            logz[i,0] = logz[i,0] + 0.3
         elif Ms[i]<11:
-            logz[i] = logz[i] + 0.1
+            logz[i,0] = logz[i,0] + 0.1
         else:
             continue
     
@@ -803,7 +846,7 @@ def phot_rate(lssfr=None, lms=None, IMF_f=None, Lagn=None, origin='sfr'):
             
     return Q
 
-def get_une_kashino20(Q, lms, lssfr, loh12, T, IMF_f):
+def get_une_kashino20(Q, lms, lssfr, loh12, T, ng_ratio, IMF_f):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z) and the assumed IMF,
     get the ionizing parameter, logU, and the electron density, logne,
@@ -846,13 +889,39 @@ def get_une_kashino20(Q, lms, lssfr, loh12, T, IMF_f):
         loh12[ind] = loh12[ind] + const.ohsun - np.log10(const.zsun)
         
         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr_new[ind] + 9.)
+        # lne[ind] = 2
         lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
         # lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)
         loh12[ind] = loh12[ind] - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
+        
+    ind = np.where((lssfr > const.notnum) &
+                   (lms > 0) &
+                   (loh12 > const.notnum))
+    
+    ind_comp = []   
+    for comp in range(len(Q[0])):
+        ind_comp.append(np.where((lssfr[:,comp] > const.notnum) &
+                       (lms[:,comp] > 0) &
+                       (loh12[:,comp] > const.notnum) &
+                       (Q[:,comp] > 0))[0])
+        
+    epsilon = np.full(np.shape(lssfr),const.notnum)
+    cte = np.zeros(np.shape(lssfr))
+    
+    for comp in range(len(Q[0])):
+        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                              ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+        
+        if ng_ratio != None:
+            epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+        
+        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c)    
+    
+    lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
     return lu, lne, loh12
 
-def get_une_orsi14(lms, lssfr, loh12, q0, z0, gamma):
+def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, epsilon0, ng_ratio):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z) and the values for the free parameters,
     get the ionizing parameter, logU, and the electron density, logne,
@@ -887,6 +956,31 @@ def get_une_orsi14(lms, lssfr, loh12, q0, z0, gamma):
     if (np.shape(ind)[1]>1):
         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
         lu[ind] = np.log10(q0*((10**loh12[ind])/z0)**-gamma / const.c)
+        
+    ind = np.where((lssfr > const.notnum) &
+                   (lms > 0) &
+                   (loh12 > const.notnum))
+    
+    ind_comp = []   
+    for comp in range(len(Q[0])):
+        ind_comp.append(np.where((lssfr[:,comp] > const.notnum) &
+                       (lms[:,comp] > 0) &
+                       (loh12[:,comp] > const.notnum) &
+                       (Q[:,comp] > 0))[0])
+        
+    epsilon = np.full(np.shape(lssfr),const.notnum)
+    cte = np.zeros(np.shape(lssfr))
+    
+    for comp in range(len(Q[0])):
+        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                              ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+        
+        if ng_ratio != None:
+            epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+        
+        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c)    
+    
+    lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
     
 
     return lu, lne, loh12
@@ -953,20 +1047,32 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
     lu, lne, loh12 : floats
     '''
     
-    lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
+    loh12_all = np.copy(loh12)
+    
+    lu, lne, loh12 = [np.full(np.shape(lms), const.notnum) for i in range(3)]
 
     ind = np.where((lssfr > const.notnum) &
                    (lms > 0) &
-                   (loh12 > const.notnum))
+                   (loh12_all > const.notnum) &
+                   (Q > 0))
     
-    ind1 = np.where((lssfr[:,0] > const.notnum) &
-                   (lms[:,0] > 0) &
-                   (loh12[:,0] > const.notnum))[0]
-    ind2 = np.where((lssfr[:,1] > const.notnum) &
-                   (lms[:,1] > 0) &
-                   (loh12[:,1] > const.notnum))[0]
+    # ind1 = np.where((lssfr[:,0] > const.notnum) &
+    #                (lms[:,0] > 0) &
+    #                (loh12[:,0] > const.notnum) &
+    #                (Q[:,0] > 0))[0]
+    # ind2 = np.where((lssfr[:,1] > const.notnum) &
+    #                (lms[:,1] > 0) &
+    #                (loh12[:,1] > const.notnum) &
+    #                (Q[:,1] > 0))[0]
     
-    ind_comp = [ind1,ind2]
+    # ind_comp = [ind1,ind2]
+    
+    ind_comp = []   
+    for comp in range(len(Q[0])):
+        ind_comp.append(np.where((lssfr[:,comp] > const.notnum) &
+                       (lms[:,comp] > 0) &
+                       (loh12_all[:,comp] > const.notnum) &
+                       (Q[:,comp] > 0))[0])
     
     if (np.shape(ind)[1]>1):
         
@@ -974,14 +1080,15 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            lu, lne, loh12 = get_une_kashino20(Q,lms,lssfr,loh12,T,IMF_f)
+            # lu, lne, loh12 = get_une_orsi14(Q, lms, lssfr, loh12, T, q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3)
+            lu, lne, loh12 = get_une_kashino20(Q,lms,lssfr,loh12_all,T,ng_ratio,IMF_f)
             
             for comp in range(len(Q[0])):
                 epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                                       ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
                 
-                if ng_ratio[0] != None:
-                    epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio[ind_comp[comp]]
+                if ng_ratio != None:
+                    epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
                 cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c)    
             
@@ -989,6 +1096,7 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
         
         if origin=='agn':
             lne[ind] = 3
+            loh12[ind] = loh12_all[ind]
             
             for comp in range(len(Q[0])):
                 
@@ -996,16 +1104,20 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
                 
                 cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*const.c)) 
                  * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
-            
+                
+            cte[cte==0] = 1e-50
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
+            lu[cte==1e-50] = const.notnum
     
 
     return lu, lne, loh12
     
-def get_une(lms, lssfr, loh12, 
-            q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=[None],
+def get_une(lms_o, lssfr_o, loh12_o,
+            q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=None,
+            Z_central_cor=False,
             gamma=1.3, T=10000, epsilon_param=[[None]], epsilon_param_z0=[[None]],
             epsilon=0.01, h0=None, IMF_f=['Kroupa','Kroupa'],
+            redshift=0.1,
             unemod='kashino20', origin='sfr', verbose=True):
     '''
     Given log10(Mstar), log10(sSFR) and 12+log(O/H),
@@ -1046,23 +1158,32 @@ def get_une(lms, lssfr, loh12,
     '''
 
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr,lms=lms,IMF_f=IMF_f,Lagn=Lagn,origin=origin)
+    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF_f=IMF_f,Lagn=Lagn,origin=origin)
     
+    epsilon = None
     if epsilon_param[0][0] != None:
         if origin=='agn':
             epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],h0=h0,
                               nH=const.nH_AGN,profile='exponential',verbose=verbose)
         if origin=='sfr':
-            ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
-            epsilon = ng/const.nH_gal
-            epsilon[epsilon>1] = 1
+            # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
+            # epsilon = ng/const.nH_gal
+            # epsilon[epsilon>1] = 1
             
-        if epsilon_param_z0[0][0] != None:
-            ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
-            ng_ratio = n_ratio(ng,ng_z0)
-    
-    if origin=='agn':
-        loh12 = Zagn(lms,loh12)
+            if epsilon_param_z0[0][0] != None:
+                # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
+                # ng_ratio = n_ratio(ng,ng_z0)
+                if redshift==0.8:
+                    ng_ratio = const.med_to_low
+                elif redshift==1.5:
+                    ng_ratio = const.high_to_low
+                else:
+                    ng_ratio = 1.
+                    
+    if Z_central_cor and origin=='agn':
+        loh12 = Zagn(lms_o,loh12_o)
+    else:
+        loh12 = np.copy(loh12_o)
     
     if unemod not in const.unemods:
         if verbose:
@@ -1070,12 +1191,12 @@ def get_une(lms, lssfr, loh12,
             print('                Possible unemod= {}'.format(const.unemods))
         sys.exit()
     elif (unemod == 'kashino20'):
-        lu, lne, loh12 = get_une_kashino20(Q,lms,lssfr,loh12,T,IMF_f)
+        lu, lne, loh12 = get_une_kashino20(Q,lms_o,lssfr_o,loh12,T,ng_ratio,IMF_f)
     elif (unemod == 'orsi14'):
-        lu, lne, loh12 = get_une_orsi14(lms,lssfr,loh12,q0,z0,gamma)
+        lu, lne, loh12 = get_une_orsi14(Q,lms_o,lssfr_o,loh12,T,q0,z0,gamma,ng_ratio)
     elif (unemod == 'panuzzo03'):
-        lu, lne, loh12 = get_une_panuzzo03(Q,lms,lssfr,loh12,T,epsilon,ng_ratio,origin,IMF_f)
+        lu, lne, loh12 = get_une_panuzzo03(Q,lms_o,lssfr_o,loh12,T,epsilon,ng_ratio,origin,IMF_f)
     elif (unemod == 'carton17'):
-        lu, lne, loh12 = get_une_carton17(lms,lssfr,loh12)
+        lu, lne, loh12 = get_une_carton17(lms_o,lssfr_o,loh12)
         
-    return Q, lu, lne, loh12
+    return Q, lu, lne, loh12, epsilon, ng_ratio

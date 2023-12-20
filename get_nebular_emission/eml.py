@@ -1,28 +1,34 @@
 from get_nebular_emission.eml_io import get_data, get_secondary_data, get_secondary_data2, write_data, write_data_AGN
-from get_nebular_emission.eml_une import get_une, L_agn, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
+from get_nebular_emission.eml_une import get_une, bursttobulge, L_agn, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
 from get_nebular_emission.eml_ew import get_ew
 import get_nebular_emission.eml_const as const
-from get_nebular_emission.eml_photio import get_lines, get_limits, clean_photarray
+from get_nebular_emission.eml_photio import get_lines, get_limits, clean_photarray, calculate_flux
 from get_nebular_emission.eml_att import attenuation
 import time
 import numpy as np
 #import get_nebular_emission.eml_testplots as get_testplot
 
 def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
-        cutcols=[None], mincuts=[None], maxcuts=[None], att_params=None,
-        volume = 542.16**3.,inputformat='HDF5',
-        IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
+        cutcols=[None], mincuts=[None], maxcuts=[None], 
+        att=False, att_params=None, att_ratio_lines=None,
+        flux=False,
+        volume = 542.16**3.,inputformat='HDF5', flag=0,
+        IMF_i=['Kroupa', 'Kroupa'], IMF_f=['Kroupa', 'Kroupa'], 
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,
-        AGNinputs='Lagn', Lagn_params=None,
+        AGN=False,
+        AGNinputs='Lagn', Lagn_params=None, Z_central_cor=False,
         epsilon_params=None,
+        extra_params=None, extra_params_names=None, extra_params_labels=None,
         cols_att = None,cols_notatt = None,cols_photmod = None,
         cols_ew_att=None, cols_ew_notatt=None,
         attmod='cardelli89',unemod_sfr='kashino19', 
         unemod_agn='panuzzo03', photmod_sfr='gutkin16',
         photmod_agn='feltre16', ewmod='LandEW',
         LC2sfr=False, cutlimits=False, mtot2mdisk = True,
-        verbose=True, Plotting=False, Testing=False):
+        verbose=True, Testing=False,
+        xid_feltre=0.5,alpha_feltre=-1.7,
+        xid_gutkin=0.3,co_gutkin=1,imf_cut_gutkin=100):
     '''
     Calculate emission lines given the properties of model galaxies
 
@@ -72,6 +78,9 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
      Inputs for AGN's bolometric luminosity calculations.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
+    Z_central_correction : boolean
+     If False, the code supposes the central metallicity of the galaxy to be the mean one.
+     If True, the code estimates the central metallicity of the galaxy from the mean one.
     epsilon_params : list
      Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
      - For text or csv files: list of integers with column position.
@@ -125,8 +134,6 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
       If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
       If True print out messages
-    Plotting : boolean
-      If True run verification plots with all data.
     Testing : boolean
       If True only run over few entries for testing purposes
 
@@ -146,7 +153,7 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
     
     for i in range(len(infile)):
         
-        if verbose:
+        if not verbose:
             print('Infile: ' + infile[i])
             if infile_z0[0]:
                 print('Infile_z0: ' + infile_z0[i])
@@ -159,21 +166,25 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
                                       inputformat=inputformat, LC2sfr=LC2sfr, 
                                       mtot2mdisk=mtot2mdisk,
                                       IMF_i=IMF_i, IMF_f=IMF_f, verbose=verbose, 
-                                      Plotting=Plotting, Testing=Testing)
+                                      Testing=Testing)
         
-        epsilon_param, epsilon_param_z0, Lagn_param, att_param = get_secondary_data2(i, infile, 
-                               cut, infile_z0=infile_z0, epsilon_params=epsilon_params, 
+        epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param = get_secondary_data2(i, infile, 
+                               cut, infile_z0=infile_z0, 
+                               epsilon_params=epsilon_params, extra_params=extra_params,
                                Lagn_params=Lagn_params, att_params=att_params, 
-                               inputformat=inputformat, attmod=attmod, verbose=verbose)
+                               inputformat=inputformat, attmod=attmod, verbose=verbose)        
         
         if verbose:
             print('Data read.')
             
-        # loh12 = Z_blanc(lms)
-        loh12 = Z_tremonti2(loh12,lms)
+        if flag==1:
+            loh12 = Z_tremonti(lms,loh12,Lagn_param)[1]
+        elif flag==2:
+            minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
+            loh12 = Z_tremonti2(lms,loh12,minZ,maxZ,Lagn_param)
             
-        Q_sfr, lu_sfr, lne_sfr, loh12_sfr = get_une(lms, lssfr, loh12, q0, z0,
-                            T=T, IMF_f=IMF_f, h0=h0,
+        Q_sfr, lu_sfr, lne_sfr, loh12_sfr, epsilon_sfr, ng_ratio = get_une(lms, lssfr, loh12, q0, z0,
+                            T=T, IMF_f=IMF_f, h0=h0, redshift=redshift,
                             epsilon_param=epsilon_param, epsilon_param_z0=epsilon_param_z0,
                             origin='sfr',
                             unemod=unemod_sfr, gamma=gamma, verbose=verbose)
@@ -188,33 +199,45 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
         
         clean_photarray(lms, lssfr, lu_sfr, lne_sfr, loh12_sfr, photmod=photmod_sfr)
         
-        nebline_sfr = get_lines(lu_sfr,lne_sfr,loh12_sfr,photmod=photmod_sfr,verbose=verbose,Testing=Testing,Plotting=Plotting)
-        nebline_sfr[0] = nebline_sfr[0]*3.826e33*10**(lms[:,0]+lssfr[:,0])
-        nebline_sfr[1] = nebline_sfr[1]*3.826e33*10**(lms[:,1]+lssfr[:,1])
+        nebline_sfr = get_lines(lu_sfr,lne_sfr,loh12_sfr,photmod=photmod_sfr,
+                                verbose=verbose,
+                                xid_gutkin=xid_gutkin,co_gutkin=co_gutkin,imf_cut_gutkin=imf_cut_gutkin)
+        
+        for comp in range(len(m_sfr_z)):
+            nebline_sfr[comp] = nebline_sfr[comp]*3.826e33*10**(lms[:,comp]+lssfr[:,comp])
         
         if verbose:
             print(' Emission calculated.')
-        
-        nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
-                                  redshift=redshift,
-                                  cols_att=cols_att, cols_notatt=cols_notatt, cols_photmod=cols_photmod,
-                                  cut=cut, attmod=attmod, photmod=photmod_sfr,verbose=verbose)
-        
-        if verbose:
-            print(' Attenuation calculated.')
             
-        # if cols_ew_att and cols_ew_notatt:
-        #     ew_att, ew_notatt = get_ew(infile[i], lms, lssfr, nebline_sfr, nebline_sfr_att, cols_att, 
-        #                                 cols_notatt, cols_ew_att, cols_ew_notatt, 
-        #                                 cols_photmod, ewmod=ewmod, 
-        #                                 inputformat=inputformat, cut=cut, 
-        #                                 verbose=verbose)
+        if att:
+            nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
+                                      att_ratio_lines=att_ratio_lines,redshift=redshift,
+                                      origin='sfr',
+                                      cut=cut, attmod=attmod, photmod=photmod_sfr,verbose=verbose)
         
-        if Lagn_params:
+            if verbose:
+                print(' Attenuation calculated.')
+        else:
+            nebline_sfr_att = np.array(None)
+            
+        if flux:
+            fluxes_sfr = calculate_flux(nebline_sfr,redshift,h0=const.h,origin='sfr')
+            fluxes_sfr_att = calculate_flux(nebline_sfr_att,redshift,h0=const.h,origin='sfr')
+            if verbose:
+                print(' Flux calculated.')
+        else:
+            fluxes_sfr = np.array(None)
+            fluxes_sfr_att = np.array(None)
+            
+        if AGN:
+            bursttobulge(lms, Lagn_param)
+            
             Lagn = L_agn(Lagn_param,AGNinputs=AGNinputs,
                          verbose=verbose)
             
-            Q_agn, lu_agn, lne_agn, loh12_agn = get_une(lms, lssfr, loh12, q0, z0,
+            Q_agn, lu_agn, lne_agn, loh12_agn, epsilon_agn, ng_ratio = get_une(lms, 
+                                lssfr, loh12, q0, z0,
+                                Z_central_cor=Z_central_cor,
                                 Lagn=Lagn, T=T, epsilon_param=epsilon_param, 
                                 h0=h0, IMF_f=IMF_f, origin='agn',
                                 unemod=unemod_agn, gamma=gamma, verbose=verbose)
@@ -230,27 +253,37 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
             clean_photarray(lms, lssfr, lu_agn, lne_agn, loh12_agn, photmod=photmod_agn)
                 
             nebline_agn = get_lines(lu_agn,lne_agn,loh12_agn,photmod=photmod_agn,verbose=verbose,
-                                Testing=Testing,Plotting=Plotting)
+                                xid_feltre=xid_feltre,alpha_feltre=alpha_feltre)
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
-            nebline_agn[1] = Lagn
             
             if verbose:
                 print(' Emission calculated.')
             
-            nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
-                                          cols_att=cols_att, cols_notatt=cols_notatt, cols_photmod=cols_photmod,
-                                          cut=cut, attmod=attmod, photmod=photmod_agn,verbose=verbose)
-            
-            # return coef_sfr_att, coef_agn_att
-            
-            if verbose:
-                print(' Attenuation calculated.')
+            if att:
+                nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
+                                              att_ratio_lines=att_ratio_lines,redshift=redshift,
+                                              origin='agn',
+                                              cut=cut, attmod=attmod, photmod=photmod_agn,verbose=verbose)
+                if verbose:
+                    print(' Attenuation calculated.')     
+            else:
+                nebline_agn_att = np.array(None)
                 
-            # return nebline_agn_att 
-                
+            if flux:
+                fluxes_agn = calculate_flux(nebline_agn,redshift,h0=const.h,origin='sfr')
+                fluxes_agn_att = calculate_flux(nebline_agn_att,redshift,h0=const.h,origin='sfr')
+                if verbose:
+                    print(' Flux calculated.')
+            else:
+                fluxes_agn = np.array(None)
+                fluxes_agn_att = np.array(None)
+
             write_data_AGN(lms,lssfr,lu_o_sfr,lne_o_sfr,loh12_o_sfr,lu_o_agn,lne_o_agn,loh12_o_agn,
                        nebline_sfr,nebline_agn,nebline_sfr_att,nebline_agn_att,
-                       # Mdot_hh=Lagn_param[4],Mdot_stb=Lagn_param[3],Mhot=Lagn_param[5],
+                       fluxes_sfr,fluxes_agn,fluxes_sfr_att,fluxes_agn_att,
+                       epsilon_sfr,epsilon_agn,
+                       extra_param=extra_param, extra_params_names=extra_params_names,
+                       extra_params_labels=extra_params_labels,
                        outfile=outfile,attmod=attmod,unemod_agn=unemod_agn,unemod_sfr=unemod_sfr,
                        photmod_agn=photmod_agn,photmod_sfr=photmod_sfr,first=first)             
             del lms, lssfr
@@ -260,6 +293,9 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
         else:
             write_data(lms,lssfr,lu_o_sfr,lne_o_sfr,loh12_o_sfr,
                        nebline_sfr,nebline_sfr_att,
+                       fluxes_sfr,fluxes_sfr_att,
+                       extra_param=extra_param, extra_params_names=extra_params_names,
+                       extra_params_labels=extra_params_labels,
                        outfile=outfile,attmod=attmod,unemod_sfr=unemod_sfr,
                        photmod_sfr=photmod_sfr,first=first)             
             del lms, lssfr
@@ -276,7 +312,7 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
             print()
             print('Subvolume', i+1, 'of', len(infile))
             print('Time:', round(time.perf_counter() - start_time,2), 's.')
-            print()
-            
+            print()         
+    
     if verbose:
         print('Total time: ', round(time.perf_counter() - start_total_time,2), 's.')

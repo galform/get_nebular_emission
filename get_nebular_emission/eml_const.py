@@ -43,7 +43,7 @@ attmods = ['ratios', 'cardelli89']
 
 ewmods = ['LandEW']
 
-inputformats = ['textfile','HDF5']
+inputformats = ['txt','hdf5']
 
 # For Kennicut IMF -> M(Kenn) = corr * M(IMF)
 # ---------------------------
@@ -59,6 +59,8 @@ inputformats = ['textfile','HDF5']
 # Chabrier 1.57
 # Baldry & Glazebrook 2.26
 # Top-heavy IMF (x=1) 3.13
+
+######### Lacey et. al. 2016
 
 IMF_M = {'Kennicut': 1, 'Salpeter': 0.47, 'Kroupa': 0.74, 'Chabrier': 0.81, 
             'Baldry&Glazebrook': 0.85, 'Top-heavy': 1.11}
@@ -76,6 +78,13 @@ phot_to_sfr_kenn = 9.85e52 # phot/s
 # Reescaled to Kennicut, it gives our number.
 
 #------------------------------------------------------------------------------------
+
+# Mean ratio between global cold gas density at different redshift for GP20
+
+med_to_low = 1.74 # 0.8 to 0
+high_to_low = 1.58 # 1.5 to 0
+
+#------------------------------------------------------------------------------------
 #    Atenuation:
 #------------------------------------------------------------------------------------
 
@@ -89,7 +98,7 @@ phot_to_sfr_kenn = 9.85e52 # phot/s
 
 def saito_att(z):
     if z < 2.8:
-        return 5/(z+2.2)
+        return (z+2.2)/5
     else:
         return 1
 
@@ -143,12 +152,11 @@ beta = 1 - alpha_adaf/0.55
 acc_rate_crit_visc = 0.001*(lambda_adaf/0.0005)*((1-beta)/beta)*alpha_adaf**2 
 # Boundary between the two adaf regimes
 
-
 spin_bh = 0.67 # 0, 0.3, 0.5, 0.67, 0.9, 0.95, 1
 
 # Lagos et. al 2008:
-kappa_agn = 2.23e-4#2.46e-4 3.17e-4 6.36e-4
-kappa_agn_exp = 0.633 #0.624 #0.460 0.398
+kappa_agn = 5.44e-4#2.46e-4 3.17e-4 5.44e-4
+kappa_agn_exp = 0.597 #0.624 #0.460 0.597
 # 1e-4  # Efficiency of cold gas accretion onto the BH during gas cooling (1e-4 in Lagos et. al)
 
 # Lacey et. al 2016
@@ -156,6 +164,12 @@ epsilon_heat = 0.02 # BH heating efficienty
 
 nH_AGN = 1000 # cm^-3
 radius_NLR = 0.001 # Mpc
+
+#------------------------------------------------------------------------------------
+
+# Relationship between epsilon and M and Z
+epsilon_a_sfr = -0.1633
+epsilon_b_sfr = 0.3776
 
 #------------------------------------------------------------------------------------
 
@@ -306,7 +320,7 @@ BPT_lines = {'NII': ['SFR_Composite', 'Composite_AGN', 'LINER_NIIlim', 'LINER_OI
 #------------------------------------------------------------------------------------
 #   Cosmology:
 #------------------------------------------------------------------------------------
-h = 0.6777 # Hubble constant H = 100 h km s**-1 Mpc**-1
+h = 0.704#0.6777 # Hubble constant H = 100 h km s**-1 Mpc**-1
 omega0=0.307
 omegab = 0.0482
 lambda0=0.693

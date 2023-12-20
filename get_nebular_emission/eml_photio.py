@@ -7,6 +7,7 @@ import sys
 import warnings
 from cosmology import emission_line_flux
 
+from cosmology import logL2flux, set_cosmology
 
 def get_zfile(zmet_str, photmod='gutkin16'):
 
@@ -146,24 +147,39 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
         return lower_limit,upper_limit
     
-def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True):
+def calculate_flux(nebline,redshift,h0=const.h,origin='sfr'):
+    
+    if nebline.any():
+        set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=h0)
+        
+        luminosities = np.zeros(nebline.shape)
+        luminosities[nebline>0] = np.log10(nebline[nebline>0]*h0**2)
+        if (origin=='agn') and (luminosities.shape[0]==2):
+            luminosities[1] = 0
+            
+        fluxes = np.zeros(luminosities.shape)
+        for comp in range(luminosities.shape[0]):
+            for i in range(luminosities.shape[1]):
+                for j in range(luminosities.shape[2]):
+                    if luminosities[comp,i,j] == 0:  
+                        fluxes[comp,i,j] = 0
+                    else:
+                        fluxes[comp,i,j] = logL2flux(luminosities[comp,i,j],redshift)
+    else:
+        fluxes = np.copy(nebline)
+            
+    return fluxes
+            
+def get_lines_Feltre(lu, lne, loh12, verbose=True, 
+                     xid_feltre=0.5,alpha_feltre=-1.7):
     '''
     Get the interpolations for the emission lines,
     using the tables
-    from Feltre et al. (2016) (https://arxiv.org/pdf/1511.08217.pdf)
-
-    Parameters
-    ----------
-    lu : floats
-     U of the galaxies per component.
+    from Feltre et al. (2016) (https://arxiv.org/pdf/1511.08217utkingalaxies per component.
     lne : floats
      ne of the galaxies per component (cm^-3).
     loh12 : floats
      Metallicity of the galaxies per component (log10(Z))
-    Plotting : boolean
-      If True run verification plots with all data.
-    Testing : boolean
-      If True to only run over few entries for testing purposes
     verbose : boolean
       If True print out messages
       
@@ -172,6 +188,11 @@ def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     nebline : floats
      Array with the luminosity of the lines per component. (Lsun for L_AGN = 10^45 erg/s)
     '''
+    
+    minU, maxU = get_limits(propname='U', photmod='feltre16')
+    minnH, maxnH = get_limits(propname='nH', photmod='feltre16')
+    minZ, maxZ = get_limits(propname='Z', photmod='feltre16')
+    minZ, maxZ = np.log10(minZ), np.log10(maxZ)
     
     zmet_str = const.zmet_str['feltre16']
     zmets = np.full(len(zmet_str),const.notnum)
@@ -210,7 +231,7 @@ def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                 nH = float(data[2])
                 alpha = float(data[3])
 
-                if xid==0.3 and alpha==-1.7:
+                if xid==xid_feltre and alpha==alpha_feltre:
                     if u == -5.:
                         l = 0
                     if u == -4.5:
@@ -265,7 +286,7 @@ def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
         j = []
         for logu in lu[:,comp]:
             j1 = locate_interval(logu,logubins)
-            if j1 == 0:
+            if logu<minU:
                 du.append(0.0)
                 j.append(0)
                 #du = 0.0
@@ -285,7 +306,7 @@ def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     
         for logz in loh12[:,comp]:
             i1 = locate_interval(logz, lzmets)
-            if i1 == 0:
+            if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0
                 i1 = 0
@@ -330,7 +351,7 @@ def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                 dn = (lne[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int2[k][n] + (dn) * emline_int3[k][n]
-                print('hay mayor que 3')
+                # print('hay mayor que 3')
     
             elif (lne[:,comp][n] <= 2.):
                 for k in range(nemline):
@@ -343,7 +364,8 @@ def get_lines_Feltre(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                 
     return nebline
 
-def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True):
+def get_lines_Gutkin(lu, lne, loh12, verbose=True,
+                     xid_gutkin=0.3,co_gutkin=1,imf_cut_gutkin=100):
     '''
     Get the interpolations for the emission lines,
     using the tables
@@ -357,10 +379,6 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
      ne of the galaxies per component (cm^-3).
     loh12 : floats
      Metallicity of the galaxies per component (log10(Z))
-    Plotting : boolean
-      If True run verification plots with all data.
-    Testing : boolean
-      If True to only run over few entries for testing purposes
     verbose : boolean
       If True print out messages
       
@@ -369,6 +387,11 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     nebline : floats
      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     '''
+    
+    minU, maxU = get_limits(propname='U', photmod='feltre16')
+    minnH, maxnH = get_limits(propname='nH', photmod='feltre16')
+    minZ, maxZ = get_limits(propname='Z', photmod='feltre16')
+    minZ, maxZ = np.log10(minZ), np.log10(maxZ)
     
     zmet_str = const.zmet_str['gutkin16']
     zmets = np.full(len(zmet_str),const.notnum)
@@ -413,8 +436,8 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                 nH = float(data[2])
                 co = float(data[3])
                 imf_cut = float(data[4])
-
-                if xid==0.3 and co==1.and imf_cut==100:
+                
+                if xid==xid_gutkin and co==co_gutkin and imf_cut==imf_cut_gutkin:
                     if u == -4.:
                         l = 0
                     if u == -3.5:
@@ -484,7 +507,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
         j = []
         for logu in lu[:,comp]:
             j1 = locate_interval(logu,logubins)
-            if j1 == 0:
+            if logu<minU:
                 du.append(0.0)
                 j.append(0)
                 #du = 0.0
@@ -505,7 +528,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
         for logz in loh12[:,comp]:
             i1 = locate_interval(logz,lzmets_reduced)
     
-            if i1==0:
+            if logz<minZ:
                 dz.append(0.0)
                 #dz = 0.0
                 i1 = 0
@@ -543,7 +566,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     
         for logz in loh12[:,comp]:
             i1 = locate_interval(logz, lzmets)
-            if i1 == 0:
+            if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0
                 i1 = 0
@@ -588,7 +611,7 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
                 dn = (lne[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
-                print('hay mayor que 3')
+                # print('hay mayor que 3')
     
             elif (lne[:,comp][n] <= 1.):
                 for k in range(nemline):
@@ -604,7 +627,9 @@ def get_lines_Gutkin(lu, lne, loh12, Testing=False, Plotting=False, verbose=True
     return nebline
 
 
-def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True, Testing=False, Plotting=False):
+def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True,
+              xid_gutkin=0.3,co_gutkin=1,imf_cut_gutkin=100,
+              xid_feltre=0.5,alpha_feltre=-1.7):
     '''
     Get the emission lines
 
@@ -620,10 +645,6 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True, Testing=False, P
       Name of the considered photoionisation model.
     verbose : boolean
       If True print out messages
-    Plotting : boolean
-      If True run verification plots with all data.
-    Testing : boolean
-      If True to only run over few entries for testing purposes
 
     Returns
     -------
@@ -637,11 +658,13 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True, Testing=False, P
             print('                Possible photmod= {}'.format(const.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_Gutkin(lu,lne,loh12, Testing=Testing, 
-                Plotting=Plotting, verbose=verbose)
+        nebline = get_lines_Gutkin(lu,lne,loh12,
+                verbose=verbose,
+                xid_gutkin=xid_gutkin,co_gutkin=co_gutkin,imf_cut_gutkin=imf_cut_gutkin)
     elif (photmod == 'feltre16'):
-        nebline = get_lines_Feltre(lu,lne,loh12, Testing=Testing, 
-                Plotting=Plotting, verbose=verbose)
+        nebline = get_lines_Feltre(lu,lne,loh12,
+                verbose=verbose,
+                xid_feltre=xid_feltre,alpha_feltre=alpha_feltre)
 
     return nebline
 

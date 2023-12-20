@@ -178,7 +178,7 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
-    mmin = 8 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
+    mmin = 8.5 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
     mmax = 15 
     dm = 0.1
     mbins = np.arange(mmin, mmax, dm)
@@ -276,11 +276,12 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     for ii in range(len(inputdata)):
         with h5py.File(inputdata[ii],'r') as file:
             data = file['data']          
-            lms = np.log10(10**data['lms'][:,0]+10**data['lms'][:,1]) #+ np.log10(h0)
+            lms = np.log10((10**data['lms'][:,0])/const.IMF_M['Chabrier']+data['Ms_bulge'][:,0]*const.IMF_M['Top-heavy']/const.IMF_M['Chabrier']) #+ np.log10(h0)
             if specific:
                 lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
             else: 
                 lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + lms
+                lsfr = lsfr/const.IMF_SFR['Chabrier']
             # lms = lms + np.log10(h0)     
             del data
 
@@ -326,7 +327,7 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
         ind = np.where(y < 0.)
 
         axm.plot(x[ind], y[ind], color=color[ii],
-                 linestyle=lsty[ii], label=labels[ii])
+                 linestyle=lsty[ii])
     
         # Plot observations GSMF
         if obsGSM:
@@ -421,26 +422,19 @@ def test_medians(infile, outplot, verbose=False):
             with h5py.File(infile,'r') as file:
                 print(infile)
                 f = file['data']
-                lu = f['lu'][:,0]
-                lne = f['lne'][:,0]   
-                lms = f['lms'][:,0]  + np.log10(const.h)
+                lu = f['lu_sfr'][:,0]
+                lne = f['lne_sfr'][:,0]   
+                lms = np.log10(10**f['lms'][:,0] + f['Ms_bulge'][:,0]) + np.log10(const.h)
                 lssfr = f['lssfr'][:,0]
-                Ha = np.sum(f['Halpha'],axis=0)
                 
-            Ha[Ha==np.inf] = 0
-            Ha[Ha==0] = 0.01
-            
-            print(len(lms[lms>11]))
-                
-            lum_Halpha = np.log10(Ha*3.826e33*10**(lssfr + lms))
-            Ha_flux = np.zeros(lum_Halpha.shape)
-            for j in range(len(lum_Halpha)):
-                Ha_flux[j] = logL2flux(lum_Halpha[j],0.131)
+                Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
+                Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
+                Ha_flux = Ha_flux_sfr + Ha_flux_agn
             
             data = np.append([lu], [lne], axis=0)
             print(data.shape)
             
-            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>2e-15))
+            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>4e-17))
             
             # MEDIANS:
             median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
@@ -463,6 +457,46 @@ def test_medians(infile, outplot, verbose=False):
             #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
             #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
             plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, color=col)#, label='Calculated from the ' + SFR[ii] + '')
+        # plt.legend()
+        
+            with h5py.File('output_data/emlines_GP20_z1.5_Kashino_cor.hdf5','r') as file:
+                print(infile)
+                f = file['data']
+                lu = f['lu_sfr'][:,0]
+                lne = f['lne_sfr'][:,0]   
+                lms = np.log10(10**f['lms'][:,0] + f['Ms_bulge'][:,0]) + np.log10(const.h)
+                lssfr = f['lssfr'][:,0]
+                
+                Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
+                Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
+                Ha_flux = Ha_flux_sfr + Ha_flux_agn
+            
+            data = np.append([lu], [lne], axis=0)
+            print(data.shape)
+            
+            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>4e-17))
+            
+            # MEDIANS:
+            median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
+
+            ind = np.where(median>const.notnum)
+            
+            median = median[ind]
+
+            # QUARTILES:
+            up_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.75)[ind]
+            #qup[ii] = up_qu
+            low_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.25)[ind]
+            #qlow[ii] = low_qu
+            
+            qu = np.append([median-low_qu],[up_qu-median],axis=0)
+            
+            print(ind, len(mhist))
+
+            #plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
+            #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
+            #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
+            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, color='k')#, label='Calculated from the ' + SFR[ii] + '')
         # plt.legend()
         
         plt.xlim((mmin,mmax))
@@ -538,18 +572,6 @@ def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=F
         lms = np.log10(10**data['lms'][:,0] + 10**data['lms'][:,1])
         lms = lms[ind]
         
-        # EW_Halpha = data['Halpha_EW'][ind]
-        
-        # Hbeta = Hbeta[::10]
-        # OIII5007 = OIII5007[::10]
-        # NII6548 = NII6548[::10]
-        # Halpha = Halpha[::10]
-        # SII6717_6731 = SII6717_6731[::10]
-        # OII3727 = OII3727[::10]
-        
-        # lz = lz[::10]
-        # lssfr = lssfr[::10]
-        
         ind2 = np.where((Hbeta>0)&(OIII5007>0)&(NII6548>0)&(Halpha>0)&(SII6717_6731>0)&(OII3727>0))[0]
         
         print(len(ind),len(ind2))
@@ -564,8 +586,6 @@ def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=F
         lz = lz[ind2]
         lssfr = lssfr[ind2]
         lms = lms[ind2]
-        
-        # EW_Halpha = EW_Halpha[ind2]
         
         bpt_x = ['log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)',
                  'log$_{10}$([SII]$\\lambda$6731/H$\\alpha$)',
