@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Documentation for get_nebular_emission &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Get nebular emission" href="readme_include.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="readme_include.html" title="Get nebular emission"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Documentation for <code class="docutils literal notranslate"><span class="pre">get_nebular_emission</span></code></a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="documentation-for-get-nebular-emission">
+<h1>Documentation for <code class="docutils literal notranslate"><span class="pre">get_nebular_emission</span></code><a class="headerlink" href="#documentation-for-get-nebular-emission" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme_include.html">Get nebular emission</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="readme_include.html#requirements-and-installation">Requirements and Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Code Features</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="features.html#flow-chart">Flow chart</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="source/get_nebular_emission.html">get_nebular_emission package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="source/get_nebular_emission.html#module-get_nebular_emission.eml">get_nebular_emission.eml module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source/get_nebular_emission.html#module-get_nebular_emission.eml_io">get_nebular_emission.eml_io module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source/get_nebular_emission.html#module-get_nebular_emission.eml_photio">get_nebular_emission.eml_photio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source/get_nebular_emission.html#module-get_nebular_emission.eml_plots">get_nebular_emission.eml_plots module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source/get_nebular_emission.html#module-get_nebular_emission.eml_une">get_nebular_emission.eml_une module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source/get_nebular_emission.html#module-get_nebular_emission.eml_att">get_nebular_emission.eml_att module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p><a class="reference external" href="https://get-nebular-emission.readthedocs.io/en/latest/"><img alt="Documentation Status" src="https://readthedocs.org/projects/get-nebular-emission/badge/?version=latest" /></a></p>
+<p>This code is in beta. Please report issues and be patient with the incomplete documentation.</p>
+</section>
+<section id="get-nebular-emission">
+<h1>Get nebular emission<a class="headerlink" href="#get-nebular-emission" title="Permalink to this heading">¶</a></h1>
+<p><strong>get_nebular_emission</strong> is a Python package that given the metallicity of cold gas, the stellar mass and either the specific star formation or the number of ionizing photons, calculates the intensity of nebular emission lines from star forming HII regions. It also calculates the emission lines from narrow-line regions of AGNs from the AGN luminosity and the size and mass of galactic components.</p>
+<p>The current version of the code is based on the Fortran90 one used for the paper Baugh, Lacey, Gonzalez-Perez and Manzoni 2022 (<a class="reference external" href="https://arxiv.org/abs/2112.00129">https://arxiv.org/abs/2112.00129</a>).</p>
+<p>The code reads galaxy properties from an input text or HDF5 file with values separated by spaces. This can have a header, as long as the header lines start with characters or signs well specify (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).</p>
+<p>If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).</p>
+<section id="requirements-and-installation">
+<h2>Requirements and Installation<a class="headerlink" href="#requirements-and-installation" title="Permalink to this heading">¶</a></h2>
+<p>This code has been developed in Python 3.7.1 and it is compatible with Python above 3.5 versions. The code has been tested to run in Linux and Windows operating systems.</p>
+<p>This code uses numpy as specified in docs/requirements.txt.</p>
+<p>The code can be run directly from a cloned GitHub <a class="reference external" href="https://github.com/galform/get_nebular_emission">repository</a> and then makeing a local installation from the main directory (where you can see <cite>setup.py</cite>:
+<code class="code docutils literal notranslate"><span class="pre">python3</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>.</p>
+</section>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="#">Table of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="readme_include.html">Get nebular emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Code Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/get_nebular_emission.html">get_nebular_emission package</a></li>
+</ul>
+
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="readme_include.html"
+                          title="next chapter">Get nebular emission</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="readme_include.html" title="Get nebular emission"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Documentation for <code class="docutils literal notranslate"><span class="pre">get_nebular_emission</span></code></a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

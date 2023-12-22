@@ -1,0 +1,398 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>get_nebular_emission.eml_att &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_att</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for get_nebular_emission.eml_att</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Wed Apr 12 14:36:13 2023</span>
+
+<span class="sd">@author: expox7</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">get_nheader</span><span class="p">,</span> <span class="n">homedir</span><span class="p">,</span> <span class="n">locate_interval</span>
+<span class="kn">import</span> <span class="nn">get_nebular_emission.eml_const</span> <span class="k">as</span> <span class="nn">const</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">check_file</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">cosmology</span> <span class="kn">import</span> <span class="n">emission_line_flux</span>
+
+<span class="c1">#------------------------------------------------------------------------------------</span>
+<span class="c1">#   Cardelli et al. 1989 extinction laws in FIR and IR/OPT:</span>
+<span class="c1">#------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="cardelli"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_att.cardelli">[docs]</a><span class="k">def</span> <span class="nf">cardelli</span><span class="p">(</span><span class="n">waveA</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given the wavelength, returns Al/Av following Cardelli 1989.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    waveA : floats</span>
+<span class="sd">     Wavelength (A)</span>
+<span class="sd">     </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Al_Av : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">Rv</span><span class="o">=</span><span class="mf">3.1</span> 
+    <span class="n">wave</span><span class="o">=</span><span class="n">waveA</span><span class="o">/</span><span class="mf">10000.</span>
+    <span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="n">wave</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio.cardelli): &#39;</span><span class="p">,</span>
+              <span class="s1">&#39;Wavelength out of range.&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        <span class="k">return</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">1.1</span><span class="p">):</span> <span class="c1">#IR</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="mf">0.574</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mf">1.61</span><span class="p">)</span> 
+        <span class="n">bx</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.527</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mf">1.61</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">3.3</span><span class="p">):</span> <span class="c1">#Optical/NIR</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="mf">1.82</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="mf">0.17699</span><span class="o">*</span><span class="n">y</span> <span class="o">-</span> <span class="mf">0.50447</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">0.02427</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">0.72085</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> 
+        <span class="mf">0.01979</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">5</span> <span class="o">-</span> <span class="mf">0.77530</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="mf">0.32999</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">7</span><span class="p">)</span> 
+        <span class="n">bx</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.41338</span><span class="o">*</span><span class="n">y</span><span class="o">+</span><span class="mf">2.28305</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.07233</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">5.38434</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span>
+        <span class="mf">0.62251</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> <span class="mf">5.30260</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">6</span> <span class="o">-</span> <span class="mf">2.09002</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">7</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">):</span> <span class="c1">#UV</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">5.9</span><span class="p">):</span>
+            <span class="n">Fa</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">Fb</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">Fa</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.04473</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">0.009779</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">Fb</span> <span class="o">=</span> <span class="mf">0.2130</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.1207</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="mf">1.752</span><span class="o">-</span><span class="mf">0.316</span><span class="o">*</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.104</span><span class="o">/</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="mf">4.67</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.341</span><span class="p">)</span> <span class="o">+</span> <span class="n">Fa</span>
+        <span class="n">bx</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.090</span><span class="o">+</span><span class="mf">1.825</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="mf">1.206</span><span class="o">/</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="mf">4.62</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.263</span><span class="p">)</span> <span class="o">+</span> <span class="n">Fb</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.073</span> <span class="o">-</span> <span class="mf">0.628</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.137</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">0.070</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="n">bx</span> <span class="o">=</span> <span class="mf">13.670</span> <span class="o">+</span> <span class="mf">4.257</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.420</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.374</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+    
+    <span class="n">Al_Av</span> <span class="o">=</span> <span class="n">ax</span><span class="o">+</span><span class="n">bx</span><span class="o">/</span><span class="n">Rv</span>
+    <span class="k">return</span> <span class="n">Al_Av</span></div>
+
+<div class="viewcode-block" id="coef_att_cardelli"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_att.coef_att_cardelli">[docs]</a><span class="k">def</span> <span class="nf">coef_att_cardelli</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">Mcold_disc</span><span class="p">,</span> <span class="n">rhalf_mass_disc</span><span class="p">,</span> <span class="n">Z_disc</span><span class="p">,</span> <span class="n">costheta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">albedo</span><span class="o">=</span><span class="mf">0.56</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given the wavelength, the cold gas mass, the half-mass radius and the global metallicity of the disk,</span>
+<span class="sd">    along with the assumed albedo and scattering angle, it gives the attenuation coefficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    wavelength : floats</span>
+<span class="sd">     Wavelength (A).</span>
+<span class="sd">    Mcold_disc : floats</span>
+<span class="sd">     Cold gas mass (Msun).</span>
+<span class="sd">    rhalf_mass_disc : floats</span>
+<span class="sd">     Half-mass radius of the disk (Msun).</span>
+<span class="sd">    Z_disc : floats</span>
+<span class="sd">     Disc&#39;s global metallicity.</span>
+<span class="sd">    costheta : float</span>
+<span class="sd">     Cosine of the assumed cattering angle.</span>
+<span class="sd">    albedo : float</span>
+<span class="sd">     Assumed albedo.</span>
+<span class="sd">     </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    coef_att : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+    
+    <span class="n">a_disc</span> <span class="o">=</span> <span class="mf">1.68</span>
+    <span class="k">if</span> <span class="n">wavelength</span> <span class="o">&gt;</span> <span class="mi">2000</span><span class="p">:</span> <span class="c1">#Guiderdoni &amp; Roca-Volmerange 1987 (see De Lucia &amp; Blaizot 2007)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mf">1.6</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mf">1.35</span>
+    <span class="n">Al_Av</span> <span class="o">=</span> <span class="n">cardelli</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)</span>
+    <span class="n">sectheta</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">costheta</span>
+
+    <span class="n">mean_col_dens_disc_log</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">Mcold_disc</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">Msun_to_kg</span><span class="p">)</span> <span class="o">-</span> 
+    <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mf">1.4</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">mp</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">-</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">a_disc</span><span class="o">*</span><span class="n">rhalf_mass_disc</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">Mpc_to_cm</span><span class="p">))</span>
+    
+    <span class="n">tau_disc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">Al_Av</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="n">Z_disc</span><span class="o">/</span><span class="n">const</span><span class="o">.</span><span class="n">zsun</span><span class="p">)</span><span class="o">**</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">mean_col_dens_disc_log</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mf">2.1e21</span><span class="p">)</span>
+    <span class="n">tau_disc</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="n">tau_disc</span>
+    
+    <span class="n">al_disc</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">albedo</span><span class="p">))</span><span class="o">*</span><span class="n">tau_disc</span>
+    
+    <span class="n">A_lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="mf">1.</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">al_disc</span><span class="o">*</span><span class="n">sectheta</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">al_disc</span><span class="o">*</span><span class="n">sectheta</span><span class="p">))</span>
+    
+    <span class="n">coef_att</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4</span><span class="o">*</span><span class="n">A_lambda</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">coef_att</span></div>
+
+<div class="viewcode-block" id="coef_att_ratios"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_att.coef_att_ratios">[docs]</a><span class="k">def</span> <span class="nf">coef_att_ratios</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">cols_notatt</span><span class="p">,</span><span class="n">cols_att</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">,</span><span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;HDF5&#39;</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    It reads luminosities of lines with and without attenuation</span>
+<span class="sd">    from line emission data and it returns the attenuation coefficients.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">     Name of the input file. </span>
+<span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    cols_notatt : list</span>
+<span class="sd">     Attenuated flux lines calculated by the semi-analytic model of the input data. </span>
+<span class="sd">     Used to calculate attenuation coefficients for the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_att : list</span>
+<span class="sd">     Not attenuated flux lines calculated by the semi-analytic model of the input data. </span>
+<span class="sd">     Used to calculate attenuation coefficients for the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_photmod : list</span>
+<span class="sd">     Index in the list of lines of the photoionization model of the lines for which </span>
+<span class="sd">     attenuation is going to be calculated in the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
+<span class="sd">    photmod : string</span>
+<span class="sd">     Photoionisation model to be used for look up tables.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">     If True print out messages.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    coef_att : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">check_file</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols_notatt</span><span class="p">)</span>
+        
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">]</span>
+    <span class="n">numlines</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    
+    <span class="n">cols_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cols_att</span><span class="p">)</span>
+    <span class="n">cols_notatt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cols_notatt</span><span class="p">)</span>
+    <span class="n">cols_photmod</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cols_photmod</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;HDF5&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">hf</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            
+            <span class="n">coef_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">ncomp</span><span class="p">,</span><span class="n">numlines</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])))</span>
+            <span class="n">coef_att</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cols_photmod</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][:]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">ind2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][:]</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="n">cols_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span><span class="o">/</span><span class="n">hf</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span>
+                    <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;textfile&#39;</span><span class="p">:</span>
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>        
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        
+        <span class="n">coef_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">ncomp</span><span class="p">,</span><span class="n">numlines</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+        <span class="n">coef_att</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cols_photmod</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">ind2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]]</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">cols_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span><span class="o">/</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span>
+                    <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]]</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">ind2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]]</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">comp</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">cols_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span><span class="o">-</span><span class="n">X</span><span class="p">[</span><span class="n">cols_att</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span><span class="o">-</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">])</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">cols_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span><span class="o">/</span><span class="n">X</span><span class="p">[</span><span class="n">cols_notatt</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">cols_photmod</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                    
+                    
+        <span class="k">del</span> <span class="n">X</span>        
+    
+    <span class="k">return</span> <span class="n">coef_att</span></div>
+
+<div class="viewcode-block" id="attenuation"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_att.attenuation">[docs]</a><span class="k">def</span> <span class="nf">attenuation</span><span class="p">(</span><span class="n">nebline</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">att_ratio_lines</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">redshift</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;cardelli89&#39;</span><span class="p">,</span><span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">,</span>
+                <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the attenuated emission lines from the raw ones.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nebline : floats</span>
+<span class="sd">     Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr).</span>
+<span class="sd">    infile : string</span>
+<span class="sd">     - Name of the input file. </span>
+<span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    att_params : list</span>
+<span class="sd">     Parameters to look for calculating attenuation. See eml_const to know what each model expects.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    redshift : float</span>
+<span class="sd">     Redshift of the input data.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
+<span class="sd">    attmod : string</span>
+<span class="sd">     Attenuation model.</span>
+<span class="sd">    cols_notatt : list</span>
+<span class="sd">     Attenuated flux lines calculated by the semi-analytic model of the input data. </span>
+<span class="sd">     Used to calculate attenuation coefficients for the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_att : list</span>
+<span class="sd">     Not attenuated flux lines calculated by the semi-analytic model of the input data. </span>
+<span class="sd">     Used to calculate attenuation coefficients for the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_photmod : list</span>
+<span class="sd">     Index in the list of lines of the photoionization model of the lines for which </span>
+<span class="sd">     attenuation is going to be calculated in the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">    photmod : string</span>
+<span class="sd">     Photoionisation model to be used for look up tables.</span>
+<span class="sd">    cut : integers</span>
+<span class="sd">     Indeces of the not cutted galaxies.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">     If True print out messages.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nebline_att, coef_att : floats</span>
+<span class="sd">      </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -------</span>
+<span class="sd">    It will ignore the lines for which, for any reason, attenuation can not be calculated.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nebline</span><span class="p">)</span>
+    <span class="n">coef_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">nebline</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">att_param</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">attmod</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">attmods</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio.attenuation): Unrecognised model for attenuation.&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                Possible attmod= </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">attmods</span><span class="p">))</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">attmod</span><span class="o">==</span><span class="s1">&#39;ratios&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">att_ratio_lines</span><span class="p">:</span>
+                    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">att_ratio_lines</span><span class="p">)</span><span class="o">==</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                
+                <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">comp</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">att_param</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">*</span> <span class="n">const</span><span class="o">.</span><span class="n">line_att_coef_all</span><span class="p">(</span><span class="n">redshift</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">origin</span><span class="o">==</span><span class="s1">&#39;sfr&#39;</span><span class="p">:</span>
+                            <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="n">coef_att</span><span class="p">[(</span><span class="n">coef_att</span><span class="o">!=</span><span class="n">coef_att</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">coef_att</span><span class="o">!=</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="k">elif</span> <span class="n">attmod</span><span class="o">==</span><span class="s1">&#39;cardelli89&#39;</span><span class="p">:</span>
+            <span class="n">Rhm</span> <span class="o">=</span> <span class="n">att_param</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">Mcold_disc</span> <span class="o">=</span> <span class="n">att_param</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">Z_disc</span> <span class="o">=</span> <span class="n">att_param</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                
+            <span class="n">coef_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">nebline</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">comp</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">coef_att_cardelli</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">wavelength_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> 
+                                    <span class="n">Mcold_disc</span><span class="o">=</span><span class="n">Mcold_disc</span><span class="p">,</span> <span class="n">rhalf_mass_disc</span><span class="o">=</span><span class="n">Rhm</span><span class="p">,</span> 
+                                    <span class="n">Z_disc</span><span class="o">=</span><span class="n">Z_disc</span><span class="p">,</span> <span class="n">costheta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">albedo</span><span class="o">=</span><span class="mf">0.56</span><span class="p">)</span> <span class="o">*</span> <span class="n">const</span><span class="o">.</span><span class="n">line_att_coef_all</span><span class="p">(</span><span class="n">redshift</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">coef_att</span><span class="p">[(</span><span class="n">coef_att</span><span class="o">!=</span><span class="n">coef_att</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">coef_att</span><span class="o">!=</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.</span>
+    
+    <span class="n">nebline_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">nebline</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">coef_att</span><span class="o">!=</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">nebline_att</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">nebline</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">*</span><span class="n">coef_att</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">nebline_att</span><span class="p">,</span> <span class="n">coef_att</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme_include.html">Get nebular emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_att</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

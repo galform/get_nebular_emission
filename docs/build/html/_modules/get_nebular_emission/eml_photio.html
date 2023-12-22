@@ -1,0 +1,835 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>get_nebular_emission.eml_photio &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_photio</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for get_nebular_emission.eml_photio</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">get_nheader</span><span class="p">,</span> <span class="n">homedir</span><span class="p">,</span> <span class="n">locate_interval</span>
+<span class="kn">import</span> <span class="nn">get_nebular_emission.eml_const</span> <span class="k">as</span> <span class="nn">const</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">check_file</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<span class="n">mod_lim</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s2">&quot;nebular_data/gutkin_tables/limits_gutkin.txt&quot;</span><span class="p">}</span>
+
+<span class="c1"># print(mod_lim.keys()) # To show the keys</span>
+
+<span class="c1">#------------------------------------------------------------------------------------</span>
+<span class="c1">#   Cardelli et al. 1989 extinction laws in FIR and IR/OPT:</span>
+<span class="c1">#------------------------------------------------------------------------------------</span>
+<div class="viewcode-block" id="cardelli"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.cardelli">[docs]</a><span class="k">def</span> <span class="nf">cardelli</span><span class="p">(</span><span class="n">waveA</span><span class="p">):</span>
+    <span class="n">Rv</span><span class="o">=</span><span class="mf">3.1</span> 
+    <span class="n">wave</span><span class="o">=</span><span class="n">waveA</span><span class="o">/</span><span class="mf">10000.</span>
+    <span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="n">wave</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio.cardelli): &#39;</span><span class="p">,</span>
+              <span class="s1">&#39;Wavelength out of range.&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        <span class="k">return</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">1.1</span><span class="p">):</span> <span class="c1">#IR</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="mf">0.574</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mf">1.61</span><span class="p">)</span> 
+        <span class="n">bx</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.527</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mf">1.61</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">3.3</span><span class="p">):</span> <span class="c1">#Optical/NIR</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="mf">1.82</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">+</span><span class="mf">0.17699</span><span class="o">*</span><span class="n">y</span> <span class="o">-</span> <span class="mf">0.50447</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">0.02427</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">0.72085</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> 
+        <span class="mf">0.01979</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">5</span> <span class="o">-</span> <span class="mf">0.77530</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">6</span> <span class="o">+</span> <span class="mf">0.32999</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">7</span><span class="p">)</span> 
+        <span class="n">bx</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.41338</span><span class="o">*</span><span class="n">y</span><span class="o">+</span><span class="mf">2.28305</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.07233</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">5.38434</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span>
+        <span class="mf">0.62251</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> <span class="mf">5.30260</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">6</span> <span class="o">-</span> <span class="mf">2.09002</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">7</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">):</span> <span class="c1">#UV</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">5.9</span><span class="p">):</span>
+            <span class="n">Fa</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">Fb</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">Fa</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.04473</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">0.009779</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+            <span class="n">Fb</span> <span class="o">=</span> <span class="mf">0.2130</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.1207</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">5.9</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="mf">1.752</span><span class="o">-</span><span class="mf">0.316</span><span class="o">*</span><span class="n">x</span> <span class="o">-</span> <span class="mf">0.104</span><span class="o">/</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="mf">4.67</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.341</span><span class="p">)</span> <span class="o">+</span> <span class="n">Fa</span>
+        <span class="n">bx</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.090</span><span class="o">+</span><span class="mf">1.825</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="mf">1.206</span><span class="o">/</span><span class="p">((</span><span class="n">x</span><span class="o">-</span><span class="mf">4.62</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.263</span><span class="p">)</span> <span class="o">+</span> <span class="n">Fb</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.073</span> <span class="o">-</span> <span class="mf">0.628</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.137</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">0.070</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="n">bx</span> <span class="o">=</span> <span class="mf">13.670</span> <span class="o">+</span> <span class="mf">4.257</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.420</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.374</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        
+    <span class="k">return</span> <span class="n">ax</span><span class="o">+</span><span class="n">bx</span><span class="o">/</span><span class="n">Rv</span></div>
+
+<div class="viewcode-block" id="coef_att_cardelli"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.coef_att_cardelli">[docs]</a><span class="k">def</span> <span class="nf">coef_att_cardelli</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">Mcold_disc</span><span class="p">,</span> <span class="n">rhalf_mass_disc</span><span class="p">,</span> <span class="n">Z_disc</span><span class="p">,</span> <span class="n">costheta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">albedo</span><span class="o">=</span><span class="mf">0.56</span><span class="p">):</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
+    
+    <span class="n">a_disc</span> <span class="o">=</span> <span class="mf">1.68</span>
+    <span class="k">if</span> <span class="n">wavelength</span> <span class="o">&gt;</span> <span class="mi">2000</span><span class="p">:</span> <span class="c1">#Guiderdoni &amp; Roca-Volmerange 1987 (see De Lucia &amp; Blaizot 2007)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mf">1.6</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mf">1.35</span>
+    <span class="n">Al_Av</span> <span class="o">=</span> <span class="n">cardelli</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)</span>
+    <span class="n">sectheta</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">/</span><span class="n">costheta</span>
+
+    <span class="n">mean_col_dens_disc_log</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">Mcold_disc</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">Msun_to_kg</span><span class="p">)</span> <span class="o">-</span> 
+    <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mf">1.4</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">mp</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span><span class="o">-</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">a_disc</span><span class="o">*</span><span class="n">rhalf_mass_disc</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">Mpc_to_cm</span><span class="p">))</span>
+    
+    <span class="n">tau_disc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">Al_Av</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="n">Z_disc</span><span class="o">/</span><span class="n">const</span><span class="o">.</span><span class="n">zsun</span><span class="p">)</span><span class="o">**</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">mean_col_dens_disc_log</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mf">2.1e21</span><span class="p">)</span>
+    <span class="n">tau_disc</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="n">tau_disc</span>
+    
+    <span class="n">al_disc</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">albedo</span><span class="p">))</span><span class="o">*</span><span class="n">tau_disc</span>
+    
+    <span class="n">A_lambda</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="mf">1.</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">al_disc</span><span class="o">*</span><span class="n">sectheta</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">al_disc</span><span class="o">*</span><span class="n">sectheta</span><span class="p">))</span>
+    
+    <span class="n">coef_att</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4</span><span class="o">*</span><span class="n">A_lambda</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">coef_att</span></div>
+
+<div class="viewcode-block" id="coef_att_galform"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.coef_att_galform">[docs]</a><span class="k">def</span> <span class="nf">coef_att_galform</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">cols</span><span class="p">,</span><span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">],</span><span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    It reads luminosities of lines with and without attenuation</span>
+<span class="sd">    from GALFORM data and it returns the attenuation coefficients.</span>
+<span class="sd">    It supposes two components.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">      Name of the input file. Expects an hdf5 file.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    coef_att : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">check_file</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;.hdf5&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">infile</span><span class="p">):</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="n">infile</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;.hdf5&#39;</span> <span class="c1">#This expects a .txt or a .dat</span>
+    
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">][</span><span class="n">lines</span><span class="p">]</span>
+    
+    <span class="n">numlines</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">hf</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        
+        <span class="n">coef_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">ncomp</span><span class="p">,</span><span class="n">numlines</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_disk_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]])))</span>
+        <span class="n">coef_att</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numlines</span><span class="p">):</span>
+                <span class="n">indd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_disk_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]][:]</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">indb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_bulge_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]][:]</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                
+                <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">indd</span><span class="p">]</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_disk_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_ext&#39;</span><span class="p">][</span><span class="n">indd</span><span class="p">]</span><span class="o">/</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_disk_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">indd</span><span class="p">]</span>
+                <span class="n">coef_att</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">indb</span><span class="p">]</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_bulge_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_ext&#39;</span><span class="p">][</span><span class="n">indb</span><span class="p">]</span><span class="o">/</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_bulge_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">indb</span><span class="p">]</span>
+                
+                <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][(</span><span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">&gt;</span><span class="mf">1.</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.</span>
+                <span class="n">coef_att</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">][(</span><span class="n">coef_att</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">&gt;</span><span class="mf">1.</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">coef_att</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="k">elif</span> <span class="n">ncomp</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numlines</span><span class="p">):</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_tot_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]][:]</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                
+                <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_tot_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_ext&#39;</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span><span class="o">/</span><span class="n">hf</span><span class="p">[</span><span class="s1">&#39;L_tot_&#39;</span> <span class="o">+</span> <span class="n">lines</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="n">ind</span><span class="p">]</span>
+                
+                <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][(</span><span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">&gt;</span><span class="mf">1.</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio.coef_att_galform): &#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;GALFORM does not have more than two components.&#39;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">coef_att</span></div>
+
+
+<div class="viewcode-block" id="get_zfile"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_zfile">[docs]</a><span class="k">def</span> <span class="nf">get_zfile</span><span class="p">(</span><span class="n">zmet_str</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a metallicity string get the name of the corresponding table</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    zmet_str : string</span>
+<span class="sd">        Metallicity name in files</span>
+<span class="sd">    photomod : string</span>
+<span class="sd">        Name of the considered photoionisation model</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    zfile : string</span>
+<span class="sd">        Name of the model file with data for the given metallicity</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;nebular_data/&#39;</span> <span class="o">+</span> <span class="n">photmod</span> <span class="o">+</span> <span class="s1">&#39;_tables/nebular_emission_Z&#39;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">zmet_str</span><span class="p">)</span><span class="o">&lt;</span><span class="mi">3</span><span class="p">:</span>
+        <span class="n">zmet_str</span> <span class="o">=</span> <span class="n">zmet_str</span><span class="o">+</span><span class="s1">&#39;0&#39;</span>
+    <span class="n">zfile</span> <span class="o">=</span> <span class="n">root</span> <span class="o">+</span> <span class="n">zmet_str</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span>
+    <span class="c1"># Si son 2 numeros que le añada un cero</span>
+    <span class="n">file_fine</span> <span class="o">=</span> <span class="n">check_file</span><span class="p">(</span><span class="n">zfile</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">file_fine</span><span class="p">):</span>
+        <span class="n">zfile</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">zfile</span></div>
+
+<div class="viewcode-block" id="clean_photarray"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.clean_photarray">[docs]</a><span class="k">def</span> <span class="nf">clean_photarray</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given the model, take the values outside the limits and give them the apropriate</span>
+<span class="sd">    value inside the limits depending on the model.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    photomod : string</span>
+<span class="sd">     Name of the considered photoionisation model</span>
+
+<span class="sd">    verbose : boolean</span>
+<span class="sd">     If True print out messages</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lu,lne,loh12 : arrays</span>
+<span class="sd">     - Array of the properties with all the data in the limits.</span>
+<span class="sd">     - Two components [disk, bulge]</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+
+    <span class="c1"># Read the data file:</span>
+    <span class="c1"># infile = r&quot;output_data/U_ne_loh12.hdf5&quot;</span>
+
+    <span class="c1"># check_file(infile, verbose=verbose)</span>
+
+    <span class="c1"># f = h5py.File(infile,&#39;r&#39;)</span>
+    <span class="c1"># header = f[&#39;header&#39;]</span>
+    <span class="c1"># data = f[&#39;data&#39;]</span>
+
+    <span class="c1"># lu = data[&#39;lu&#39;][:]</span>
+    <span class="n">lud</span><span class="o">=</span><span class="p">[];</span> <span class="n">lub</span><span class="o">=</span><span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lu</span><span class="p">):</span>
+        <span class="n">u1</span> <span class="o">=</span> <span class="n">lu</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+        <span class="n">u1</span> <span class="o">=</span> <span class="n">u1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">lud</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">lub</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">u1</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">lud</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lud</span><span class="p">)</span>
+    <span class="n">lub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lub</span><span class="p">)</span>
+
+
+    <span class="c1"># lne = data[&#39;lne&#39;][:]</span>
+    <span class="n">lned</span><span class="o">=</span><span class="p">[];</span><span class="n">lneb</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">ne</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lne</span><span class="p">):</span>
+        <span class="n">ne1</span> <span class="o">=</span> <span class="n">lne</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+        <span class="n">ne1</span> <span class="o">=</span> <span class="n">ne1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">lned</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ne1</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">lneb</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ne1</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">lned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lned</span><span class="p">)</span>
+    <span class="n">lneb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lneb</span><span class="p">)</span>
+
+
+    <span class="c1"># loh12 = data[&#39;loh12&#39;][:]</span>
+    <span class="n">loh12d</span><span class="o">=</span><span class="p">[];</span><span class="n">loh12b</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">oh12</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">loh12</span><span class="p">):</span>
+        <span class="n">oh121</span> <span class="o">=</span> <span class="n">loh12</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+        <span class="n">oh121</span> <span class="o">=</span> <span class="n">oh121</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">loh12d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oh121</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">loh12b</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">oh121</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">loh12d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">loh12d</span><span class="p">)</span>
+    <span class="n">loh12b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">loh12b</span><span class="p">)</span>
+
+
+    <span class="n">lowerl</span><span class="p">,</span> <span class="n">upperl</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">)</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lud</span> <span class="o">&gt;</span> <span class="n">upperl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lud</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lud</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">upperl</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lud</span> <span class="o">&lt;</span> <span class="n">lowerl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lud</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lud</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowerl</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lub</span> <span class="o">&gt;</span> <span class="n">upperl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lub</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lub</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">upperl</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lub</span> <span class="o">&lt;</span> <span class="n">lowerl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lub</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lub</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowerl</span>
+
+    <span class="n">lu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">lud</span><span class="p">,</span> <span class="n">lub</span><span class="p">))</span>
+
+    <span class="n">lowerl</span><span class="p">,</span> <span class="n">upperl</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;nH&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">)</span>
+    
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lned</span> <span class="o">&gt;</span> <span class="n">upperl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lned</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lned</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">upperl</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lned</span> <span class="o">&lt;</span> <span class="n">lowerl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lned</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lned</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowerl</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lneb</span> <span class="o">&gt;</span> <span class="n">upperl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lneb</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lneb</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">upperl</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lneb</span> <span class="o">&lt;</span> <span class="n">lowerl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lneb</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">lneb</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowerl</span>
+
+    <span class="n">lne</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">lned</span><span class="p">,</span> <span class="n">lneb</span><span class="p">))</span>
+
+    <span class="n">lowerl</span><span class="p">,</span> <span class="n">upperl</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">)</span>
+    
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">loh12d</span> <span class="o">&gt;</span> <span class="n">upperl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">loh12d</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">loh12d</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">upperl</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">loh12d</span> <span class="o">&lt;</span> <span class="n">lowerl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">loh12d</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">loh12d</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowerl</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">loh12b</span> <span class="o">&gt;</span> <span class="n">upperl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">loh12b</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">loh12b</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">upperl</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">loh12b</span> <span class="o">&lt;</span> <span class="n">lowerl</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">loh12b</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    <span class="n">loh12b</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowerl</span>
+
+    <span class="n">loh12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">loh12d</span><span class="p">,</span> <span class="n">loh12b</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">lu</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">lne</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">loh12</span><span class="o">.</span><span class="n">T</span></div>
+
+<div class="viewcode-block" id="get_limits"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_limits">[docs]</a><span class="k">def</span> <span class="nf">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="p">,</span> <span class="n">photmod</span> <span class="o">=</span> <span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a file with a structure: property + lower limit + upper limit,</span>
+<span class="sd">    gets the limits of the parameters of the photoionization model.</span>
+
+<span class="sd">    In the file we must find the properties well specified i.e U, Z and nH.</span>
+<span class="sd">    The header lines have to start with &#39;#&#39;</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -------</span>
+<span class="sd">    propname : string</span>
+<span class="sd">        name of the property that we want</span>
+<span class="sd">    photomod : string</span>
+<span class="sd">        Name of the considered photoionisation model</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lower_limit: float</span>
+<span class="sd">        lower limit of the requested property</span>
+<span class="sd">    upper_limit: float</span>
+<span class="sd">        upper limits of the requested property</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; # Table 3 of Gutkin+2016 (https://arxiv.org/pdf/1607.06086.pdf)</span>
+<span class="sd">    &gt;&gt;&gt; # Property      Lower_limit     Upper_limit</span>
+<span class="sd">    &gt;&gt;&gt; Z               0.0001          0.040</span>
+<span class="sd">    &gt;&gt;&gt; U               -4.0            -1.0</span>
+<span class="sd">    &gt;&gt;&gt; xid             0.1             0.5</span>
+<span class="sd">    &gt;&gt;&gt; nH               1               4 </span>
+<span class="sd">    &gt;&gt;&gt; get_limits(propname = &#39;Z&#39;, photmod = &#39;gutkin16&#39;)</span>
+<span class="sd">        0.0001 0.04</span>
+<span class="sd">    &gt;&gt;&gt; get_limits(propname = &#39;nH&#39;, photmod = &#39;gutkin16&#39;)</span>
+<span class="sd">        1  4</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="n">mod_lim</span><span class="p">[</span><span class="n">photmod</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio): the </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">photmod</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; model is an unrecognised model in the dictionary mod_lim&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                  Possible photmod= </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mod_lim</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">exit</span><span class="p">()</span>
+
+    <span class="c1"># Check if the limits file exists:</span>
+    <span class="n">check_file</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="c1"># print(infile)</span>
+
+    <span class="n">prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span><span class="n">comments</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">prop</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">propname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prop</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio): property </span><span class="si">{}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">propname</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;not found in the limits file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">infile</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                   In the limits file we must find the properties written as: U, Z and nH&#39;</span><span class="p">)</span>
+        <span class="n">exit</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">propname</span><span class="p">)</span>
+
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">firstchar</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">)</span>
+        <span class="n">lower_limit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ind</span><span class="o">+</span><span class="n">ih</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">upper_limit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ind</span><span class="o">+</span><span class="n">ih</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lower_limit</span><span class="p">,</span><span class="n">upper_limit</span></div>
+
+<div class="viewcode-block" id="get_lines_Gutkin"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_lines_Gutkin">[docs]</a><span class="k">def</span> <span class="nf">get_lines_Gutkin</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the interpolations for the emission lines,</span>
+<span class="sd">    using the tables</span>
+<span class="sd">    from Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lu : floats</span>
+<span class="sd">      Ionization parameter, log10(U) (dimensionless) [disk, bulge]</span>
+<span class="sd">    lne : floats</span>
+<span class="sd">      Electron density, log10(nH) (cm**-3) [disk, bulge]</span>
+<span class="sd">    loh12 : floats</span>
+<span class="sd">      Metallicity, 12+log(O/H) [disk, bulge]</span>
+<span class="sd">    Plotting : boolean</span>
+<span class="sd">      If True run verification plots with all data.</span>
+<span class="sd">    Testing : boolean</span>
+<span class="sd">      If True to only run over few entries for testing purposes</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+<span class="sd">      </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nebline_disk, nebline_bulge : floats</span>
+<span class="sd">      Fluxes of the lines for the disk and bulge components.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">zmet_str</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">zmet_str</span><span class="p">[</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">]</span>
+    <span class="n">zmets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">zmet_str</span><span class="p">),</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+    <span class="n">zmets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;0.&#39;</span> <span class="o">+</span> <span class="n">zmet</span><span class="p">)</span> <span class="k">for</span> <span class="n">zmet</span> <span class="ow">in</span> <span class="n">zmet_str</span><span class="p">])</span>
+
+    <span class="n">logubins</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">4.</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">]</span>
+    
+    <span class="n">nemline</span> <span class="o">=</span> <span class="mi">18</span>
+    <span class="n">ndat</span> <span class="o">=</span> <span class="n">lu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="n">lu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">nzmet</span> <span class="o">=</span> <span class="mi">14</span>
+    <span class="n">nu</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">nzmet_reduced</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">zmets_reduced</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">zmet_reduced</span><span class="p">[</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">]</span>
+
+    <span class="n">emline_grid1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nzmet_reduced</span><span class="p">,</span><span class="n">nu</span><span class="p">,</span><span class="n">nemline</span><span class="p">))</span> <span class="c1"># From slower to faster</span>
+    <span class="n">emline_grid2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nzmet</span><span class="p">,</span><span class="n">nu</span><span class="p">,</span><span class="n">nemline</span><span class="p">))</span>
+    <span class="n">emline_grid3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nzmet</span><span class="p">,</span><span class="n">nu</span><span class="p">,</span><span class="n">nemline</span><span class="p">))</span>
+    <span class="n">emline_grid4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nzmet_reduced</span><span class="p">,</span><span class="n">nu</span><span class="p">,</span><span class="n">nemline</span><span class="p">))</span>
+
+    <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">kred</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">nn</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">zname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">zmets</span><span class="p">):</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="n">get_zfile</span><span class="p">(</span><span class="n">zmet_str</span><span class="p">[</span><span class="n">k</span><span class="p">],</span><span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin&#39;</span><span class="p">)</span>
+        <span class="n">check_file</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#print(k,infile)</span>
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ff</span><span class="p">:</span>
+            <span class="n">iline</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">ff</span><span class="p">:</span>
+                <span class="n">iline</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">iline</span><span class="o">&lt;</span><span class="n">ih</span><span class="p">:</span><span class="k">continue</span>
+
+                <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+                <span class="n">u</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">xid</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">nH</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">co</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+                <span class="n">imf_cut</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="n">xid</span><span class="o">==</span><span class="mf">0.3</span> <span class="ow">and</span> <span class="n">co</span><span class="o">==</span><span class="mf">1.</span><span class="ow">and</span> <span class="n">imf_cut</span><span class="o">==</span><span class="mi">100</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">4.</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">3.5</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">3.</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">2</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">3</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">2.</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">4</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.5</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">5</span>
+                    <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.</span><span class="p">:</span>
+                        <span class="n">l</span> <span class="o">=</span> <span class="mi">6</span>
+
+
+                    <span class="k">if</span> <span class="n">nH</span><span class="o">==</span><span class="mi">10</span> <span class="ow">or</span> <span class="n">nH</span><span class="o">==</span><span class="mi">100</span> <span class="ow">or</span> <span class="n">nH</span><span class="o">==</span><span class="mi">1000</span> <span class="ow">or</span> <span class="n">nH</span><span class="o">==</span><span class="mi">10000</span><span class="p">:</span>
+
+                        <span class="k">if</span> <span class="n">nH</span><span class="o">==</span><span class="mi">10</span> <span class="ow">or</span> <span class="n">nH</span><span class="o">==</span><span class="mi">10000</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">k</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                                <span class="n">kred</span> <span class="o">=</span> <span class="mi">0</span>
+                            <span class="k">if</span> <span class="n">k</span><span class="o">==</span><span class="mi">4</span><span class="p">:</span>
+                                <span class="n">kred</span> <span class="o">=</span> <span class="mi">1</span>
+                            <span class="k">if</span> <span class="n">k</span><span class="o">==</span><span class="mi">9</span><span class="p">:</span>
+                                <span class="n">kred</span> <span class="o">=</span> <span class="mi">2</span>
+                            <span class="k">if</span> <span class="n">k</span><span class="o">==</span><span class="mi">12</span><span class="p">:</span>
+                                <span class="n">kred</span> <span class="o">=</span> <span class="mi">3</span>
+                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">nH</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span>
+                                <span class="n">emline_grid1</span><span class="p">[</span><span class="n">kred</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">5</span><span class="p">])</span>
+                            <span class="k">if</span> <span class="n">nH</span> <span class="o">==</span> <span class="mi">100</span><span class="p">:</span>
+                                <span class="n">emline_grid2</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">5</span><span class="p">])</span>
+                            <span class="k">if</span> <span class="n">nH</span> <span class="o">==</span> <span class="mi">1000</span><span class="p">:</span>
+                                <span class="n">emline_grid3</span><span class="p">[</span><span class="n">k</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">5</span><span class="p">])</span>
+                            <span class="k">if</span> <span class="n">nH</span> <span class="o">==</span> <span class="mi">10000</span><span class="p">:</span>
+                                <span class="n">emline_grid4</span><span class="p">[</span><span class="n">kred</span><span class="p">,</span><span class="n">l</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">5</span><span class="p">])</span>
+        <span class="n">ff</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="c1"># From Carlton&#39;s code, I do not understand from line 201 to line 212:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    for kred in range(nzmet_reduced):</span>
+<span class="sd">        for l in range(nu):</span>
+<span class="sd">            emline_grid1(kred,l,1)</span>
+<span class="sd">            emline_grid1(kred,l,3)</span>
+<span class="sd">            emline_grid1(kred,l,5)</span>
+<span class="sd">            emline_grid1(kred,l,6)</span>
+<span class="sd">    </span>
+<span class="sd">    for k in range(nzmet):</span>
+<span class="sd">        for l in range(nu):</span>
+<span class="sd">            emline_grid2(k,l,1)</span>
+<span class="sd">            emline_grid2(k,l,3)</span>
+<span class="sd">            emline_grid2(k,l,5)</span>
+<span class="sd">            emline_grid2(k,l,6)</span>
+<span class="sd">        </span>
+<span class="sd">            emline_grid3(k,l,1)</span>
+<span class="sd">            emline_grid3(k,l,3)</span>
+<span class="sd">            emline_grid3(k,l,5)</span>
+<span class="sd">            emline_grid3(k,l,6)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># log metallicity bins ready for interpolation:</span>
+
+    <span class="n">lzmets_reduced</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">zmets_reduced</span><span class="p">),</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">zmets_reduced</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">ind</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">lzmets_reduced</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">zmets_reduced</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+
+    <span class="n">lzmets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">zmets</span><span class="p">),</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">zmets</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">ind</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">lzmets</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">zmets</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+    <span class="n">nebline</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ncomp</span><span class="p">,</span><span class="n">nemline</span><span class="p">,</span><span class="n">ndat</span><span class="p">))</span>
+
+    <span class="c1"># Interpolate in all three ne grids to start with u-grid first, since the same for all grids</span>
+    
+    <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+
+        <span class="n">emline_int1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nemline</span><span class="p">,</span><span class="n">ndat</span><span class="p">))</span>
+        <span class="n">emline_int2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nemline</span><span class="p">,</span> <span class="n">ndat</span><span class="p">))</span>
+        <span class="n">emline_int3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nemline</span><span class="p">,</span> <span class="n">ndat</span><span class="p">))</span>
+        <span class="n">emline_int4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nemline</span><span class="p">,</span> <span class="n">ndat</span><span class="p">))</span>
+    
+        <span class="c1"># Interpolate over ionisation parameter</span>
+        <span class="n">du</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">logu</span> <span class="ow">in</span> <span class="n">lu</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]:</span>
+            <span class="n">j1</span> <span class="o">=</span> <span class="n">locate_interval</span><span class="p">(</span><span class="n">logu</span><span class="p">,</span><span class="n">logubins</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">j1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">du</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="n">j</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="c1">#du = 0.0</span>
+                <span class="n">j1</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">elif</span> <span class="n">j1</span> <span class="o">==</span> <span class="n">nu</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">du</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">j</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nu</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+                <span class="c1">#du = 1.0</span>
+                <span class="n">j1</span> <span class="o">=</span> <span class="n">nu</span> <span class="o">-</span> <span class="mi">2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">logu</span> <span class="o">-</span> <span class="n">logubins</span><span class="p">[</span><span class="n">j1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">logubins</span><span class="p">[</span><span class="n">j1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">logubins</span><span class="p">[</span><span class="n">j1</span><span class="p">])</span>
+                <span class="n">du</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">j</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j1</span><span class="p">)</span>
+    
+        <span class="c1"># Interpolate over disk gas metallicity loh12[comp]</span>
+        <span class="n">dz</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">logz</span> <span class="ow">in</span> <span class="n">loh12</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]:</span>
+            <span class="n">i1</span> <span class="o">=</span> <span class="n">locate_interval</span><span class="p">(</span><span class="n">logz</span><span class="p">,</span><span class="n">lzmets_reduced</span><span class="p">)</span>
+    
+            <span class="k">if</span> <span class="n">i1</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">dz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="c1">#dz = 0.0</span>
+                <span class="n">i1</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">i1</span> <span class="o">==</span> <span class="n">nzmet_reduced</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">dz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="c1">#dz = 1.0</span>
+                <span class="n">i1</span> <span class="o">=</span> <span class="n">nzmet_reduced</span><span class="o">-</span><span class="mi">2</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nzmet_reduced</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">logz</span> <span class="o">-</span> <span class="n">lzmets_reduced</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">lzmets_reduced</span><span class="p">[</span><span class="n">i1</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">lzmets_reduced</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span>
+                <span class="n">dz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+    
+    
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndat</span><span class="p">):</span>
+                <span class="c1">#emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))</span>
+                <span class="c1">#print(emline_grid1[i[ii]][j[ii]][k])</span>
+                <span class="n">emline_int1</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid1</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid1</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid1</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid1</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+    
+                <span class="n">emline_int4</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid4</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid4</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid4</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid4</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+    
+    
+        <span class="c1"># full metallicity grid for emlines_grid2 ne=100 and emlines_grid3 ne=1000</span>
+    
+        <span class="n">dz</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="p">[]</span>
+    
+        <span class="k">for</span> <span class="n">logz</span> <span class="ow">in</span> <span class="n">loh12</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]:</span>
+            <span class="n">i1</span> <span class="o">=</span> <span class="n">locate_interval</span><span class="p">(</span><span class="n">logz</span><span class="p">,</span> <span class="n">lzmets</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="c1"># dz = 0.0</span>
+                <span class="n">i1</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">i1</span> <span class="o">==</span> <span class="n">nzmet</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">dz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="c1"># dz = 1.0</span>
+                <span class="n">i1</span> <span class="o">=</span> <span class="n">nzmet</span> <span class="o">-</span> <span class="mi">2</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nzmet</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="p">(</span><span class="n">logz</span> <span class="o">-</span> <span class="n">lzmets</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">lzmets</span><span class="p">[</span><span class="n">i1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">lzmets</span><span class="p">[</span><span class="n">i1</span><span class="p">])</span>
+                <span class="n">dz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+    
+    
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndat</span><span class="p">):</span>
+                <span class="n">emline_int2</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid2</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid2</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid2</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid2</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+    
+                <span class="n">emline_int3</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid3</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">emline_grid3</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid3</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">+</span>\
+                                     <span class="n">dz</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">du</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">*</span><span class="n">emline_grid3</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+    
+        <span class="c1"># Interpolate over ne</span>
+        <span class="c1"># use gas density in disk logned</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndat</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">2.</span> <span class="ow">and</span> <span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">3.</span><span class="p">):</span>
+                <span class="n">dn</span> <span class="o">=</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span><span class="mf">2.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">3.</span> <span class="o">-</span> <span class="mf">2.</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+                    <span class="n">nebline</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dn</span><span class="p">)</span><span class="o">*</span><span class="n">emline_int2</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">dn</span><span class="p">)</span><span class="o">*</span><span class="n">emline_int3</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+    
+            <span class="k">elif</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">1.</span> <span class="ow">and</span> <span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">2.</span><span class="p">):</span>
+                <span class="n">dn</span> <span class="o">=</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span><span class="mf">1.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+                    <span class="n">nebline</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="o">-</span><span class="n">dn</span><span class="p">)</span><span class="o">*</span><span class="n">emline_int1</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">dn</span><span class="p">)</span><span class="o">*</span><span class="n">emline_int2</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+    
+            <span class="k">elif</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">3.</span> <span class="ow">and</span> <span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span><span class="o">&lt;=</span><span class="mf">4.</span><span class="p">):</span>
+                <span class="n">dn</span> <span class="o">=</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">-</span> <span class="mf">3.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mf">4.</span> <span class="o">-</span> <span class="mf">3.</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+                    <span class="n">nebline</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">dn</span><span class="p">)</span> <span class="o">*</span> <span class="n">emline_int3</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">dn</span><span class="p">)</span> <span class="o">*</span> <span class="n">emline_int4</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;hay mayor que 3&#39;</span><span class="p">)</span>
+    
+            <span class="k">elif</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">1.</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+                    <span class="n">nebline</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">emline_int1</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">4.</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nemline</span><span class="p">):</span>
+                    <span class="n">nebline</span><span class="p">[</span><span class="n">comp</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">emline_int4</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">n</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;log(ne)disk out of limits&#39;</span><span class="p">,</span><span class="s1">&#39;log(ne)disk = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="n">comp</span><span class="p">][</span><span class="n">n</span><span class="p">]))</span>
+
+    <span class="c1"># check if there is an ongoing bulge with the masses</span>
+
+    <span class="k">return</span> <span class="n">nebline</span></div>
+
+
+<div class="viewcode-block" id="get_lines"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_lines">[docs]</a><span class="k">def</span> <span class="nf">get_lines</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the emission lines</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lu : floats</span>
+<span class="sd">      Ionization parameter, log10(U) (dimensionless) [disk, bulge]</span>
+<span class="sd">    lne : floats</span>
+<span class="sd">      Electron density, log10(nH) (cm**-3) [disk, bulge]</span>
+<span class="sd">    loh12 : floats</span>
+<span class="sd">      Metallicity, 12+log(O/H) [disk, bulge]</span>
+<span class="sd">    photomod : string</span>
+<span class="sd">      Name of the considered photoionisation model</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+<span class="sd">    Plotting : boolean</span>
+<span class="sd">      If True run verification plots with all data.</span>
+<span class="sd">    Testing : boolean</span>
+<span class="sd">      If True to only run over few entries for testing purposes</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nebline_disk, nebline_bulge : floats</span>
+<span class="sd">      Fluxes of the lines for the disk and bulge components.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1">#lu,lne,loh12 = clean_photarray(lu,lne,loh12,photmod=photmod,verbose=verbose)</span>
+
+    <span class="k">if</span> <span class="n">photmod</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">photmods</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio.get_lines): Unrecognised model to get emission lines.&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                Possible photmod= </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">photmods</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">photmod</span> <span class="o">==</span> <span class="s1">&#39;gutkin16&#39;</span><span class="p">):</span>
+        <span class="n">nebline</span> <span class="o">=</span> <span class="n">get_lines_Gutkin</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span><span class="n">lne</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="n">Testing</span><span class="p">,</span> 
+                <span class="n">Plotting</span><span class="o">=</span><span class="n">Plotting</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">nebline</span></div>
+
+<div class="viewcode-block" id="attenuation"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.attenuation">[docs]</a><span class="k">def</span> <span class="nf">attenuation</span><span class="p">(</span><span class="n">nebline</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Rvir&#39;</span><span class="p">,</span><span class="s1">&#39;ColdGas&#39;</span><span class="p">],</span> <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;GALFORM&#39;</span><span class="p">,</span> 
+                <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">infile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the attenuated emission lines from the raw ones.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nebline_disk, nebline_bulge : floats</span>
+<span class="sd">      Fluxes of the lines for the disk and bulge components.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nebline_att : floats</span>
+<span class="sd">      Fluxes of the attenuated lines for the disk and bulge components.</span>
+<span class="sd">      </span>
+<span class="sd">    lines : floats</span>
+<span class="sd">      Array with indexes of the lines whose fluxes will be stored in the output file.</span>
+<span class="sd">      </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -------</span>
+<span class="sd">    In general, lines will cover all the lines in the model. It will only eliminate the lines</span>
+<span class="sd">    for which, for any reason, attenuation can not be calculated.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nebline</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;.hdf5&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">infile</span><span class="p">):</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="n">infile</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;.hdf5&#39;</span> <span class="c1">#This expects a .txt or a .dat </span>
+        
+    <span class="k">if</span> <span class="n">attmod</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">attmods</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio.attenuation): Unrecognised model for attenuation.&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                Possible attmod= </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">attmods</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">attmod</span><span class="o">==</span><span class="s1">&#39;ratios&#39;</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">hf</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">line</span> <span class="ow">in</span> <span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">hf</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">coef_att</span> <span class="o">=</span> <span class="n">coef_att_galform</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="n">lines</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        
+        <span class="n">coef_att</span> <span class="o">=</span> <span class="n">coef_att</span><span class="p">[:,:,</span><span class="n">cut</span><span class="p">]</span>
+        <span class="n">coef_att</span> <span class="o">=</span> <span class="n">coef_att</span><span class="p">[:,:,</span><span class="n">limits</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">attmod</span><span class="o">==</span><span class="s1">&#39;cardelli89&#39;</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nebline</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]))</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">Rvir</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="n">att_param</span><span class="p">[</span><span class="mi">0</span><span class="p">]][:]</span>
+            <span class="n">Mcold_disc</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="n">att_param</span><span class="p">[</span><span class="mi">1</span><span class="p">]][:]</span>
+            <span class="n">Z_disc</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="n">m_sfr_z</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">]][:]</span>
+            
+            <span class="n">Rvir</span> <span class="o">=</span> <span class="n">Rvir</span><span class="p">[</span><span class="n">cut</span><span class="p">]</span>
+            <span class="n">Mcold_disc</span> <span class="o">=</span> <span class="n">Mcold_disc</span><span class="p">[</span><span class="n">cut</span><span class="p">]</span>
+            <span class="n">Z_disc</span> <span class="o">=</span> <span class="n">Z_disc</span><span class="p">[</span><span class="n">cut</span><span class="p">]</span>
+            
+            <span class="c1"># Rvir = Rvir[:1153192]</span>
+            <span class="c1"># Mcold_disc = Mcold_disc[:1153192]</span>
+            <span class="c1"># Z_disc = Z_disc[:1153192]</span>
+            
+            <span class="n">Rvir</span> <span class="o">=</span> <span class="n">Rvir</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
+            <span class="n">Mcold_disc</span> <span class="o">=</span> <span class="n">Mcold_disc</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
+            <span class="n">Z_disc</span> <span class="o">=</span> <span class="n">Z_disc</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
+            
+            <span class="n">coef_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">nebline</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">comp</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">coef_att_cardelli</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">wavelength_model</span><span class="p">[</span><span class="n">photmod</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> 
+                                <span class="n">Mcold_disc</span><span class="o">=</span><span class="n">Mcold_disc</span><span class="p">,</span> <span class="n">rhalf_mass_disc</span><span class="o">=</span><span class="n">Rvir</span><span class="o">*</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> 
+                                <span class="n">Z_disc</span><span class="o">=</span><span class="n">Z_disc</span><span class="p">,</span> <span class="n">costheta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">albedo</span><span class="o">=</span><span class="mf">0.56</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">coef_att</span><span class="p">[</span><span class="n">comp</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">coef_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">coef_att</span><span class="p">[</span><span class="n">coef_att</span><span class="o">!=</span><span class="n">coef_att</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_photio): Unrecognised model to attenuate lines.&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                Possible attmod= </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">attmods</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        
+    <span class="n">nebline_att</span> <span class="o">=</span> <span class="n">nebline</span><span class="p">[:,</span><span class="n">lines</span><span class="p">]</span><span class="o">*</span><span class="n">coef_att</span>
+    
+    
+    <span class="k">return</span> <span class="n">nebline_att</span><span class="p">,</span> <span class="n">coef_att</span><span class="p">,</span> <span class="n">lines</span></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme_include.html">Get nebular emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/modules.html">get_nebular_emission</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_photio</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

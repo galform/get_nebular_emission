@@ -1,9 +1,6 @@
 get_nebular_emission package
 ============================
 
-Submodules
-----------
-
 get_nebular_emission.eml module
 -------------------------------
 
@@ -43,19 +40,11 @@ get_nebular_emission.eml\_une module
     :members:
     :undoc-members:
     :show-inheritance:
+    
+get_nebular_emission.eml\_att module
+------------------------------------
 
-get_nebular_emission.eml\_style module
---------------------------------------
-
-.. automodule:: get_nebular_emission.eml_style
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: get_nebular_emission
+.. automodule:: get_nebular_emission.eml_att
     :members:
     :undoc-members:
     :show-inheritance:

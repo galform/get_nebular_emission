@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib
 import os.path
 import h5py
-matplotlib.use("Agg")
+# matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 import get_nebular_emission.eml_style as style
@@ -11,10 +11,62 @@ import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_io import get_nheader, check_file
 from get_nebular_emission.eml_photio import get_lines_Gutkin, get_limits
 from numpy import random
-from scipy import stats
+from scipy.stats import gaussian_kde
 import sys
+from cosmology import logL2flux, set_cosmology
 
 plt.style.use(style.style1)
+
+def lines_BPT(x, BPT, line):
+    
+    '''
+    
+    Boundary lines for the distinction of ELG types in BPT diagrams.
+    It assummes OIII/Hb on the y axis.
+ 
+    Parameters
+    ----------
+    
+    x : floats
+       Array of points on the x axis to define the lines. 
+       It should correspond to the wanted BPT.
+    BPT : string
+       Key corresponding to the wanted x axis for the BPT.
+    line : string
+       Key corresponding to the wanted boundary line for the BPT.
+    
+    Returns
+    -------
+    boundary : floats
+    Values of the boundary line in the desired range.
+    '''
+    
+    if BPT not in const.BPT_lines:
+        print('STOP (eml_plots.lines_BPT): ',
+              'BPT plot not recognized.')
+        sys.exit()
+        return
+    elif BPT=='NII':
+        if line=='SFR_Composite':
+            boundary = 0.61/(x-0.05) + 1.3 # Kauffmann 2003
+        elif line=='Composite_AGN':
+            boundary = 0.61/(x-0.47) + 1.19 # Kewley 2001
+        elif line=='LINER_NIIlim':
+            boundary = np.log10(0.6) # Kauffmann 2003
+        elif line=='LINER_OIIIlim':
+            boundary = np.log10(3) # Kauffmann 2003
+    elif BPT=='SII':
+        if line=='SFR_AGN':
+            boundary = 0.72/(x-0.32) + 1.3 # Kewley 2001
+        elif line=='Seyfert_LINER':
+            boundary = 1.89*x + 0.76 # Kewley 2006
+    elif BPT=='SII':
+        if line=='SFR_AGN':
+            boundary = 0.73/(x-0.59) + 1.33 # Kewley 2001
+        elif line=='Seyfert_LINER':
+            boundary = 1.18*x + 1.3 # Kewley 2006
+            
+    return boundary
 
 def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
               colsGSM=[0,1,2,3], labelObs=None, specific=False, h0=const.h, volume=const.vol_pm, verbose=False):
@@ -116,7 +168,7 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     al = np.sort(nds)
 
     SFR = ['avSFR']
-    labels = ['SFR']
+    labels = ['SFR','SFR2','SFR3']
 
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
@@ -126,7 +178,7 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
-    mmin = 8 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
+    mmin = 8.5 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
     mmax = 15 
     dm = 0.1
     mbins = np.arange(mmin, mmax, dm)
@@ -134,9 +186,9 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     gsmf = np.zeros((len(mhist)))
 
     # Initialize SSFRF
-    smin = -5
-    smax = 2.5
-    ds = 0.5
+    smin = -4.4
+    smax = 1
+    ds = 0.1
     sbins = np.arange(smin, smax, ds)
     shist = sbins + ds * 0.5
     ssfrf = np.zeros((len(shist)))
@@ -155,10 +207,10 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     # Fig. sSFR vs M
     xtit = "log$_{10}(\\rm M_{*}/M_{\odot})$"
     if specific:
-        ytit = "log$_{10}(\\rm sSFR Gyr^{-1})$"
+        ytit = "log$_{10}(\\rm sSFR/Gyr^{-1})$"
     else:
         ytit = "log$_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
-    xmin = mmin; xmax = 12; ymin = smin;  ymax = smax
+    xmin = 8.5; xmax = 11.8; ymin = smin;  ymax = smax
     ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
     ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
@@ -166,12 +218,15 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     axm = plt.subplot(gs[0, :-1],sharex=ax)
     ytit="log$_{10}(\Phi(M_*))$" ; axm.set_ylabel(ytit)
     axm.set_autoscale_on(False) ;  axm.minorticks_on()
-    axm.set_ylim(-8,-1)
+    axm.set_ylim(-5.5,-1)
     plt.setp(axm.get_xticklabels(), visible=False)
 
     # SSFRF
     axs = plt.subplot(gs[1:, 2], sharey=ax)
-    xtit = "log$_{10}(\Phi(SFR))$"; axs.set_xlabel(xtit)
+    if specific:
+        xtit = "log$_{10}(\Phi(sSFR))$"; axs.set_xlabel(xtit)
+    else:
+        xtit = "log$_{10}(\Phi(SFR))$"; axs.set_xlabel(xtit)
     axs.set_autoscale_on(False); axs.minorticks_on()
     axs.set_xlim(-5.5, 0.0)
     start, end = axs.get_xlim()
@@ -221,11 +276,12 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     for ii in range(len(inputdata)):
         with h5py.File(inputdata[ii],'r') as file:
             data = file['data']          
-            lms = np.log10(10**data['lms'][:,0]+10**data['lms'][:,1])
+            lms = np.log10((10**data['lms'][:,0])/const.IMF_M['Chabrier']+data['Ms_bulge'][:,0]*const.IMF_M['Top-heavy']/const.IMF_M['Chabrier']) #+ np.log10(h0)
             if specific:
                 lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
             else: 
                 lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + lms
+                lsfr = lsfr/const.IMF_SFR['Chabrier']
             # lms = lms + np.log10(h0)     
             del data
 
@@ -236,7 +292,7 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
         gsmf = H / volume / dm  # In Mpc^3/h^3
 
         H, bins_edges = np.histogram(lsfr, bins=np.append(sbins, smax))
-        sfrf = H / volume / ds
+        sfrf = H / volume / ds # / const.h**-3
 
         H, xedges, yedges = np.histogram2d(lsfr, lms,
                                            bins=([np.append(sbins, smax),
@@ -271,9 +327,9 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
         ind = np.where(y < 0.)
 
         axm.plot(x[ind], y[ind], color=color[ii],
-                 linestyle=lsty[ii], label=labels[ii])
+                 linestyle=lsty[ii])
     
-            # Plot observations GSMF
+        # Plot observations GSMF
         if obsGSM:
             axm.errorbar(histGSM, freqGSM, yerr=lowGSM, marker='o', color=color[ii + 1],
                              label=''+ labelObs[0] +'')
@@ -327,6 +383,8 @@ def test_medians(infile, outplot, verbose=False):
     Medians U and ne for each bin of mass in two differents plots.
 
     '''
+    
+    set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=const.h)
 
     # Prepare the plots
     
@@ -350,13 +408,13 @@ def test_medians(infile, outplot, verbose=False):
         plt.xlabel(r'$\log M_*/h^{-1} (M_\odot)$',size=15)
         plotf = outplot + '/test_medians_'+ une+'.pdf'
         col = cm(iu)
-        color.append(col)  # col change for each iteration
+        color.append(col)# col change for each iteration
         
         if iu==0:
-            plt.ylim((-5,-2))
+            plt.ylim((-5,-1))
             plt.ylabel(r'$\log U$',size=15)
         else:
-            plt.ylim((-0.5,2.5))
+            plt.ylim((0.5,2.5))
             plt.ylabel(r'$\log n_e (cm^{-3})$',size=15)
 
         for ii,sfr in enumerate(SFR):
@@ -364,14 +422,19 @@ def test_medians(infile, outplot, verbose=False):
             with h5py.File(infile,'r') as file:
                 print(infile)
                 f = file['data']
-                lu = f['lu'][:,0]
-                lne = f['lne'][:,0]   
-                lms = f['lms'][:,0]  + np.log10(const.h)
+                lu = f['lu_sfr'][:,0]
+                lne = f['lne_sfr'][:,0]   
+                lms = np.log10(10**f['lms'][:,0] + f['Ms_bulge'][:,0]) + np.log10(const.h)
+                lssfr = f['lssfr'][:,0]
+                
+                Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
+                Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
+                Ha_flux = Ha_flux_sfr + Ha_flux_agn
             
             data = np.append([lu], [lne], axis=0)
             print(data.shape)
             
-            cut = np.where((lms>7)&(lu!=const.notnum)&(lne!=const.notnum))
+            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>4e-17))
             
             # MEDIANS:
             median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
@@ -387,14 +450,59 @@ def test_medians(infile, outplot, verbose=False):
             #qlow[ii] = low_qu
             
             qu = np.append([median-low_qu],[up_qu-median],axis=0)
+            
+            print(ind, len(mhist))
 
             #plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
             #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
             #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
-            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, color=col)#, label='Calculated from the ' + SFR[ii] + '')
+            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, color=col)#, label='Calculated from the ' + SFR[ii] + '')
         # plt.legend()
+        
+            with h5py.File('output_data/emlines_GP20_z1.5_Kashino_cor.hdf5','r') as file:
+                print(infile)
+                f = file['data']
+                lu = f['lu_sfr'][:,0]
+                lne = f['lne_sfr'][:,0]   
+                lms = np.log10(10**f['lms'][:,0] + f['Ms_bulge'][:,0]) + np.log10(const.h)
+                lssfr = f['lssfr'][:,0]
+                
+                Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
+                Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
+                Ha_flux = Ha_flux_sfr + Ha_flux_agn
+            
+            data = np.append([lu], [lne], axis=0)
+            print(data.shape)
+            
+            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>4e-17))
+            
+            # MEDIANS:
+            median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
+
+            ind = np.where(median>const.notnum)
+            
+            median = median[ind]
+
+            # QUARTILES:
+            up_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.75)[ind]
+            #qup[ii] = up_qu
+            low_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.25)[ind]
+            #qlow[ii] = low_qu
+            
+            qu = np.append([median-low_qu],[up_qu-median],axis=0)
+            
+            print(ind, len(mhist))
+
+            #plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
+            #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
+            #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
+            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, color='k')#, label='Calculated from the ' + SFR[ii] + '')
+        # plt.legend()
+        
+        plt.xlim((mmin,mmax))
+        plt.grid()
         plt.savefig(plotf)
-        plt.close()
+        # plt.close()
 
 
 
@@ -425,214 +533,308 @@ def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=F
     Plot of several BPT diagrams.
     '''
     
-    check_file(infile, verbose=True)
-    f = h5py.File(infile, 'r')
-    data = f['data']
+    set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=const.h)
+    
+    for num in range(len(infile)):
+    
+        check_file(infile[num], verbose=True)
+        f = h5py.File(infile[num], 'r')
+        data = f['data']
+    
+        lu_disk = data['lu'][:,0]
+        lne_disk = data['lne'][:,0]
+        loh12_disk = data['lz'][:,0]
+        
+        minU, maxU = get_limits(propname='U', photmod=photmod)
+        minnH, maxnH = get_limits(propname='nH', photmod=photmod)
+        minZ, maxZ = get_limits(propname='Z', photmod=photmod)
+        
+        ignore = True
+        if ignore:
+            ind = np.where((lu_disk!=minU)&(lu_disk!=maxU)&(loh12_disk!=np.log10(minZ))&(loh12_disk!=np.log10(maxZ))&
+                       (lne_disk!=np.log10(minnH))&(lne_disk!=np.log10(maxnH)))[0]
+        else:
+            ind = np.arange(len(lu_disk))
 
-    lu_disk = data['lu'][:,0]
-    lne_disk = data['lne'][:,0]
-    loh12_disk = (data['loh12'][:,0])
-    
-    minU, maxU = get_limits(propname='U', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    
-    ind = np.where((lu_disk!=minU)&(lu_disk!=maxU)&(loh12_disk!=np.log10(minZ))&(loh12_disk!=np.log10(maxZ))&
-                      (lne_disk!=np.log10(minnH))&(lne_disk!=np.log10(maxnH))) #We ignore the galaxies in the limits.
-    
-    Hbeta = np.sum(data['Hbeta_att'],axis=0)[ind]
-    OIII5007 = np.sum(data['OIII5007_att'],axis=0)[ind]
-    NII6548 = np.sum(data['NII6583_att'],axis=0)[ind]
-    Halpha = np.sum(data['Halpha_att'],axis=0)[ind]
-    SII6717_6731 = np.sum(data['SII6717_att'],axis=0)[ind] + np.sum(data['SII6731_att'],axis=0)[ind]
-    
-    # Hbeta = Hbeta[::10000]
-    # OIII5007 = OIII5007[::10000]
-    # NII6548 = NII6548[::10000]
-    # Halpha = Halpha[::10000]
-    # SII6717_6731 = SII6717_6731[::10000]
-    
-    ind2 = np.where((Hbeta!=0)&(OIII5007!=0)&(NII6548!=0)&(Halpha!=0)&(SII6717_6731!=0))
-    
-    print(len(ind[0]),len(ind2[0]))
-    
-    Hbeta = Hbeta[ind2]
-    OIII5007 = OIII5007[ind2]
-    NII6548 = NII6548[ind2]
-    Halpha = Halpha[ind2]
-    SII6717_6731 = SII6717_6731[ind2]
-    
-    bpt_x = ['log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)','log$_{10}$([SII]$\\lambda$(6717+6731)/H$\\alpha$)']
-    my_x = [np.log10(NII6548 / Halpha),np.log10(SII6717_6731 / Halpha)]
-    
-    bpt_y = ['log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)','log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)']
-    my_y = [np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / Hbeta)]
-    
-    if not plot_phot:
-        for i in range(2):
-            plt.figure(figsize=(15,15))
-            
-            xmin=-2.5
-            xmax=1
-            ymin=-2
-            ymax=2
-            
-            # X1, Y1 = np.mgrid[xmin:xmax:68j, ymin:ymax:68j]
-            # positions = np.vstack([X1.ravel(), Y1.ravel()])
-            # values = np.vstack([my_x[i], my_y[i]])
-            # kernel = stats.gaussian_kde(values,0.75)
-            # BPT = np.reshape(kernel(positions).T, X1.shape)
-            # plt.imshow(BPT, cmap=plt.cm.gist_earth_r,extent=[xmin, xmax, ymin, ymax],aspect=(xmax-xmin)/(ymax-ymin))#,vmin=0,vmax=1)
-            
-            plt.plot(my_x[i], my_y[i], marker='o', markersize=1, linewidth=0, color='black')
-            
-            plt.xlabel(bpt_x[i],size=30)
-            plt.ylabel(bpt_y[i],size=30)
-            plt.xticks(fontsize=30)
-            plt.yticks(fontsize=30)
-            
-            plt.xlim((xmin,xmax))
-            plt.ylim((ymin,ymax))
-            plt.grid()
-            
-            plotnom = outplot + '/BPTplot_' + str(i) + '.png'
+        Hbeta = np.sum(data['Hbeta'],axis=0)[ind]
+        OIII5007 = np.sum(data['OIII5007'],axis=0)[ind]
+        NII6548 = np.sum(data['NII6583'],axis=0)[ind]
+        Halpha = np.sum(data['Halpha'],axis=0)[ind]
+        SII6717_6731 = np.sum(data['SII6731'],axis=0)[ind]
+        OII3727 = np.sum(data['OII3727'],axis=0)[ind]
         
-            plt.savefig(plotnom)
-            plt.close()
-    
-    if plot_phot:       
-        if photmod not in const.photmods:
-            if verbose:
-                print('STOP (eml_photio.test_bpt): Unrecognised model to get emission lines.')
-                print('                Possible photmod= {}'.format(const.photmods))
-            sys.exit()
-        elif (photmod == 'gutkin16'):
+        lz = data['lz'][:,0]
+        lz = lz[ind]
+        
+        lssfr = data['lssfr'][:,0]
+        lssfr = lssfr[ind]
+        
+        lms = np.log10(10**data['lms'][:,0] + 10**data['lms'][:,1])
+        lms = lms[ind]
+        
+        ind2 = np.where((Hbeta>0)&(OIII5007>0)&(NII6548>0)&(Halpha>0)&(SII6717_6731>0)&(OII3727>0))[0]
+        
+        print(len(ind),len(ind2))
+        
+        Hbeta = Hbeta[ind2]
+        OIII5007 = OIII5007[ind2]
+        NII6548 = NII6548[ind2]
+        Halpha = Halpha[ind2]
+        SII6717_6731 = SII6717_6731[ind2]
+        OII3727 = OII3727[ind2]
+        
+        lz = lz[ind2]
+        lssfr = lssfr[ind2]
+        lms = lms[ind2]
+        
+        bpt_x = ['log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)',
+                 'log$_{10}$([SII]$\\lambda$6731/H$\\alpha$)',
+                 'log$_{10}$([NII]$\\lambda$6584/[OII]$\\lambda$3727)',
+                 'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)']
+        my_x = [np.log10(NII6548 / Halpha),np.log10(SII6717_6731 / Halpha),np.log10(NII6548 / OII3727)]#,np.log10(NII6548 / Halpha)]
+        
+        bpt_y = ['log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
+                 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
+                 'log$_{10}$([OIII]$\\lambda$5007/[OII]$\\lambda$3727)',
+                 'log$_{10}$(EW(H$\\alpha$)/$\dot{A}$)']
+        my_y = [np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / OII3727)]#,np.log10(EW_Halpha)]
+        
+        if not plot_phot:
+            for i in range(4):
+                plt.figure(figsize=(15,15))
+                
+                # X1, Y1 = np.mgrid[xmin:xmax:68j, ymin:ymax:68j]
+                # positions = np.vstack([X1.ravel(), Y1.ravel()])
+                # values = np.vstack([my_x[i], my_y[i]])
+                # kernel = stats.gaussian_kde(values,0.75)
+                # BPT = np.reshape(kernel(positions).T, X1.shape)
+                # plt.imshow(BPT, cmap=plt.cm.gist_earth_r,extent=[xmin, xmax, ymin, ymax],aspect=(xmax-xmin)/(ymax-ymin))#,vmin=0,vmax=1)
+                
+                if i==0:
+                    xmin=-2.2
+                    xmax=1
+                    ymin=-2
+                    ymax=2
+                    
+                    x = np.arange(xmin, xmax+0.1, 0.03)
+                    
+                    SFR_Composite = lines_BPT(x,'NII','SFR_Composite')
+                    Composite_AGN = lines_BPT(x,'NII','Composite_AGN')
+                    LINER_NIIlim = lines_BPT(x,'NII','LINER_NIIlim')
+                    LINER_OIIIlim = lines_BPT(x,'NII','LINER_OIIIlim')
+                    
+                    plt.plot(x[x<0.05],SFR_Composite[x<0.05],'k--',markersize=3)
+                    plt.plot(x[x<0.47],Composite_AGN[x<0.47],'k.',markersize=3)
+                    plt.vlines(LINER_NIIlim,ymin,LINER_OIIIlim,'k',linestyles='dashdot')
+                    plt.hlines(LINER_OIIIlim,LINER_NIIlim,xmax,'k',linestyles='dashdot')
+                elif i==1:
+                    xmin=-2.6 #-1.6
+                    xmax=0.2
+                    ymin=-1.9
+                    ymax=1.5
+                    
+                    x = np.arange(xmin, xmax+0.1, 0.03)
+                    
+                    SFR_AGN = lines_BPT(x,'SII','SFR_AGN')
+                    Seyfert_LINER = lines_BPT(x,'SII','Seyfert_LINER')
+                    
+                    plt.plot(x[x<0.32], SFR_AGN[x<0.32], 'k.', markersize=3)
+                    
+                    plt.plot(x[(Seyfert_LINER>SFR_AGN)|(x>=0.32)], Seyfert_LINER[(Seyfert_LINER>SFR_AGN)|(x>=0.32)], 'k.', markersize=3)
+                elif i==2:
+                    xmin=-1.9
+                    xmax=0.9
+                    ymin=-2.1
+                    ymax=1.6
+                elif i==3:
+                    xmin=-2.2
+                    xmax=1.2
+                    ymin=-1
+                    ymax=3
+                    
+                    # x = np.arange(xmin, xmax+0.1, 0.03)
             
-            Z = ['0001', '0002', '0005', '001', '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
+                # xy = np.vstack([my_x[i], my_y[i]])
+                # z = gaussian_kde(xy)(xy)
+                # z = z/np.amax(z)
+                # np.save('density_galform_o_g1.3_ratios_' + str(i),z)
+                
+                # z = np.load('density_galform_kashino_ratios_' + str(i) + '.npy')
+                # z = np.log10(z)
+                
+                # Ha_flux = np.zeros(Halpha.shape)
+                # for j in range(len(Halpha)):
+                #     Ha_flux[j] = logL2flux(Halpha[j],0.131)
+                    
+                # ind = np.where((Ha_flux>2e-15))
+                
+                z = Halpha
+                
+                vmin = 40.5
+                vmax = 43
+
+                plt.scatter(my_x[i][ind], my_y[i][ind], c=z[ind], s=1, marker='o',cmap='jet',vmin=vmin, vmax=vmax)
+                cbar = plt.colorbar()
+                cbar.set_label(r'$\log H_\alpha \ [\rm erg/s]$', rotation=270, labelpad =40, size=30)
+                cbar.ax.tick_params(labelsize=30)
+                
+                #'$\log \bar{n}_p$'
+                #'$\log M_* \ [M_\odot]$'
+                #'$\log Z$'
+                #'$\log SFR \ [M_\odot/yr]$'
+                #'$\log H_\alpha \ [\rm erg/s]$'
+                
+                plt.xlabel(bpt_x[i],size=30)
+                plt.ylabel(bpt_y[i],size=30)
+                plt.xticks(fontsize=30)
+                plt.yticks(fontsize=30)
+                
+                plt.xlim((xmin,xmax))
+                plt.ylim((ymin,ymax))
+                plt.grid()
+                
+                plotnom = outplot + '/BPTplot_' + str(i) + '_' + str(num) + '_k.png'
+                
+                # np.save(outplot + '/BPTplot_' + str(i) + '_' + str(num), np.array([my_x,my_y]))
+            
+                plt.savefig(plotnom)
+                # plt.close()
+                
+                print(str(i+1) + ' de 4.')     
         
-            zz = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
-        
-            uu = [-1., -1.5, -2., -2.5, -3., -3.5, -4.]
-        
-            ne = ['100']  # ['10', '100', '1000','10000']
-        
-            cm = plt.get_cmap('tab20') # Colour map to draw colours from
-        
-            if create_file:
-                for iz, zname in enumerate(Z):
-                    infile = r"nebular_data/gutkin_tables/nebular_emission_Z" + zname + ".txt"
+        if plot_phot:       
+            if photmod not in const.photmods:
+                if verbose:
+                    print('STOP (eml_photio.test_bpt): Unrecognised model to get emission lines.')
+                    print('                Possible photmod= {}'.format(const.photmods))
+                sys.exit()
+            elif (photmod == 'gutkin16'):
+                
+                Z = ['0001', '0002', '0005', '001', '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
+            
+                zz = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
+            
+                uu = [-1., -1.5, -2., -2.5, -3., -3.5, -4.]
+            
+                ne = ['100']  # ['10', '100', '1000','10000']
+            
+                cm = plt.get_cmap('tab20') # Colour map to draw colours from
+            
+                if create_file:
+                    for iz, zname in enumerate(Z):
+                        infile = r"nebular_data/gutkin16_tables/nebular_emission_Z" + zname + ".txt"
+                
+                        ih = get_nheader(infile)
+                
+                        datane = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
+                        datalu = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
+                
+                        OIII5007_model = np.loadtxt(infile, skiprows=ih, usecols=(8), unpack=True)
+                        Hb_model = np.loadtxt(infile, skiprows=ih, usecols=(6), unpack=True)
+                        NII6548_model = np.loadtxt(infile, skiprows=ih, usecols=(9), unpack=True)
+                        Ha_model = np.loadtxt(infile, skiprows=ih, usecols=(10), unpack=True)
+                        SII6717_6731_model = np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True) + np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True)
+                
+                        for ii, nh in enumerate(ne):
+                            outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
+                            if iz==0 and os.path.exists(outfile):
+                                os.remove(outfile)
+                
+                            header1 = 'Z, U, NII6584/Ha  OIII5007/Hb, SII(6717+6731)/Ha'
+                
+                            ind = np.where(datane == float(nh))
+                            x = np.log10(NII6548_model[ind] / Ha_model[ind])
+                            y = np.log10(OIII5007_model[ind] / Hb_model[ind])
+                            p = np.log10(SII6717_6731_model[ind] / Ha_model[ind])
+                            u = datalu[ind]
+                            z = np.full(np.shape(u), zz[iz])
+                
+                            tofile = np.column_stack((z, u, x, y, p))
+                
+                            with open(outfile, 'a') as outf:
+                                if iz == 0:
+                                    np.savetxt(outf, tofile, delimiter=' ', header=header1)
+                                else:
+                                    np.savetxt(outf, tofile, delimiter=' ')
+                                outf.closed
+                else:
+                    for ii, nh in enumerate(ne):
+                        outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
+                        if not os.path.exists(outfile):
+                            print('STOP (eml_photio.test_bpt): Textfiles for table reading dont exist.')
+                            print('Create them with create_file = True.')
+            
+                cols = []
+                for iz, lz in enumerate(zz):
+                    col = cm(iz)
+                    cols.append(col)
+            
+                for ii, nh in enumerate(ne):
+                    infile = r"output_data/Gutkinfile_n_" + nh + ".txt"
             
                     ih = get_nheader(infile)
             
-                    datane = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
-                    datalu = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
+                    z = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
+                    u = np.loadtxt(infile, skiprows=ih, usecols=(1), unpack=True)
+                    x = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
+                    y = np.loadtxt(infile, skiprows=ih, usecols=(3), unpack=True)
+                    p = np.loadtxt(infile, skiprows=ih, usecols=(4), unpack=True)
+                    
+                    comp_x = [x,p]
+                    comp_y = [y,y]
             
-                    OIII5007_model = np.loadtxt(infile, skiprows=ih, usecols=(8), unpack=True)
-                    Hb_model = np.loadtxt(infile, skiprows=ih, usecols=(6), unpack=True)
-                    NII6548_model = np.loadtxt(infile, skiprows=ih, usecols=(9), unpack=True)
-                    Ha_model = np.loadtxt(infile, skiprows=ih, usecols=(10), unpack=True)
-                    SII6717_6731_model = np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True) + np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True)
+                    # DIFERENTS COLORS FOR U:
+                        
+                    for i in range(2):
+                        plt.figure(figsize=(15,15))
             
-                    for ii, nh in enumerate(ne):
-                        outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-                        if iz==0 and os.path.exists(outfile):
-                            os.remove(outfile)
-            
-                        header1 = 'Z, U, NII6584/Ha  OIII5007/Hb, SII(6717+6731)/Ha'
-            
-                        ind = np.where(datane == float(nh))
-                        x = np.log10(NII6548_model[ind] / Ha_model[ind])
-                        y = np.log10(OIII5007_model[ind] / Hb_model[ind])
-                        p = np.log10(SII6717_6731_model[ind] / Ha_model[ind])
-                        u = datalu[ind]
-                        z = np.full(np.shape(u), zz[iz])
-            
-                        tofile = np.column_stack((z, u, x, y, p))
-            
-                        with open(outfile, 'a') as outf:
-                            if iz == 0:
-                                np.savetxt(outf, tofile, delimiter=' ', header=header1)
-                            else:
-                                np.savetxt(outf, tofile, delimiter=' ')
-                            outf.closed
-            else:
-                for ii, nh in enumerate(ne):
-                    outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-                    if not os.path.exists(outfile):
-                        print('STOP (eml_photio.test_bpt): Textfiles for table reading dont exist.')
-                        print('Create them with create_file = True.')
-        
-            cols = []
-            for iz, lz in enumerate(zz):
-                col = cm(iz)
-                cols.append(col)
-        
-            for ii, nh in enumerate(ne):
-                infile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-        
-                ih = get_nheader(infile)
-        
-                z = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
-                u = np.loadtxt(infile, skiprows=ih, usecols=(1), unpack=True)
-                x = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
-                y = np.loadtxt(infile, skiprows=ih, usecols=(3), unpack=True)
-                p = np.loadtxt(infile, skiprows=ih, usecols=(4), unpack=True)
+                        for iu, lu in enumerate(uu):
+                            ind2 = np.where(u == uu[iu])
+                            plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iu], label='U = ' + str(lu) + '')
                 
-                comp_x = [x,p]
-                comp_y = [y,y]
-        
-                # DIFERENTS COLORS FOR U:
+                        labelsU = []
+                        for elem in lu_disk: labelsU.append('U = {}'.format(np.round(elem,2)))
+                        
+                        plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
+                        
+                        plt.xlabel(bpt_x[i],size=30)
+                        plt.ylabel(bpt_y[i],size=30)
+                        plt.xticks(fontsize=30)
+                        plt.yticks(fontsize=30)
+                        plt.grid()
+                        plt.legend()
+                        
+                        plotnom = outplot + '/BPTplot_U_' + str(i) + '_' + str(num) + '.png'
+                        
+                        print('U', str(i))
                     
-                for i in range(2):
-                    plt.figure(figsize=(15,15))
-        
-                    for iu, lu in enumerate(uu):
-                        ind2 = np.where(u == uu[iu])
-                        plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iu], label='U = ' + str(lu) + '')
+                        plt.savefig(plotnom)
+                        plt.close()
             
-                    labelsU = []
-                    for elem in lu_disk: labelsU.append('U = {}'.format(np.round(elem,2)))
-                    
-                    plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
-                    
-                    plt.xlabel(bpt_x[i],size=30)
-                    plt.ylabel(bpt_y[i],size=30)
-                    plt.xticks(fontsize=30)
-                    plt.yticks(fontsize=30)
-                    plt.grid()
-                    plt.legend()
-                    
-                    plotnom = outplot + '/BPTplot_U_' + str(i) + '.png'
-                    
-                    print('U', str(i))
-                
-                    plt.savefig(plotnom)
-                    plt.close()
-        
-                # DIFFERENTS COLORS FOR Z:
-                    
-                for i in range(2):
-                    plt.figure(figsize=(15,15))
-        
-                    for iz, lz in enumerate(zz):
-                        ind2 = np.where(z == zz[iz])
-                        plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
+                    # DIFFERENTS COLORS FOR Z:
+                        
+                    for i in range(2):
+                        plt.figure(figsize=(15,15))
             
-                    labelsZ = []
-                    for elem in loh12_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
-                    
-                    plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
-                    
-                    plt.xlabel(bpt_x[i],size=30)
-                    plt.ylabel(bpt_y[i],size=30)
-                    plt.xticks(fontsize=30)
-                    plt.yticks(fontsize=30)
-                    plt.grid()
-                    plt.legend()
-                    
-                    plotnom = outplot + '/BPTplot_Z_' + str(i) + '.png'
-                    
-                    print('Z', str(i))
+                        for iz, lz in enumerate(zz):
+                            ind2 = np.where(z == zz[iz])
+                            plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
                 
-                    plt.savefig(plotnom)
-                    plt.close()
+                        labelsZ = []
+                        for elem in loh12_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
+                        
+                        plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
+                        
+                        plt.xlabel(bpt_x[i],size=30)
+                        plt.ylabel(bpt_y[i],size=30)
+                        plt.xticks(fontsize=30)
+                        plt.yticks(fontsize=30)
+                        plt.grid()
+                        plt.legend()
+                        
+                        plotnom = outplot + '/BPTplot_Z_' + str(i) + '_' + str(num) + '.png'
+                        
+                        print('Z', str(i))
+                    
+                        plt.savefig(plotnom)
+                        plt.close()

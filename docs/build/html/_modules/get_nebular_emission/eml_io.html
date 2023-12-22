@@ -1,0 +1,1068 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>get_nebular_emission.eml_io &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_io</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for get_nebular_emission.eml_io</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. moduleauthor:: Violeta Gonzalez-Perez &lt;violetagp@protonmail.com&gt;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">get_nebular_emission.eml_const</span> <span class="k">as</span> <span class="nn">const</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">homedir</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span>
+
+<div class="viewcode-block" id="stop_if_no_file"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.stop_if_no_file">[docs]</a><span class="k">def</span> <span class="nf">stop_if_no_file</span><span class="p">(</span><span class="n">infile</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    It stops the program if a file does not exists</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">        Input file</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">infile</span><span class="p">)):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP: no input file </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">infile</span><span class="p">))</span> 
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="check_file"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.check_file">[docs]</a><span class="k">def</span> <span class="nf">check_file</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    It checks if a file exists</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">        Input file</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">        If True print out messages</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    file_fine : boolean</span>
+<span class="sd">        True when the file exists.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">file_fine</span> <span class="o">=</span> <span class="kc">True</span>  
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">infile</span><span class="p">)):</span>
+        <span class="n">file_fine</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING (eml_io.check_file): file not found </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
+                  <span class="nb">format</span><span class="p">(</span><span class="n">infile</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">file_fine</span></div>
+
+
+<div class="viewcode-block" id="get_nheader"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.get_nheader">[docs]</a><span class="k">def</span> <span class="nf">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">firstchar</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given a text file with a structure: header+data, </span>
+<span class="sd">    counts the number of header lines</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">        Input file</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ih : integer</span>
+<span class="sd">        Number of lines with the header text</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+
+    <span class="n">ih</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ff</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">ff</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="c1"># Count any empty lines in the header</span>
+                <span class="n">ih</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sline</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                
+                <span class="c1"># Check that the first character is not a digit</span>
+                <span class="n">char1</span> <span class="o">=</span> <span class="n">sline</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">word1</span> <span class="o">=</span> <span class="n">sline</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">firstchar</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">char1</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()):</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">char1</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span><span class="p">):</span>
+                            <span class="n">ih</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="nb">float</span><span class="p">(</span><span class="n">word1</span><span class="p">)</span>
+                                <span class="k">return</span> <span class="n">ih</span>
+                            <span class="k">except</span><span class="p">:</span>
+                                <span class="n">ih</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">ih</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">char1</span> <span class="o">==</span> <span class="n">firstchar</span><span class="p">:</span>
+                        <span class="n">ih</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">ih</span></div>
+        
+
+
+<div class="viewcode-block" id="get_ncomponents"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.get_ncomponents">[docs]</a><span class="k">def</span> <span class="nf">get_ncomponents</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the number of components to estimate the emission lines from</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cols : list</span>
+<span class="sd">      List of columns with M*, SFR, Z, per components</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ncomp : integer</span>
+<span class="sd">      Number of components (for example 2 for bulge and disk)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="mi">1</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">dum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">cols</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">ncomp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">cols</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">ncomp</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_io.get_ncomponents): &#39;</span><span class="p">,</span>
+              <span class="s1">&#39;Columns should be given as m_sfr_z=[[0,1,2]]&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        
+    <span class="k">return</span> <span class="n">ncomp</span></div>
+
+<div class="viewcode-block" id="locate_interval"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.locate_interval">[docs]</a><span class="k">def</span> <span class="nf">locate_interval</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">edges</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get the index, i, of the interval with edges.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    val : int or float</span>
+<span class="sd">        Value</span>
+<span class="sd">    edges : array of int or floats</span>
+<span class="sd">        Array of the edges of the intervals</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ind : integer</span>
+<span class="sd">        Index of the interval. If outside: index of the limits</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+    <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">&gt;=</span> <span class="n">high</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">val</span> <span class="o">&gt;=</span> <span class="n">low</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">high</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">val</span><span class="o">&lt;=</span><span class="n">low</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">linds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">val</span> <span class="o">&gt;=</span> <span class="n">low</span><span class="p">)</span>
+        <span class="n">hinds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">val</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">linds</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">hinds</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">lind</span> <span class="o">=</span> <span class="n">linds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">hind</span> <span class="o">=</span> <span class="n">hinds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">common</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">lind</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">hind</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">common</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">common</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">ind</span></div>
+
+<div class="viewcode-block" id="read_data"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.read_data">[docs]</a><span class="k">def</span> <span class="nf">read_data</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">cutcols</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">mincuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">maxcuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
+              <span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;hdf5&#39;</span><span class="p">,</span><span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    It reads star masses, star formation rates and metallicities from a file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">     - Name of the input file. </span>
+<span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
+<span class="sd">    cols : list</span>
+<span class="sd">     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]</span>
+<span class="sd">     - Expected : component1 = total or disk, component2 = bulge</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cutcols : list</span>
+<span class="sd">     Parameters to look for cutting the data.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    mincuts : list</span>
+<span class="sd">     Minimum value of the parameter of cutcols in the same index. All the galaxies below won&#39;t be considered.</span>
+<span class="sd">    maxcuts : list</span>
+<span class="sd">     Maximum value of the parameter of cutcols in the same index. All the galaxies above won&#39;t be considered.</span>
+<span class="sd">    attmod : string</span>
+<span class="sd">      Model of dust attenuation.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+<span class="sd">    Testing : boolean</span>
+<span class="sd">      If True only run over few entries for testing purposes</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lms, lssfr, loh12 : floats</span>
+<span class="sd">    cut : integers</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">check_file</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="n">get_ncomponents</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">Testing</span><span class="p">:</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="kc">None</span>
+        
+    <span class="k">if</span> <span class="n">inputformat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">inputformats</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_io): Unrecognised input format.&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;Possible input formats = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">inputformats</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;hdf5&#39;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">hf</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            
+            <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]))</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cutcols</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">cutcols</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">param</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="n">cutcols</span><span class="p">[</span><span class="n">i</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]</span>
+                    <span class="n">mincut</span> <span class="o">=</span> <span class="n">mincuts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">maxcut</span> <span class="o">=</span> <span class="n">maxcuts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">mincut</span> <span class="ow">and</span> <span class="n">maxcut</span><span class="p">:</span>
+                        <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mincut</span><span class="o">&lt;</span><span class="n">param</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">param</span><span class="o">&lt;</span><span class="n">maxcut</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="n">mincut</span><span class="p">:</span>
+                        <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mincut</span><span class="o">&lt;</span><span class="n">param</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="k">elif</span> <span class="n">maxcut</span><span class="p">:</span>
+                        <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">param</span><span class="o">&lt;</span><span class="n">maxcut</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]])</span>
+                    <span class="n">lssfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]])</span>
+                    <span class="n">loh12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lms</span><span class="p">,[</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">lssfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lssfr</span><span class="p">,[</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">loh12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loh12</span><span class="p">,[</span><span class="n">hf</span><span class="p">[</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]][:</span><span class="n">limit</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;txt&#39;</span><span class="p">:</span>
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+        
+        <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">)[:</span><span class="n">limit</span><span class="p">]))</span>
+        
+        <span class="k">if</span> <span class="n">cutcols</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cutcols</span><span class="p">)):</span>
+                <span class="n">param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">cutcols</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">)[:</span><span class="n">limit</span><span class="p">]</span>
+                <span class="n">mincut</span> <span class="o">=</span> <span class="n">mincuts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">maxcut</span> <span class="o">=</span> <span class="n">maxcuts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="c1"># if i&lt;2:</span>
+                <span class="k">if</span> <span class="n">mincut</span> <span class="ow">and</span> <span class="n">maxcut</span><span class="p">:</span>
+                    <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">mincut</span><span class="o">&lt;</span><span class="n">param</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">param</span><span class="o">&lt;</span><span class="n">maxcut</span><span class="p">))[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="n">mincut</span><span class="p">:</span>
+                    <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mincut</span><span class="o">&lt;</span><span class="n">param</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="n">maxcut</span><span class="p">:</span>
+                    <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">cut</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">param</span><span class="o">&lt;</span><span class="n">maxcut</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="c1"># else:</span>
+                <span class="c1">#     param2 = np.loadtxt(infile,usecols=16,skiprows=ih)[:limit]</span>
+                <span class="c1">#     cut = np.intersect1d(cut,np.where(param2&lt;param)[0])</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[:,:</span><span class="n">limit</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                <span class="n">lssfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="n">loh12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lms</span><span class="p">,[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">lssfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lssfr</span><span class="p">,[</span><span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">loh12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loh12</span><span class="p">,[</span><span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_io.read_data): &#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;Input file has not been found.&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+        
+    <span class="n">lms</span> <span class="o">=</span> <span class="n">lms</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">lssfr</span> <span class="o">=</span> <span class="n">lssfr</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">loh12</span> <span class="o">=</span> <span class="n">loh12</span><span class="o">.</span><span class="n">T</span>
+            
+    <span class="k">return</span> <span class="n">lms</span><span class="p">[</span><span class="n">cut</span><span class="p">],</span> <span class="n">lssfr</span><span class="p">[</span><span class="n">cut</span><span class="p">],</span> <span class="n">loh12</span><span class="p">[</span><span class="n">cut</span><span class="p">],</span> <span class="n">cut</span></div>
+
+<div class="viewcode-block" id="get_secondary_data2"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.get_secondary_data2">[docs]</a><span class="k">def</span> <span class="nf">get_secondary_data2</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">infile</span><span class="p">,</span> <span class="n">cut</span><span class="p">,</span> <span class="n">infile_z0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">epsilon_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                       <span class="n">Lagn_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">att_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;hdf5&#39;</span><span class="p">,</span> <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;cardelli89&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get data for epsilon calculation in the adecuate units.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">     - Name of the input file. </span>
+<span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
+<span class="sd">    epsilon_params : list</span>
+<span class="sd">     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">     </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    epsilon_param : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">epsilon_param</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="n">epsilon_param_z0</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="n">Lagn_param</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]]</span>
+    <span class="n">extra_param</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]]</span>
+    
+    <span class="k">if</span> <span class="n">inputformat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">inputformats</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_io): Unrecognised input format.&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;Possible input formats = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">inputformats</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;hdf5&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;HDF5 not implemented yet for secondary params.&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;txt&#39;</span><span class="p">:</span>
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">epsilon_params</span><span class="p">:</span>
+            <span class="n">epsilon_param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">epsilon_params</span><span class="p">)[</span><span class="n">cut</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+            
+        <span class="k">if</span> <span class="n">infile_z0</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">epsilon_param_z0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile_z0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">epsilon_params</span><span class="p">)[</span><span class="n">cut</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">if</span> <span class="n">Lagn_params</span><span class="p">:</span>
+            <span class="n">Lagn_param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">Lagn_params</span><span class="p">)[</span><span class="n">cut</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+            
+        <span class="k">if</span> <span class="n">extra_params</span><span class="p">:</span>
+            <span class="n">extra_param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">extra_params</span><span class="p">)[</span><span class="n">cut</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">extra_params</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">extra_param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">extra_param</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">att_params</span><span class="p">:</span>
+                <span class="n">att_param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">att_params</span><span class="p">)[</span><span class="n">cut</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+                
+    <span class="k">return</span> <span class="n">epsilon_param</span><span class="p">,</span> <span class="n">epsilon_param_z0</span><span class="p">,</span> <span class="n">Lagn_param</span><span class="p">,</span> <span class="n">att_param</span><span class="p">,</span> <span class="n">extra_param</span></div>
+
+<div class="viewcode-block" id="get_secondary_data"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.get_secondary_data">[docs]</a><span class="k">def</span> <span class="nf">get_secondary_data</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">cut</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;hdf5&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get data for epsilon calculation in the adecuate units.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">     - Name of the input file. </span>
+<span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
+<span class="sd">    epsilon_params : list</span>
+<span class="sd">     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">     </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    epsilon_param : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="n">inputformat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">inputformats</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_io): Unrecognised input format.&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;Possible input formats = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">inputformats</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;hdf5&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;HDF5 not implemented yet for secondary params.&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">inputformat</span><span class="o">==</span><span class="s1">&#39;txt&#39;</span><span class="p">:</span>
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+        <span class="n">param</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    
+    <span class="k">return</span> <span class="n">param</span><span class="p">[:,</span><span class="n">cut</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="get_data"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.get_data">[docs]</a><span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">infile</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;hdf5&#39;</span><span class="p">,</span> 
+             <span class="n">IMF_i</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Chabrier&#39;</span><span class="p">,</span> <span class="s1">&#39;Chabrier&#39;</span><span class="p">],</span> <span class="n">IMF_f</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Kroupa&#39;</span><span class="p">,</span> <span class="s1">&#39;Kroupa&#39;</span><span class="p">],</span> 
+             <span class="n">cutcols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mincuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">maxcuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
+             <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;GALFORM&#39;</span><span class="p">,</span> <span class="n">LC2sfr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mtot2mdisk</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+             <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    infile : string</span>
+<span class="sd">     - Name of the input file. </span>
+<span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
+<span class="sd">    cols : list</span>
+<span class="sd">     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]</span>
+<span class="sd">     - Expected : component1 = total or disk, component2 = bulge</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cutcols : list</span>
+<span class="sd">     Parameters to look for cutting the data.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    mincuts : list</span>
+<span class="sd">     Minimum value of the parameter of cutcols in the same index. All the galaxies below won&#39;t be considered.</span>
+<span class="sd">    maxcuts : list</span>
+<span class="sd">     Maximum value of the parameter of cutcols in the same index. All the galaxies above won&#39;t be considered.</span>
+<span class="sd">    attmod : string</span>
+<span class="sd">     Attenuation model.</span>
+<span class="sd">    IMF_i : list</span>
+<span class="sd">     Assumed IMF in the input data.</span>
+<span class="sd">     - [[component1_IMF],[component2_IMF],...]</span>
+<span class="sd">    IMF_f : list</span>
+<span class="sd">     Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.</span>
+<span class="sd">     - [[component1_IMF],[component2_IMF],...]</span>
+<span class="sd">    h0 : float</span>
+<span class="sd">      If not None: value of h, H0=100h km/s/Mpc.</span>
+<span class="sd">    LC2sfr : boolean</span>
+<span class="sd">      If True magnitude of Lyman Continuum photons expected as input for SFR.</span>
+<span class="sd">    mtot2mdisk : boolean</span>
+<span class="sd">      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+<span class="sd">    Testing : boolean</span>
+<span class="sd">      If True only run over few entries for testing purposes</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lms, lssfr, loh12 : floats</span>
+<span class="sd">    cut : integers</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">cut</span> <span class="o">=</span> <span class="n">read_data</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span> <span class="n">cutcols</span><span class="o">=</span><span class="n">cutcols</span><span class="p">,</span>
+                                <span class="n">maxcuts</span><span class="o">=</span><span class="n">maxcuts</span><span class="p">,</span> <span class="n">mincuts</span><span class="o">=</span><span class="n">mincuts</span><span class="p">,</span> <span class="n">inputformat</span><span class="o">=</span><span class="n">inputformat</span><span class="p">,</span> 
+                                <span class="n">Testing</span><span class="o">=</span><span class="n">Testing</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="n">get_ncomponents</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+
+    <span class="c1"># Set to a default value if negative stellar masses</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms</span><span class="o">&lt;=</span><span class="mf">1.</span><span class="p">)</span>
+    <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+    <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+    <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+
+    <span class="k">if</span> <span class="n">LC2sfr</span><span class="p">:</span> <span class="c1"># Avoid positives magnitudes of LC photons</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span> <span class="p">;</span> <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+
+
+    <span class="k">else</span><span class="p">:</span> <span class="c1"># Avoid other negative SFR</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="o">&lt;=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span> <span class="p">;</span> <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+
+
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">loh12</span><span class="o">&lt;=</span><span class="mi">0</span><span class="p">)</span> <span class="c1"># Avoid other negative Z</span>
+    <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+
+    <span class="c1"># Calculate the disk mass if we have only the total and bulge mass</span>
+
+    <span class="k">if</span> <span class="n">mtot2mdisk</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_io.get_data): &#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;mtot2mdisk can only be True with two components.&#39;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+                
+        <span class="n">lms_tot</span> <span class="o">=</span> <span class="n">lms</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Calculate the disk mass :</span>
+        <span class="n">lmsdisk</span> <span class="o">=</span> <span class="n">lms</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">lms</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">lmsdisk</span><span class="p">,</span><span class="n">lms</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]))</span>     
+
+        <span class="c1"># Take the log of the total stellar mass</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms_tot</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">lms_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">lms_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+        <span class="c1"># Take the log of the stellar mass:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">lms_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+            <span class="c1"># Take the log of the total stellar mass:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms_tot</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+            <span class="n">lms_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">lms_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+    
+        <span class="c1"># Take the log of the stellar mass:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+    <span class="c1"># Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary</span>
+
+    <span class="k">if</span> <span class="n">LC2sfr</span><span class="p">:</span>
+        
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+            <span class="n">ins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lssfr</span><span class="p">))</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[:,</span> <span class="n">comp</span><span class="p">]</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+            <span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.02</span><span class="o">*</span><span class="p">(</span><span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">0.4</span><span class="o">*</span><span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span><span class="o">-</span><span class="mf">4.</span><span class="p">))</span>
+            <span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_SFR</span><span class="p">[</span><span class="n">IMF_i</span><span class="p">[</span><span class="n">comp</span><span class="p">]]</span><span class="o">/</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_M</span><span class="p">[</span><span class="n">IMF_i</span><span class="p">[</span><span class="n">comp</span><span class="p">]])</span><span class="o">*</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_M</span><span class="p">[</span><span class="n">IMF_f</span><span class="p">[</span><span class="n">comp</span><span class="p">]]</span><span class="o">/</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_SFR</span><span class="p">[</span><span class="n">IMF_f</span><span class="p">[</span><span class="n">comp</span><span class="p">]])</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ins</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">-</span> <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">-</span> <span class="mf">9.</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ins</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+    
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[:,</span> <span class="n">comp</span><span class="p">]</span> <span class="o">==</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+            <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span>
+            
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">lssfr_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lssfr</span><span class="p">))</span>
+            <span class="n">ssfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">lssfr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+                <span class="n">ssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span> <span class="o">**</span> <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span>
+
+            <span class="n">ins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ssfr</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ins</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">lssfr_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+    <span class="c1"># If instantaneous SFR as input:</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Take the log of the ssfr:</span>
+        <span class="c1"># ind = [np.where(lssfr[:,0] &gt; 0.)[0], np.where(lssfr[:,1] &gt; 0.)[0]]</span>
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_SFR</span><span class="p">[</span><span class="n">IMF_i</span><span class="p">[</span><span class="n">comp</span><span class="p">]]</span><span class="o">/</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_M</span><span class="p">[</span><span class="n">IMF_i</span><span class="p">[</span><span class="n">comp</span><span class="p">]])</span><span class="o">*</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_M</span><span class="p">[</span><span class="n">IMF_f</span><span class="p">[</span><span class="n">comp</span><span class="p">]]</span><span class="o">/</span><span class="n">const</span><span class="o">.</span><span class="n">IMF_SFR</span><span class="p">[</span><span class="n">IMF_f</span><span class="p">[</span><span class="n">comp</span><span class="p">]])</span>
+            <span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">])</span> <span class="o">-</span> <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">-</span> <span class="mf">9.</span>
+
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">lssfr_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lssfr</span><span class="p">))</span>
+            <span class="n">ssfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">lssfr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+                <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]</span><span class="o">!=</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+                <span class="n">ssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span><span class="o">**</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">])</span>
+
+            <span class="n">ins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ssfr</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ins</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">lssfr_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">h0</span><span class="p">:</span>
+        <span class="c1"># Correct the units of the stellar mass</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">lms_tot</span> <span class="o">=</span> <span class="n">lms_tot</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">lsfr</span> <span class="o">=</span> <span class="n">lssfr_tot</span><span class="o">+</span><span class="n">lms_tot</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lsfr</span> <span class="o">=</span> <span class="n">lssfr</span> <span class="o">+</span> <span class="n">lms</span>
+
+    <span class="c1"># Obtain 12+log10(O/H) from Z=MZcold/Mcold</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">loh12</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="c1">#+ const.ohsun - np.log10(const.zsun)</span>
+
+    <span class="k">if</span> <span class="n">ncomp</span><span class="o">!=</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">oh12</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">loh12</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">loh12_tot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">loh12</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ncomp</span><span class="p">):</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">loh12</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]</span> <span class="o">!=</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+            <span class="n">oh12</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.</span> <span class="o">**</span> <span class="p">(</span><span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span><span class="n">comp</span><span class="p">])</span>
+    
+        <span class="n">ins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">oh12</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ins</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">loh12_tot</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">ins</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+
+
+
+    <span class="k">if</span> <span class="n">Testing</span><span class="p">:</span> <span class="c1"># here : Search more efficient form. Allow more components in the header</span>
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">header1</span> <span class="o">=</span> <span class="s1">&#39;log(mstars_tot), log(mstars_disk), log(mstars_bulge),&#39;</span> \
+                      <span class="s1">&#39; log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) &#39;</span> \
+                      <span class="s1">&#39;log(Z)_tot, log(Z)_disk, log(Z)_bulge&#39;</span>
+            <span class="n">datatofile</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">lms_tot</span><span class="p">,</span><span class="n">lms</span><span class="p">,</span><span class="n">lsfr</span><span class="p">,</span><span class="n">lssfr_tot</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">loh12_tot</span><span class="p">,</span><span class="n">loh12</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">ncomp</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">header1</span> <span class="o">=</span> <span class="s1">&#39;log(mstars), &#39;</span> \
+                      <span class="s1">&#39;log(SFR), log(sSFR) &#39;</span> \
+                      <span class="s1">&#39;log(Z)&#39;</span>
+            <span class="n">datatofile</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">lms</span><span class="p">,</span><span class="n">lsfr</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">loh12</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">LC2sfr</span><span class="p">:</span>
+            <span class="n">outfil</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;example_data/tmp_LC.dat&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">outfil</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;example_data/tmp_avSFR.dat&quot;</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfil</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">outf</span><span class="p">,</span> <span class="n">datatofile</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header1</span><span class="p">)</span>
+            <span class="n">outf</span><span class="o">.</span><span class="n">closed</span>
+
+
+                    
+    <span class="k">return</span> <span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">cut</span></div>
+
+<div class="viewcode-block" id="write_data"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.write_data">[docs]</a><span class="k">def</span> <span class="nf">write_data</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">lu_sfr</span><span class="p">,</span><span class="n">lne_sfr</span><span class="p">,</span><span class="n">loh12_sfr</span><span class="p">,</span>
+               <span class="n">nebline_sfr</span><span class="p">,</span><span class="n">nebline_sfr_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">fluxes_sfr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">fluxes_sfr_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">extra_param</span><span class="o">=</span><span class="p">[[</span><span class="kc">None</span><span class="p">]],</span><span class="n">extra_params_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">extra_params_labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">ew_notatt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">ew_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;output.hdf5&#39;</span><span class="p">,</span><span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;ratios&#39;</span><span class="p">,</span>
+               <span class="n">unemod_sfr</span><span class="o">=</span><span class="s1">&#39;kashino20&#39;</span><span class="p">,</span><span class="n">photmod_sfr</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a .hdf5 file from a .dat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lms_sfr : floats</span>
+<span class="sd">     Masses of the galaxies per component (log10(M*) (Msun)).</span>
+<span class="sd">    lssfr_sfr : floats</span>
+<span class="sd">     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</span>
+<span class="sd">    lu_sfr : floats</span>
+<span class="sd">     U of the galaxies per component.</span>
+<span class="sd">    lne_sfr : floats</span>
+<span class="sd">     ne of the galaxies per component (cm^-3).</span>
+<span class="sd">    loh12_sfr : floats</span>
+<span class="sd">     Metallicity of the galaxies per component (12+log(O/H))</span>
+<span class="sd">    nebline_sfr : floats</span>
+<span class="sd">      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</span>
+<span class="sd">    nebline_sfr_att : floats</span>
+<span class="sd">      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)    </span>
+<span class="sd">    ew_notatt : floats</span>
+<span class="sd">      Array with the equivalent width of the lines per component. (Angstroms)</span>
+<span class="sd">    ew_att : floats</span>
+<span class="sd">      Array with the equivalent width of the attenuated lines per component. (Angstroms)</span>
+<span class="sd">    outfile : string</span>
+<span class="sd">      Name of the output file.</span>
+<span class="sd">    attmod : string</span>
+<span class="sd">      Attenuation model.</span>
+<span class="sd">    unemod_sfr : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne.</span>
+<span class="sd">    photmod_sfr : string</span>
+<span class="sd">      Photoionisation model to be used for look up tables.</span>
+<span class="sd">    first : boolean</span>
+<span class="sd">      If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="n">first</span><span class="p">:</span> 
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;header&#39;</span><span class="p">,(</span><span class="mi">1</span><span class="p">,))</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;HII model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unemod_sfr</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;Lines model for SF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">photmod_sfr</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;Attenuation model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attmod</span>
+    
+            <span class="c1"># Data</span>
+            <span class="n">hfdat</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+            
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lms&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lms</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(M*) (Msun)&#39;</span>
+            
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lssfr&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lssfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(SFR/M*) (1/yr)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lu_sfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(U) (dimensionless)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">lne_sfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(nH) (cm**-3)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">loh12_sfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(Z)&#39;</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">])):</span>           
+                <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">,</span> 
+                                     <span class="n">data</span><span class="o">=</span><span class="n">nebline_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]&#39;</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_sfr</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">,</span> 
+                                         <span class="n">data</span><span class="o">=</span><span class="n">fluxes_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1 cm^-2&#39;</span>
+                    
+                <span class="k">if</span> <span class="n">fluxes_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">,</span> 
+                                         <span class="n">data</span><span class="o">=</span><span class="n">fluxes_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1 cm^-2&#39;</span>
+
+                
+                <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">,</span> 
+                                             <span class="n">data</span><span class="o">=</span><span class="n">nebline_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]&#39;</span>
+    
+            <span class="k">if</span> <span class="n">extra_param</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">extra_param</span><span class="p">)):</span>
+                    <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span><span class="kc">None</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">extra_params_labels</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">extra_params_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+            <span class="n">hfdat</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lms</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lms</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lms</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lssfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lssfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lssfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lu_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lu_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lu_sfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lne_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lne_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lne_sfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">loh12_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">loh12_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">loh12_sfr</span>
+            
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">])):</span> 
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">nebline_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_sfr</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">fluxes_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                     <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                     <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">fluxes_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">nebline_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">extra_param</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">extra_param</span><span class="p">)):</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span><span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="o">-</span><span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span><span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span><span class="kc">None</span><span class="p">]</span></div>
+        
+
+<div class="viewcode-block" id="write_data_AGN"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_io.write_data_AGN">[docs]</a><span class="k">def</span> <span class="nf">write_data_AGN</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">lu_sfr</span><span class="p">,</span><span class="n">lne_sfr</span><span class="p">,</span><span class="n">loh12_sfr</span><span class="p">,</span><span class="n">lu_agn</span><span class="p">,</span><span class="n">lne_agn</span><span class="p">,</span><span class="n">loh12_agn</span><span class="p">,</span>
+               <span class="n">nebline_sfr</span><span class="p">,</span><span class="n">nebline_agn</span><span class="p">,</span><span class="n">nebline_sfr_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">nebline_agn_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">fluxes_sfr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">fluxes_agn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">fluxes_sfr_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">fluxes_agn_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">epsilon_sfr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">epsilon_agn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">extra_param</span><span class="o">=</span><span class="p">[[</span><span class="kc">None</span><span class="p">]],</span><span class="n">extra_params_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">extra_params_labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">ew_notatt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">ew_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;output.hdf5&#39;</span><span class="p">,</span><span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;ratios&#39;</span><span class="p">,</span>
+               <span class="n">unemod_sfr</span><span class="o">=</span><span class="s1">&#39;kashino20&#39;</span><span class="p">,</span><span class="n">unemod_agn</span><span class="o">=</span><span class="s1">&#39;panuzzo03&#39;</span><span class="p">,</span><span class="n">photmod_sfr</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span>
+               <span class="n">photmod_agn</span><span class="o">=</span><span class="s1">&#39;feltre16&#39;</span><span class="p">,</span><span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Create a .hdf5 file from a .dat file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lms_sfr : floats</span>
+<span class="sd">     Masses of the galaxies per component (log10(M*) (Msun)).</span>
+<span class="sd">    lssfr_sfr : floats</span>
+<span class="sd">     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</span>
+<span class="sd">    lu_sfr : floats</span>
+<span class="sd">     U of the galaxies per component.</span>
+<span class="sd">    lne_sfr : floats</span>
+<span class="sd">     ne of the galaxies per component (cm^-3).</span>
+<span class="sd">    loh12_sfr : floats</span>
+<span class="sd">     Metallicity of the galaxies per component (12+log(O/H))</span>
+<span class="sd">    nebline_sfr : floats</span>
+<span class="sd">      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</span>
+<span class="sd">    nebline_sfr_att : floats</span>
+<span class="sd">      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</span>
+<span class="sd">    lms_agn : floats</span>
+<span class="sd">     Masses of the galaxies per component (log10(M*) (Msun)).</span>
+<span class="sd">    lssfr_agn : floats</span>
+<span class="sd">     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</span>
+<span class="sd">    lu_agn : floats</span>
+<span class="sd">     U of the galaxies per component.</span>
+<span class="sd">    lne_agn : floats</span>
+<span class="sd">     ne of the galaxies per component (cm^-3).</span>
+<span class="sd">    loh12_agn : floats</span>
+<span class="sd">     Metallicity of the galaxies per component (12+log(O/H))</span>
+<span class="sd">    nebline_agn : floats</span>
+<span class="sd">      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</span>
+<span class="sd">    nebline_agn_att : floats</span>
+<span class="sd">      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)      </span>
+<span class="sd">    ew_notatt : floats</span>
+<span class="sd">      Array with the equivalent width of the lines per component. (Angstroms)</span>
+<span class="sd">    ew_att : floats</span>
+<span class="sd">      Array with the equivalent width of the attenuated lines per component. (Angstroms)</span>
+<span class="sd">    outfile : string</span>
+<span class="sd">      Name of the output file.</span>
+<span class="sd">    attmod : string</span>
+<span class="sd">      Attenuation model.</span>
+<span class="sd">    unemod_sfr : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne.</span>
+<span class="sd">    unemod_agn : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne.</span>
+<span class="sd">    photmod_sfr : string</span>
+<span class="sd">      Photoionisation model to be used for look up tables.</span>
+<span class="sd">    photmod_agn : string</span>
+<span class="sd">      Photoionisation model to be used for look up tables.</span>
+<span class="sd">    first : boolean</span>
+<span class="sd">      If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">if</span> <span class="n">first</span><span class="p">:</span> 
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;header&#39;</span><span class="p">,(</span><span class="mi">1</span><span class="p">,))</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;HII model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unemod_sfr</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;AGN model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unemod_agn</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;Lines model for SF&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">photmod_sfr</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;Lines model for AGN&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">photmod_agn</span>
+            <span class="n">head</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="sa">u</span><span class="s1">&#39;Attenuation model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attmod</span>
+    
+            <span class="c1"># Data</span>
+            <span class="n">hfdat</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+            
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lms&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lms</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(M*) (Msun)&#39;</span>
+            
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lssfr&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lssfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(SFR/M*) (1/yr)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lu_sfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(U) (dimensionless)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">lne_sfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(nH) (cm**-3)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">loh12_sfr</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(Z)&#39;</span>
+            
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lu_agn&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lu_agn</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(U) (dimensionless)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lne_agn&#39;</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">lne_agn</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(nH) (cm**-3)&#39;</span>
+    
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;lz_agn&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">loh12_agn</span><span class="p">,</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;log10(Z)&#39;</span>
+            
+            <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;epsilon_agn&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">epsilon_agn</span><span class="p">[</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;epsilon_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;NLRs volume filling factor (dimensionless)&#39;</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">])):</span>           
+                <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">,</span> 
+                                     <span class="n">data</span><span class="o">=</span><span class="n">nebline_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: erg s^-1&#39;</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_sfr</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">,</span> 
+                                         <span class="n">data</span><span class="o">=</span><span class="n">fluxes_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1 cm^-2&#39;</span>
+                    
+                <span class="k">if</span> <span class="n">fluxes_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">fluxes_sfr_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">,</span> 
+                                             <span class="n">data</span><span class="o">=</span><span class="n">fluxes_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1 cm^-2&#39;</span>
+                
+                <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">,</span> 
+                                             <span class="n">data</span><span class="o">=</span><span class="n">nebline_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: erg s^-1&#39;</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">])):</span>
+                <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn&#39;</span><span class="p">,</span> 
+                                     <span class="n">data</span><span class="o">=</span><span class="n">nebline_agn</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1&#39;</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_agn</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux&#39;</span><span class="p">,</span> 
+                                         <span class="n">data</span><span class="o">=</span><span class="n">fluxes_agn</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1 cm^-2&#39;</span>
+                    
+                <span class="k">if</span> <span class="n">fluxes_agn_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">fluxes_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux_att&#39;</span><span class="p">,</span> 
+                                             <span class="n">data</span><span class="o">=</span><span class="n">fluxes_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1 cm^-2&#39;</span>
+                
+                <span class="k">if</span> <span class="n">nebline_agn_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">nebline_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_att&#39;</span><span class="p">,</span> 
+                                             <span class="n">data</span><span class="o">=</span><span class="n">nebline_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Lines units: egr s^-1&#39;</span>
+
+            <span class="k">if</span> <span class="n">extra_param</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">extra_param</span><span class="p">)):</span>
+                    <span class="n">hfdat</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:],</span> <span class="n">maxshape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">extra_params_labels</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">extra_params_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">hf</span><span class="p">:</span>
+            <span class="n">hfdat</span> <span class="o">=</span> <span class="n">hf</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lms</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lms</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lms</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lssfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lssfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lssfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lu_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_sfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lu_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lu_sfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lne_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_sfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lne_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lne_sfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">loh12_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_sfr&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">loh12_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">loh12_sfr</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lu_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lu_agn&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lu_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lu_agn</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lne_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lne_agn&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">lne_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">lne_agn</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">loh12_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;lz_agn&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">loh12_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">loh12_agn</span>
+            
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;epsilon_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;epsilon_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">epsilon_agn</span><span class="p">[</span><span class="kc">None</span><span class="p">,:]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">hfdat</span><span class="p">[</span><span class="s1">&#39;epsilon_agn&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="n">epsilon_agn</span><span class="p">[</span><span class="kc">None</span><span class="p">,:]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">epsilon_agn</span><span class="p">[</span><span class="kc">None</span><span class="p">,:]</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">])):</span> 
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">nebline_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_sfr</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">fluxes_sfr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">fluxes_sfr</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">fluxes_sfr_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_flux_att&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">fluxes_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">nebline_sfr_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_sfr</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_sfr_att&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_sfr_att</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">nebline_sfr_att</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+                        
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">])):</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">nebline_agn</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_agn</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">fluxes_agn</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span>
+                
+                <span class="k">if</span> <span class="n">fluxes_agn_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">fluxes_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_flux_att&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_agn</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">fluxes_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span>
+                
+                <span class="k">if</span> <span class="n">nebline_agn_att</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">nebline_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_att&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">nebline_agn_att</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">hfdat</span><span class="p">[</span><span class="n">const</span><span class="o">.</span><span class="n">lines_model</span><span class="p">[</span><span class="n">photmod_agn</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;_agn_att&#39;</span><span class="p">][:,</span><span class="o">-</span><span class="n">nebline_agn_att</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">nebline_agn_att</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span>
+            
+            <span class="k">if</span> <span class="n">extra_param</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">extra_param</span><span class="p">)):</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">hfdat</span><span class="p">[</span><span class="n">extra_params_names</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:]</span> <span class="o">=</span> <span class="n">extra_param</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="kc">None</span><span class="p">,:]</span></div>
+        
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme_include.html">Get nebular emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/modules.html">get_nebular_emission</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_io</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

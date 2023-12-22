@@ -1,0 +1,1589 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>get_nebular_emission package &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="get_nebular_emission" href="modules.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="get_nebular_emission"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" accesskey="U">get_nebular_emission</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="get-nebular-emission-package">
+<h1>get_nebular_emission package<a class="headerlink" href="#get-nebular-emission-package" title="Permalink to this heading">¶</a></h1>
+<section id="module-get_nebular_emission.eml">
+<span id="get-nebular-emission-eml-module"></span><h2>get_nebular_emission.eml module<a class="headerlink" href="#module-get_nebular_emission.eml" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml.eml">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml.</span></span><span class="sig-name descname"><span class="pre">eml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_sfr_z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infile_z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutcols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mincuts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxcuts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_ratio_lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flux</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">159361136.34969598</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HDF5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_i</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Kroupa',</span> <span class="pre">'Kroupa']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Kroupa',</span> <span class="pre">'Kroupa']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">28000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.012</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AGN</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AGNinputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Lagn'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z_central_cor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_notatt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_ew_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_ew_notatt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cardelli89'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unemod_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kashino19'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unemod_agn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'panuzzo03'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod_agn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'feltre16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ewmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'LandEW'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LC2sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutlimits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mtot2mdisk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Testing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xid_feltre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_feltre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xid_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imf_cut_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml.html#eml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml.eml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate emission lines given the properties of model galaxies</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – Name of the input file.
+- In text files (<em>.dat, *txt, *.cat), columns separated by ‘ ‘.
+- In csv files (</em>.csv), columns separated by ‘,’.</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – Name of the output file.</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>m_sfr_z</strong> (<em>list</em>) – <ul>
+<li><p>[[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],…]</p></li>
+<li><p>For text or csv files: list of integers with column position.</p></li>
+<li><p>For hdf5 files: list of data names.</p></li>
+</ul>
+</p></li>
+<li><p><strong>cutcols</strong> (<em>list</em>) – Parameters to look for cutting the data.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>mincuts</strong> (<em>list</em>) – Minimum value of the parameter of cutcols in the same index. All the galaxies below won’t be considered.</p></li>
+<li><p><strong>maxcuts</strong> (<em>list</em>) – Maximum value of the parameter of cutcols in the same index. All the galaxies above won’t be considered.</p></li>
+<li><p><strong>att_params</strong> (<em>list</em>) – Parameters to look for calculating attenuation. See eml_const to know what each model expects.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>IMF_i</strong> (<em>list</em>) – Assumed IMF in the input data.
+- [[component1_IMF],[component2_IMF],…]</p></li>
+<li><p><strong>IMF_f</strong> (<em>list</em>) – Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
+- [[component1_IMF],[component2_IMF],…]</p></li>
+<li><p><strong>q0</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>z0</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>T</strong> (<em>float</em>) – Typical temperature of ionizing regions.</p></li>
+<li><p><strong>AGNinputs</strong> (<em>string</em>) – Type of inputs for AGN’s bolometric luminosity calculations.</p></li>
+<li><p><strong>Lagn_params</strong> (<em>list</em>) – Inputs for AGN’s bolometric luminosity calculations.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>Z_central_correction</strong> (<em>boolean</em>) – If False, the code supposes the central metallicity of the galaxy to be the mean one.
+If True, the code estimates the central metallicity of the galaxy from the mean one.</p></li>
+<li><p><strong>epsilon_params</strong> (<em>list</em>) – Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_att</strong> (<em>list</em>) – Attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_notatt</strong> (<em>list</em>) – Not attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_photmod</strong> (<em>list</em>) – Index in the list of lines of the photoionization model of the lines for which
+attenuation is going to be calculated in the “ratio” attenuation model.</p></li>
+<li><p><strong>cols_ew_att</strong> (<em>list</em>) – Equivalent widths calculated by the semi-analytic model of the input data, considering attenuation.
+Used to calculate equivalent widths by calculating the corresponding continuum flux.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_ew_notatt</strong> (<em>list</em>) – Equivalent widths calculated by the semi-analytic model of the input data, without considering attenuation.
+Used to calculate equivalent widths by calculating the corresponding continuum flux.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cutlimits</strong> (<em>boolean</em>) – If True the galaxies with U, ne and Z outside the photoionization model’s grid limits won’t be considered.</p></li>
+<li><p><strong>h0</strong> (<em>float</em>) – If not None: value of h, H0=100h km/s/Mpc.</p></li>
+<li><p><strong>redshift</strong> (<em>float</em>) – Redshift of the input data.</p></li>
+<li><p><strong>volume</strong> (<em>float</em>) – Carlton model default value = 500^3 Mpc^3/h^3. If not 500.**3. : value of the simulation volume in Mpc^3/h^3</p></li>
+<li><p><strong>unemod_sfr</strong> (<em>string</em>) – Model to go from galaxy properties to U and ne.</p></li>
+<li><p><strong>unemod_agn</strong> (<em>string</em>) – Model to go from galaxy properties to U and ne.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Attenuation model.</p></li>
+<li><p><strong>photmod_sfr</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>photmod_agn</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>ewmod</strong> (<em>string</em>) – Method for equivalent width calculation.</p></li>
+<li><p><strong>LC2sfr</strong> (<em>boolean</em>) – If True magnitude of Lyman Continuum photons expected as input for SFR.</p></li>
+<li><p><strong>mtot2mdisk</strong> (<em>boolean</em>) – If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+<li><p><strong>Testing</strong> (<em>boolean</em>) – If True only run over few entries for testing purposes</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This code returns an .hdf5 file with the mass, specific star formation rate,
+electron density, metallicity, ionization parameter, and the emission lines.</p>
+</dd></dl>
+
+</section>
+<section id="module-get_nebular_emission.eml_io">
+<span id="get-nebular-emission-eml-io-module"></span><h2>get_nebular_emission.eml_io module<a class="headerlink" href="#module-get_nebular_emission.eml_io" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.check_file">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">check_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#check_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.check_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>It checks if a file exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – Input file</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>file_fine</strong> – True when the file exists.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.get_data">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hdf5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_i</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Chabrier',</span> <span class="pre">'Chabrier']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Kroupa',</span> <span class="pre">'Kroupa']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutcols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mincuts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxcuts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GALFORM'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">LC2sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mtot2mdisk</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Testing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#get_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id1"><span class="problematic" id="id2">*</span></a>.dat, <a href="#id3"><span class="problematic" id="id4">*</span></a>txt, <a href="#id5"><span class="problematic" id="id6">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id7"><span class="problematic" id="id8">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>cols</strong> (<em>list</em>) – <ul>
+<li><p>[[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],…]</p></li>
+<li><p>Expected : component1 = total or disk, component2 = bulge</p></li>
+<li><p>For text or csv files: list of integers with column position.</p></li>
+<li><p>For hdf5 files: list of data names.</p></li>
+</ul>
+</p></li>
+<li><p><strong>cutcols</strong> (<em>list</em>) – Parameters to look for cutting the data.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>mincuts</strong> (<em>list</em>) – Minimum value of the parameter of cutcols in the same index. All the galaxies below won’t be considered.</p></li>
+<li><p><strong>maxcuts</strong> (<em>list</em>) – Maximum value of the parameter of cutcols in the same index. All the galaxies above won’t be considered.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Attenuation model.</p></li>
+<li><p><strong>IMF_i</strong> (<em>list</em>) – Assumed IMF in the input data.
+- [[component1_IMF],[component2_IMF],…]</p></li>
+<li><p><strong>IMF_f</strong> (<em>list</em>) – Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
+- [[component1_IMF],[component2_IMF],…]</p></li>
+<li><p><strong>h0</strong> (<em>float</em>) – If not None: value of h, H0=100h km/s/Mpc.</p></li>
+<li><p><strong>LC2sfr</strong> (<em>boolean</em>) – If True magnitude of Lyman Continuum photons expected as input for SFR.</p></li>
+<li><p><strong>mtot2mdisk</strong> (<em>boolean</em>) – If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+<li><p><strong>Testing</strong> (<em>boolean</em>) – If True only run over few entries for testing purposes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>lms, lssfr, loh12</strong> (<em>floats</em>)</p></li>
+<li><p><strong>cut</strong> (<em>integers</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.get_ncomponents">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">get_ncomponents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cols</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#get_ncomponents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.get_ncomponents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of components to estimate the emission lines from</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cols</strong> (<em>list</em>) – List of columns with M*, SFR, Z, per components</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ncomp</strong> – Number of components (for example 2 for bulge and disk)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.get_nheader">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">get_nheader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">firstchar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#get_nheader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.get_nheader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a text file with a structure: header+data,
+counts the number of header lines</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>infile</strong> (<em>string</em>) – Input file</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ih</strong> – Number of lines with the header text</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.get_secondary_data">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">get_secondary_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hdf5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#get_secondary_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.get_secondary_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get data for epsilon calculation in the adecuate units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id9"><span class="problematic" id="id10">*</span></a>.dat, <a href="#id11"><span class="problematic" id="id12">*</span></a>txt, <a href="#id13"><span class="problematic" id="id14">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id15"><span class="problematic" id="id16">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>epsilon_params</strong> (<em>list</em>) – Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>epsilon_param</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.get_secondary_data2">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">get_secondary_data2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infile_z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hdf5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cardelli89'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#get_secondary_data2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.get_secondary_data2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get data for epsilon calculation in the adecuate units.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id17"><span class="problematic" id="id18">*</span></a>.dat, <a href="#id19"><span class="problematic" id="id20">*</span></a>txt, <a href="#id21"><span class="problematic" id="id22">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id23"><span class="problematic" id="id24">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>epsilon_params</strong> (<em>list</em>) – Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>epsilon_param</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.locate_interval">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">locate_interval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#locate_interval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.locate_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the index, i, of the interval with edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>val</strong> (<em>int</em><em> or </em><em>float</em>) – Value</p></li>
+<li><p><strong>edges</strong> (<em>array of int</em><em> or </em><em>floats</em>) – Array of the edges of the intervals</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ind</strong> – Index of the interval. If outside: index of the limits</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.read_data">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">read_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutcols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mincuts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxcuts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hdf5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Testing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#read_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.read_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>It reads star masses, star formation rates and metallicities from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id25"><span class="problematic" id="id26">*</span></a>.dat, <a href="#id27"><span class="problematic" id="id28">*</span></a>txt, <a href="#id29"><span class="problematic" id="id30">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id31"><span class="problematic" id="id32">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>cols</strong> (<em>list</em>) – <ul>
+<li><p>[[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],…]</p></li>
+<li><p>Expected : component1 = total or disk, component2 = bulge</p></li>
+<li><p>For text or csv files: list of integers with column position.</p></li>
+<li><p>For hdf5 files: list of data names.</p></li>
+</ul>
+</p></li>
+<li><p><strong>cutcols</strong> (<em>list</em>) – Parameters to look for cutting the data.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>mincuts</strong> (<em>list</em>) – Minimum value of the parameter of cutcols in the same index. All the galaxies below won’t be considered.</p></li>
+<li><p><strong>maxcuts</strong> (<em>list</em>) – Maximum value of the parameter of cutcols in the same index. All the galaxies above won’t be considered.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Model of dust attenuation.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+<li><p><strong>Testing</strong> (<em>boolean</em>) – If True only run over few entries for testing purposes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>lms, lssfr, loh12</strong> (<em>floats</em>)</p></li>
+<li><p><strong>cut</strong> (<em>integers</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.stop_if_no_file">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">stop_if_no_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#stop_if_no_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.stop_if_no_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>It stops the program if a file does not exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>infile</strong> (<em>string</em>) – Input file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.write_data">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">write_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lu_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nebline_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nebline_sfr_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes_sfr_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[[None]]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ew_notatt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ew_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'output.hdf5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ratios'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unemod_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kashino20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#write_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.write_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a .hdf5 file from a .dat file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lms_sfr</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr_sfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>lu_sfr</strong> (<em>floats</em>) – U of the galaxies per component.</p></li>
+<li><p><strong>lne_sfr</strong> (<em>floats</em>) – ne of the galaxies per component (cm^-3).</p></li>
+<li><p><strong>loh12_sfr</strong> (<em>floats</em>) – Metallicity of the galaxies per component (12+log(O/H))</p></li>
+<li><p><strong>nebline_sfr</strong> (<em>floats</em>) – Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p></li>
+<li><p><strong>nebline_sfr_att</strong> (<em>floats</em>) – Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p></li>
+<li><p><strong>ew_notatt</strong> (<em>floats</em>) – Array with the equivalent width of the lines per component. (Angstroms)</p></li>
+<li><p><strong>ew_att</strong> (<em>floats</em>) – Array with the equivalent width of the attenuated lines per component. (Angstroms)</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – Name of the output file.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Attenuation model.</p></li>
+<li><p><strong>unemod_sfr</strong> (<em>string</em>) – Model to go from galaxy properties to U and ne.</p></li>
+<li><p><strong>photmod_sfr</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>first</strong> (<em>boolean</em>) – If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_io.write_data_AGN">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_io.</span></span><span class="sig-name descname"><span class="pre">write_data_AGN</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lu_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lu_agn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne_agn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12_agn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nebline_sfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nebline_agn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nebline_sfr_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nebline_agn_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes_agn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes_sfr_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fluxes_agn_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_agn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[[None]]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_params_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ew_notatt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ew_att</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'output.hdf5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ratios'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unemod_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kashino20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unemod_agn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'panuzzo03'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod_sfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod_agn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'feltre16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_io.html#write_data_AGN"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_io.write_data_AGN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a .hdf5 file from a .dat file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lms_sfr</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr_sfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>lu_sfr</strong> (<em>floats</em>) – U of the galaxies per component.</p></li>
+<li><p><strong>lne_sfr</strong> (<em>floats</em>) – ne of the galaxies per component (cm^-3).</p></li>
+<li><p><strong>loh12_sfr</strong> (<em>floats</em>) – Metallicity of the galaxies per component (12+log(O/H))</p></li>
+<li><p><strong>nebline_sfr</strong> (<em>floats</em>) – Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p></li>
+<li><p><strong>nebline_sfr_att</strong> (<em>floats</em>) – Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p></li>
+<li><p><strong>lms_agn</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr_agn</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>lu_agn</strong> (<em>floats</em>) – U of the galaxies per component.</p></li>
+<li><p><strong>lne_agn</strong> (<em>floats</em>) – ne of the galaxies per component (cm^-3).</p></li>
+<li><p><strong>loh12_agn</strong> (<em>floats</em>) – Metallicity of the galaxies per component (12+log(O/H))</p></li>
+<li><p><strong>nebline_agn</strong> (<em>floats</em>) – Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p></li>
+<li><p><strong>nebline_agn_att</strong> (<em>floats</em>) – Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p></li>
+<li><p><strong>ew_notatt</strong> (<em>floats</em>) – Array with the equivalent width of the lines per component. (Angstroms)</p></li>
+<li><p><strong>ew_att</strong> (<em>floats</em>) – Array with the equivalent width of the attenuated lines per component. (Angstroms)</p></li>
+<li><p><strong>outfile</strong> (<em>string</em>) – Name of the output file.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Attenuation model.</p></li>
+<li><p><strong>unemod_sfr</strong> (<em>string</em>) – Model to go from galaxy properties to U and ne.</p></li>
+<li><p><strong>unemod_agn</strong> (<em>string</em>) – Model to go from galaxy properties to U and ne.</p></li>
+<li><p><strong>photmod_sfr</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>photmod_agn</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>first</strong> (<em>boolean</em>) – If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-get_nebular_emission.eml_photio">
+<span id="get-nebular-emission-eml-photio-module"></span><h2>get_nebular_emission.eml_photio module<a class="headerlink" href="#module-get_nebular_emission.eml_photio" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.calculate_flux">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">calculate_flux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nebline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.704</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfr'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#calculate_flux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.calculate_flux" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.clean_photarray">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">clean_photarray</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#clean_photarray"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.clean_photarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the model, take the values outside the limits and give them the apropriate
+value inside the limits depending on the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lms</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>lu</strong> (<em>floats</em>) – U of the galaxies per component.</p></li>
+<li><p><strong>lne</strong> (<em>floats</em>) – ne of the galaxies per component (cm^-3).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z)).</p></li>
+<li><p><strong>photomod</strong> (<em>string</em>) – Name of the considered photoionisation model.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lms,lssfr,lu,lne,loh12</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.get_limits">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">get_limits</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">propname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#get_limits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.get_limits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a file with a structure: property + lower limit + upper limit,
+gets the limits of the parameters of the photoionization model.</p>
+<p>In the file we must find the properties well specified i.e U, Z and nH.
+The header lines have to start with ‘#’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>propname</strong> (<em>string</em>) – name of the property that we want</p></li>
+<li><p><strong>photomod</strong> (<em>string</em>) – Name of the considered photoionisation model</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>lower_limit</strong> (<em>float</em>) – lower limit of the requested property</p></li>
+<li><p><strong>upper_limit</strong> (<em>float</em>) – upper limits of the requested property</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Table 3 of Gutkin+2016 (https://arxiv.org/pdf/1607.06086.pdf)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Property      Lower_limit     Upper_limit</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Z</span>               <span class="mf">0.0001</span>          <span class="mf">0.040</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">U</span>               <span class="o">-</span><span class="mf">4.0</span>            <span class="o">-</span><span class="mf">1.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xid</span>             <span class="mf">0.1</span>             <span class="mf">0.5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nH</span>               <span class="mi">1</span>               <span class="mi">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span> <span class="o">=</span> <span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="n">photmod</span> <span class="o">=</span> <span class="s1">&#39;gutkin16&#39;</span><span class="p">)</span>
+<span class="go">    0.0001 0.04</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span> <span class="o">=</span> <span class="s1">&#39;nH&#39;</span><span class="p">,</span> <span class="n">photmod</span> <span class="o">=</span> <span class="s1">&#39;gutkin16&#39;</span><span class="p">)</span>
+<span class="go">    1  4</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.get_lines">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">get_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xid_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imf_cut_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xid_feltre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_feltre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1.7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#get_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.get_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the emission lines</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lu</strong> (<em>floats</em>) – U of the galaxies per component.</p></li>
+<li><p><strong>lne</strong> (<em>floats</em>) – ne of the galaxies per component (cm^-3).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z))</p></li>
+<li><p><strong>photomod</strong> (<em>string</em>) – Name of the considered photoionisation model.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>nebline</strong> – Array with the luminosity of the lines per component. Units depends on photmod.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.get_lines_Feltre">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">get_lines_Feltre</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xid_feltre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_feltre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1.7</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#get_lines_Feltre"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.get_lines_Feltre" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the interpolations for the emission lines,
+using the tables
+from Feltre et al. (2016) (<a class="reference external" href="https://arxiv.org/pdf/1511.08217utkingalaxies">https://arxiv.org/pdf/1511.08217utkingalaxies</a> per component.
+lne : floats</p>
+<blockquote>
+<div><p>ne of the galaxies per component (cm^-3).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>loh12<span class="classifier">floats</span></dt><dd><p>Metallicity of the galaxies per component (log10(Z))</p>
+</dd>
+<dt>verbose<span class="classifier">boolean</span></dt><dd><p>If True print out messages</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nebline</strong> – Array with the luminosity of the lines per component. (Lsun for L_AGN = 10^45 erg/s)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.get_lines_Gutkin">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">get_lines_Gutkin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lne</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xid_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">co_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imf_cut_gutkin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#get_lines_Gutkin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.get_lines_Gutkin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the interpolations for the emission lines,
+using the tables
+from Gutkin et al. (2016) (<a class="reference external" href="https://arxiv.org/pdf/1607.06086.pdf">https://arxiv.org/pdf/1607.06086.pdf</a>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lu</strong> (<em>floats</em>) – U of the galaxies per component.</p></li>
+<li><p><strong>lne</strong> (<em>floats</em>) – ne of the galaxies per component (cm^-3).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z))</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>nebline</strong> – Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_photio.get_zfile">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_photio.</span></span><span class="sig-name descname"><span class="pre">get_zfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">zmet_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_photio.html#get_zfile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_photio.get_zfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a metallicity string get the name of the corresponding table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>zmet_str</strong> (<em>string</em>) – Metallicity name in files.</p></li>
+<li><p><strong>photomod</strong> (<em>string</em>) – Name of the considered photoionisation model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>zfile</strong> – Name of the model file with data for the given metallicity.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-get_nebular_emission.eml_plots">
+<span id="get-nebular-emission-eml-plots-module"></span><h2>get_nebular_emission.eml_plots module<a class="headerlink" href="#module-get_nebular_emission.eml_plots" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_plots.lines_BPT">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_plots.</span></span><span class="sig-name descname"><span class="pre">lines_BPT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">BPT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_plots.html#lines_BPT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_plots.lines_BPT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boundary lines for the distinction of ELG types in BPT diagrams.
+It assummes OIII/Hb on the y axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>floats</em>) – Array of points on the x axis to define the lines.
+It should correspond to the wanted BPT.</p></li>
+<li><p><strong>BPT</strong> (<em>string</em>) – Key corresponding to the wanted x axis for the BPT.</p></li>
+<li><p><strong>line</strong> (<em>string</em>) – Key corresponding to the wanted boundary line for the BPT.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>boundary</strong> (<em>floats</em>)</p></li>
+<li><p><em>Values of the boundary line in the desired range.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_plots.test_bpt">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_plots.</span></span><span class="sig-name descname"><span class="pre">test_bpt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outplot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_phot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'output_data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_plots.html#test_bpt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_plots.test_bpt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a test of the interpolations done in eml_photio.
+Two plots, one to verify the U interpolation and the other one to verify the Z interpolation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – Name of the input file.</p></li>
+<li><p><strong>outplot</strong> (<em>string</em>) – Path to the folder plot.</p></li>
+<li><p><strong>photmod</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>plot_phot</strong> (<em>boolean</em>) – If True it plots points from the photoionization tables.</p></li>
+<li><p><strong>create_file</strong> (<em>boolean</em>) – If True it creates textfiles to read the photoionization tables.</p></li>
+<li><p><strong>file_folder</strong> (<em>string</em>) – Folder where the textfiles to read the tables will be/are stored.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Plot of several BPT diagrams.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_plots.test_medians">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_plots.</span></span><span class="sig-name descname"><span class="pre">test_medians</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outplot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_plots.html#test_medians"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_plots.test_medians" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given U and ne calculated from the Mstar and the SFR in eml_une.
+get the plot of the medians of these quantities in masses bins.
+Compare the plots between the data calculated from the average SFR and
+from the SFR calculated from the LC photons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>outplot</strong> (<em>string</em>) – Path to the folder where save the plot.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Medians U and ne for each bin of mass in two differents plots.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_plots.test_sfrf">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_plots.</span></span><span class="sig-name descname"><span class="pre">test_sfrf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputdata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outplot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obsSFR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obsGSM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colsSFR</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colsGSM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">1,</span> <span class="pre">2,</span> <span class="pre">3]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelObs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">specific</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.704</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">159361136.34969598</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_plots.html#test_sfrf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_plots.test_sfrf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given log10(Mstar) and log10(sSFR) get the plots to compare log10(SFR) vs log10(Mstar).
+Get the GSMF and the SFRF plots.
+Given the observations, compare the plots with the observations too.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obsSFR</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file for the SFR data observed.</p></li>
+<li><p>In text files (<a href="#id33"><span class="problematic" id="id34">*</span></a>.dat, <a href="#id35"><span class="problematic" id="id36">*</span></a>txt, <a href="#id37"><span class="problematic" id="id38">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id39"><span class="problematic" id="id40">*</span></a>.csv), columns separated by ‘,’.</p></li>
+<li><p>Expected histogram mode:</p></li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p>A column with the low value of the bin,</p></li>
+<li><p>A column with the high value of the bin,</p></li>
+<li><p>A column with the frequency in the bin,</p></li>
+<li><p>A column with the error.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>obsGSM</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file for the GSM data observed.</p></li>
+<li><p>In text files (<a href="#id41"><span class="problematic" id="id42">*</span></a>.dat, <a href="#id43"><span class="problematic" id="id44">*</span></a>txt, <a href="#id45"><span class="problematic" id="id46">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id47"><span class="problematic" id="id48">*</span></a>.csv), columns separated by ‘,’.</p></li>
+<li><p>Expected histogram mode:</p></li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p>A column with the low value of the bin,</p></li>
+<li><p>A column with the high value of the bin,</p></li>
+<li><p>A column with the frequency in the bin,</p></li>
+<li><p>A column with the error.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>colsSFR</strong> (<em>list</em>) – <ul>
+<li><p>Columns with the data required to do the observational histogram of the SFR.</p></li>
+<li><p>Expected: [ind_column1, ind_column2, ind_column3, ind_column4]</p></li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p>column1 is the column with the low values of the bins, in Msun/yr,</p></li>
+<li><p>column2 with the high values of the bins, in Msun/yr,</p></li>
+<li><p>column3 with the frequency, in Mpc^-3 dex^-1</p></li>
+<li><p>column4 with the error, in Mpc^-3 dex^-1</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>colsGSM</strong> (<em>list</em>) – <ul>
+<li><p>Columns with the data required to do the observational histogram of the GSM.</p></li>
+<li><p>Expected: [ind_column1, ind_column2, ind_column3, ind_column4]</p></li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p>column1 is the column with the low values of the bins, in h^-2Msun,</p></li>
+<li><p>column2 with the high values of the bins, in h^-2Msun,</p></li>
+<li><p>column3 with the frequency, in h^-3 Mpc^-3,</p></li>
+<li><p>column4 with the error, in h^-3 Mpc^-3.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>labelObs</strong> (<em>list of strings</em>) – <ul>
+<li><p>For the legend, add the name to cite the observational data source.</p></li>
+<li><p>[‘GSM observed’, ‘SFR observed’]</p></li>
+</ul>
+</p></li>
+<li><p><strong>outplot</strong> (<em>string</em>) – <ul>
+<li><p>Name of the output file.</p></li>
+<li><p>Image-type files (<a href="#id49"><span class="problematic" id="id50">*</span></a>.pdf, <a href="#id51"><span class="problematic" id="id52">*</span></a>.jpg, …)</p></li>
+</ul>
+</p></li>
+<li><p><strong>specific</strong> (<em>boolean</em>) – If True it makes the plots with the sSFR. Otherwise, it makes the plots with the SFR.</p></li>
+<li><p><strong>h0</strong> (<em>float</em>) – If not None: value of h, H0=100h km/s/Mpc.</p></li>
+<li><p><strong>volume</strong> (<em>float</em>) – <ul>
+<li><p>Carlton model default value = 542.16^3 Mpc^3/h^3.</p></li>
+<li><p>table 1: <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract">https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract</a></p></li>
+<li><p>If not 542.16**3. : valume of the simulation volume in Mpc^3/h^3</p></li>
+</ul>
+</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>It makes plot(log10(SFR),log10(Mstar)), plot GSMF and plot SFRF,
+all three in one grid and saves it in the outplot path.</p>
+</dd></dl>
+
+</section>
+<section id="module-get_nebular_emission.eml_une">
+<span id="get-nebular-emission-eml-une-module"></span><h2>get_nebular_emission.eml_une module<a class="headerlink" href="#module-get_nebular_emission.eml_une" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.L_agn">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">L_agn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Lagn_params_vals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">AGNinputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'complete'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#L_agn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.L_agn" title="Permalink to this definition">¶</a></dt>
+<dd><p>It reads parameters from the input file from which it can calculate or get the
+AGN luminosities and returns those values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file.</strong> (<em>- Name of the input</em>) – </p></li>
+<li><p><strong>(</strong><strong>*.dat</strong> (<em>- In text files</em>) – </p></li>
+<li><p><strong>*txt</strong> – </p></li>
+<li><p><strong>*.cat</strong><strong>)</strong> – </p></li>
+<li><p><strong>'.</strong> (<em>columns separated by '</em>) – </p></li>
+<li><p><strong>(</strong><strong>*.csv</strong><strong>)</strong> (<em>- In csv files</em>) – </p></li>
+<li><p><strong>'</strong> (<em>columns separated by</em>) – </p></li>
+<li><p><strong>'.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>inputformat<span class="classifier">string</span></dt><dd><p>Format of the input file.</p>
+</dd>
+<dt>AGNinputs<span class="classifier">string</span></dt><dd><p>Type of inputs for AGN’s bolometric luminosity calculations.</p>
+</dd>
+<dt>Lagn_params<span class="classifier">list</span></dt><dd><p>Inputs for AGN’s bolometric luminosity calculations.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p>
+</dd>
+<dt>verbose<span class="classifier">boolean</span></dt><dd><p>If True print out messages.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Lagn</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.Ledd">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">Ledd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Mbh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#Ledd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.Ledd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the black hole, calculates the Eddington luminosity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Mbh</strong> (<em>floats</em>) – Mass of the black hole (Msun).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Ledd</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.Rsch">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">Rsch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Mbh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#Rsch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.Rsch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the black hole, it calculates the Schwarzschild radius.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Mbh</strong> (<em>floats</em>) – Mass of the black hole (Msun)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Rs</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.Z_blanc">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">Z_blanc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logM_or</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#Z_blanc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.Z_blanc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.Z_tremonti">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">Z_tremonti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logZ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[[None],</span> <span class="pre">[None]]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#Z_tremonti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.Z_tremonti" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.Z_tremonti2">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">Z_tremonti2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logZ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minZ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxZ</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[[None],</span> <span class="pre">[None]]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#Z_tremonti2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.Z_tremonti2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.Zagn">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">Zagn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logM</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#Zagn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.Zagn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates the metallicity of the AGN from the global metallicity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logM</strong> (<em>string</em>) – Stellar mass of the galaxy (log10(Msun)).</p></li>
+<li><p><strong>logz</strong> (<em>floats</em>) – Cold gas metallicity (log10(Z)).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>logz</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.acc_rate_edd">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">acc_rate_edd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Mbh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#acc_rate_edd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.acc_rate_edd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the black hole, calculates the eddington accretion rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Mbh</strong> (<em>floats</em>) – Mass of the black hole (Msun).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>acc_rate</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.acc_rate_quasar">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">acc_rate_quasar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M_bulge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_bulge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_bulge</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#acc_rate_quasar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.acc_rate_quasar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the bulge, the half-mass radius and circular velocity
+at the half-mass radius, calculates the accretion rate of the quasar (starburst) mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>M_bulge</strong> (<em>floats</em>) – Mass of the bulge (Msun)</p></li>
+<li><p><strong>r_bulge</strong> (<em>floats</em>) – Half-mass radius of the bulge (Mpc).</p></li>
+<li><p><strong>v_bulge</strong> (<em>floats</em>) – Circular velocity at the half-mass radius of the bulge (km/s).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>acc_rate</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.acc_rate_radio">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">acc_rate_radio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Mhot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mbh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#acc_rate_radio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.acc_rate_radio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the hot gas and the mass of the black hole, calculates
+the accretion rate of the radio (hot gas) mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Mhot</strong> (<em>floats</em>) – Mass of the hot gas (Msun).</p></li>
+<li><p><strong>Mbh</strong> (<em>floats</em>) – Mass of the black hole (Msun).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>acc_rate</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.alpha_B">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">alpha_B</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#alpha_B"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.alpha_B" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the temperature of the ionizing region, it interpolates from Osterbrock &amp; Ferland 2006
+tables the corresponding value of the hydrogen case B recombination coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> (<em>floats</em>) – Typical temperature considered for nebular regions.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>alphaB</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.bursttobulge">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">bursttobulge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn_param</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#bursttobulge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.bursttobulge" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.calculate_epsilon">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">calculate_epsilon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epsilon_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.704</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nH</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#calculate_epsilon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.calculate_epsilon" title="Permalink to this definition">¶</a></dt>
+<dd><p>It reads the relevant parameters in the input file and calculates
+the volume filling-factor within that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id57"><span class="problematic" id="id58">*</span></a>.dat, <a href="#id59"><span class="problematic" id="id60">*</span></a>txt, <a href="#id61"><span class="problematic" id="id62">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id63"><span class="problematic" id="id64">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>max_r</strong> (<em>floats</em>) – Distance to the center within the surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>epsilon_params</strong> (<em>list</em>) – Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cut</strong> (<em>integers</em>) – Indeces of the galaxies which have survived the specified cut in the main program.</p></li>
+<li><p><strong>h0</strong> (<em>float</em>) – If not None: value of h, H0=100h km/s/Mpc.</p></li>
+<li><p><strong>nH</strong> (<em>float</em>) – Assumed hydrogen density in the ionizing regions.</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>epsilon</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.calculate_ng_hydro_eq">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">calculate_ng_hydro_eq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_hm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#calculate_ng_hydro_eq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.calculate_ng_hydro_eq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the mean particle density within that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_r</strong> (<em>floats</em>) – Distance to the center within the surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>Ms</strong> (<em>floats</em>) – Stellar mass of the galaxy (Msun).</p></li>
+<li><p><strong>Mg</strong> (<em>floats</em>) – Cold gas mass of the galaxy (Msun).</p></li>
+<li><p><strong>r_hm</strong> (<em>floats</em>) – Half-mass radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>n</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.enclosed_mass_disk">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">enclosed_mass_disk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#enclosed_mass_disk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.enclosed_mass_disk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the surface density at that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>floats</em>) – Distance to the center in which surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>M</strong> (<em>floats</em>) – Mass of the desired component of the galaxy (Msun).</p></li>
+<li><p><strong>reff</strong> (<em>floats</em>) – Effective radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>surf_den</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.enclosed_mass_sphere">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">enclosed_mass_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#enclosed_mass_sphere"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.enclosed_mass_sphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the surface density at that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>floats</em>) – Distance to the center in which surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>M</strong> (<em>floats</em>) – Mass of the desired component of the galaxy (Msun).</p></li>
+<li><p><strong>reff</strong> (<em>floats</em>) – Effective radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>surf_den</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.epsilon_MZ">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">epsilon_MZ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">0.1633</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3776</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#epsilon_MZ"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.epsilon_MZ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.epsilon_simplemodel">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">epsilon_simplemodel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_hm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nH</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bulge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#epsilon_simplemodel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.epsilon_simplemodel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the volume filling-factor within that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_r</strong> (<em>floats</em>) – Distance to the center within the surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>Ms</strong> (<em>floats</em>) – Stellar mass of the galaxy (Msun).</p></li>
+<li><p><strong>Mg</strong> (<em>floats</em>) – Cold gas mass of the galaxy (Msun).</p></li>
+<li><p><strong>r_hm</strong> (<em>floats</em>) – Half-mass radius of the galaxy (Mpc).</p></li>
+<li><p><strong>nH</strong> (<em>float</em>) – Assumed hydrogen density in the ionizing regions.</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>epsilon</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.epsilon_td">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">epsilon_td</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#epsilon_td"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.epsilon_td" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.gamma_gas_func">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">gamma_gas_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#gamma_gas_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.gamma_gas_func" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.gamma_star_func">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">gamma_star_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h_star</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">den_star</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#gamma_star_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.gamma_star_func" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.get_une">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">get_une</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms_o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr_o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12_o</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">28000000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.012</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ng_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z_central_cor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[[None]]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_param_z0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[[None]]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Kroupa',</span> <span class="pre">'Kroupa']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unemod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kashino20'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#get_une"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.get_une" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given log10(Mstar), log10(sSFR) and 12+log(O/H),
+get the ionizing parameter, U, and the electron density, ne.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lms</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z)).</p></li>
+<li><p><strong>q0</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>z0</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>Lagn</strong> (<em>floats</em>) – Bolometric luminosity of the AGNs (erg/s).</p></li>
+<li><p><strong>T</strong> (<em>float</em>) – Typical temperature of ionizing regions.</p></li>
+<li><p><strong>epsilon</strong> (<em>floats</em>) – Volume filling-factor of the galaxy.</p></li>
+<li><p><strong>IMF_f</strong> (<em>string</em>) – Assumed IMF.</p></li>
+<li><p><strong>unemod</strong> (<em>string</em>) – Model to go from galaxy properties to U and ne.</p></li>
+<li><p><strong>origin</strong> (<em>string</em>) – Source of the ionizing photons.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – Yes = print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Q, lu, lne, loh12</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.get_une_carton17">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">get_une_carton17</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#get_une_carton17"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.get_une_carton17" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given log10(Mstar), log10(sSFR), log10(Z),
+get the ionizing parameter, logU, and the electron density, logne,
+using the model from Carton 2017.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lms</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z)).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lu, lne, loh12</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.get_une_kashino20">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">get_une_kashino20</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ng_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#get_une_kashino20"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.get_une_kashino20" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given log10(Mstar), log10(sSFR), log10(Z) and the assumed IMF,
+get the ionizing parameter, logU, and the electron density, logne,
+using the model from Kashino 2020.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Q</strong> (<em>floats</em>) – Rate of ionizing photons (phot/s)</p></li>
+<li><p><strong>lms</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z)).</p></li>
+<li><p><strong>IMF_f</strong> (<em>string</em>) – Assumed IMF.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lu, lne, loh12</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.get_une_orsi14">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">get_une_orsi14</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ng_ratio</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#get_une_orsi14"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.get_une_orsi14" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given log10(Mstar), log10(sSFR), log10(Z) and the values for the free parameters,
+get the ionizing parameter, logU, and the electron density, logne,
+using the model from Orsi 2014.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lms</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z)).</p></li>
+<li><p><strong>q0</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>z0</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lu, lne, loh12</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.get_une_panuzzo03">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">get_une_panuzzo03</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lssfr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loh12</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ng_ratio</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#get_une_panuzzo03"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.get_une_panuzzo03" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
+the assumed temperature for the ionizing regions, the volume filling-factor
+and the assumed IMF,
+get the ionizing parameter, logU, and the electron density, logne,
+using the model from Panuzzo 2003.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Q</strong> (<em>floats</em>) – Rate of ionizing photons (phot/s)</p></li>
+<li><p><strong>lms</strong> (<em>floats</em>) – Masses of the galaxies per component (log10(M*) (Msun)).</p></li>
+<li><p><strong>lssfr</strong> (<em>floats</em>) – sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).</p></li>
+<li><p><strong>loh12</strong> (<em>floats</em>) – Metallicity of the galaxies per component (log10(Z)).</p></li>
+<li><p><strong>T</strong> (<em>float</em>) – Typical temperature of ionizing regions.</p></li>
+<li><p><strong>epsilon</strong> (<em>floats</em>) – Volume filling-factor of the galaxy.</p></li>
+<li><p><strong>IMF_f</strong> (<em>string</em>) – Assumed IMF.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lu, lne, loh12</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.mean_density">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">mean_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_hm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bulge</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#mean_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.mean_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the particle density at that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>floats</em>) – Distance to the center in which surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>Ms</strong> (<em>floats</em>) – Stellar mass of the galaxy (Msun).</p></li>
+<li><p><strong>Mg</strong> (<em>floats</em>) – Cold gas mass of the galaxy (Msun).</p></li>
+<li><p><strong>r_hm</strong> (<em>floats</em>) – Half-mass radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>n</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.mean_density_hydro_eq">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">mean_density_hydro_eq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_hm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#mean_density_hydro_eq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.mean_density_hydro_eq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the mean particle density within that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_r</strong> (<em>floats</em>) – Distance to the center within the surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>Ms</strong> (<em>floats</em>) – Stellar mass of the galaxy (Msun).</p></li>
+<li><p><strong>Mg</strong> (<em>floats</em>) – Cold gas mass of the galaxy (Msun).</p></li>
+<li><p><strong>r_hm</strong> (<em>floats</em>) – Half-mass radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>n</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.n_ratio">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">n_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_z0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#n_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.n_ratio" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.n_ratio2">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">n_ratio2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_z0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#n_ratio2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.n_ratio2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.particle_density">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">particle_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_hm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#particle_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.particle_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the particle density at that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>floats</em>) – Distance to the center in which surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>Ms</strong> (<em>floats</em>) – Stellar mass of the galaxy (Msun).</p></li>
+<li><p><strong>Mg</strong> (<em>floats</em>) – Cold gas mass of the galaxy (Msun).</p></li>
+<li><p><strong>r_hm</strong> (<em>floats</em>) – Half-mass radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>n</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.phot_rate">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">phot_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lssfr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">IMF_f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lagn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfr'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#phot_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.phot_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.r_iso">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">r_iso</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spin</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#r_iso"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.r_iso" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.surface_density">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">surface_density</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exponential'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#surface_density"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.surface_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the mass of the desired component of the galaxy, the disk effective radius
+and a distance to the center, it calculates the surface density at that distance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>floats</em>) – Distance to the center in which surface density is going to be calculated (Mpc).</p></li>
+<li><p><strong>M</strong> (<em>floats</em>) – Mass of the desired component of the galaxy (Msun).</p></li>
+<li><p><strong>reff</strong> (<em>floats</em>) – Effective radius of the galaxy (Mpc)</p></li>
+<li><p><strong>profile</strong> (<em>string</em>) – Assumed density profile form for the surface density.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>surf_den</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.t_bulge">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">t_bulge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r_bulge</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_bulge</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#t_bulge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.t_bulge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the bulge’s half-mass radius and circular velocity at the half-mass radius,
+calculates the dynamical timescale of the bulge.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r_bulge</strong> (<em>floats</em>) – Half-mass radius of the bulge (Mpc).</p></li>
+<li><p><strong>v_bulge</strong> (<em>floats</em>) – Circular velocity at the half-mass radius of the bulge (km/s).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>dyn_time</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_une.vol_sphere">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_une.</span></span><span class="sig-name descname"><span class="pre">vol_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_une.html#vol_sphere"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_une.vol_sphere" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-get_nebular_emission.eml_att">
+<span id="get-nebular-emission-eml-att-module"></span><h2>get_nebular_emission.eml_att module<a class="headerlink" href="#module-get_nebular_emission.eml_att" title="Permalink to this heading">¶</a></h2>
+<p>Created on Wed Apr 12 14:36:13 2023</p>
+<p>&#64;author: expox7</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.attenuation">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">attenuation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nebline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_ratio_lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cardelli89'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#attenuation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.attenuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the attenuated emission lines from the raw ones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nebline</strong> (<em>floats</em>) – Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr).</p></li>
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id65"><span class="problematic" id="id66">*</span></a>.dat, <a href="#id67"><span class="problematic" id="id68">*</span></a>txt, <a href="#id69"><span class="problematic" id="id70">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id71"><span class="problematic" id="id72">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>att_params</strong> (<em>list</em>) – Parameters to look for calculating attenuation. See eml_const to know what each model expects.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>redshift</strong> (<em>float</em>) – Redshift of the input data.</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Attenuation model.</p></li>
+<li><p><strong>cols_notatt</strong> (<em>list</em>) – Attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_att</strong> (<em>list</em>) – Not attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_photmod</strong> (<em>list</em>) – Index in the list of lines of the photoionization model of the lines for which
+attenuation is going to be calculated in the “ratio” attenuation model.</p></li>
+<li><p><strong>photmod</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>cut</strong> (<em>integers</em>) – Indeces of the not cutted galaxies.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>nebline_att, coef_att</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>It will ignore the lines for which, for any reason, attenuation can not be calculated.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.cardelli">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">cardelli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveA</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#cardelli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.cardelli" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the wavelength, returns Al/Av following Cardelli 1989.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waveA</strong> (<em>floats</em>) – Wavelength (A)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Al_Av</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.coef_att_cardelli">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">coef_att_cardelli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mcold_disc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhalf_mass_disc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z_disc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costheta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">albedo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.56</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#coef_att_cardelli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.coef_att_cardelli" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the wavelength, the cold gas mass, the half-mass radius and the global metallicity of the disk,
+along with the assumed albedo and scattering angle, it gives the attenuation coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wavelength</strong> (<em>floats</em>) – Wavelength (A).</p></li>
+<li><p><strong>Mcold_disc</strong> (<em>floats</em>) – Cold gas mass (Msun).</p></li>
+<li><p><strong>rhalf_mass_disc</strong> (<em>floats</em>) – Half-mass radius of the disk (Msun).</p></li>
+<li><p><strong>Z_disc</strong> (<em>floats</em>) – Disc’s global metallicity.</p></li>
+<li><p><strong>costheta</strong> (<em>float</em>) – Cosine of the assumed cattering angle.</p></li>
+<li><p><strong>albedo</strong> (<em>float</em>) – Assumed albedo.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>coef_att</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.coef_att_ratios">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">coef_att_ratios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_notatt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_photmod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HDF5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#coef_att_ratios"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.coef_att_ratios" title="Permalink to this definition">¶</a></dt>
+<dd><p>It reads luminosities of lines with and without attenuation
+from line emission data and it returns the attenuation coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – Name of the input file.
+- In text files (<em>.dat, *txt, *.cat), columns separated by ‘ ‘.
+- In csv files (</em>.csv), columns separated by ‘,’.</p></li>
+<li><p><strong>cols_notatt</strong> (<em>list</em>) – Attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_att</strong> (<em>list</em>) – Not attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_photmod</strong> (<em>list</em>) – Index in the list of lines of the photoionization model of the lines for which
+attenuation is going to be calculated in the “ratio” attenuation model.</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>photmod</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>coef_att</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../readme_include.html">Get nebular emission</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">Code Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">get_nebular_emission</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">get_nebular_emission package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-get_nebular_emission.eml">get_nebular_emission.eml module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-get_nebular_emission.eml_io">get_nebular_emission.eml_io module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-get_nebular_emission.eml_photio">get_nebular_emission.eml_photio module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-get_nebular_emission.eml_plots">get_nebular_emission.eml_plots module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-get_nebular_emission.eml_une">get_nebular_emission.eml_une module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-get_nebular_emission.eml_att">get_nebular_emission.eml_att module</a></li>
+</ul>
+</li>
+</ul>
+
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="modules.html"
+                          title="previous chapter">get_nebular_emission</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/get_nebular_emission.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="modules.html" title="get_nebular_emission"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="modules.html" >get_nebular_emission</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

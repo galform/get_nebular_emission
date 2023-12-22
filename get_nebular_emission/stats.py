@@ -11,6 +11,7 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
+import get_nebular_emission.eml_const as const
 
 
 def percentiles(val, data, weights=None):
@@ -100,6 +101,7 @@ def perc_2arrays(xedges, xarray, yarray, val, weights=None, nmin=None):
                 apercentile[i] = -999.
             elif (weights is None):
                 apercentile[i] = percentiles(val, data)
+                # print(val, apercentile[i])
             else:
                 if (len(weights) != len(yarray)):
                     sys.exit(

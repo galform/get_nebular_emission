@@ -17,7 +17,7 @@ Documentation for ``get_nebular_emission``
    readme_include.rst
    overview.rst
    features.rst
-   source/modules.rst
+   source/get_nebular_emission.rst
 
 .. include:: ../README.rst
 

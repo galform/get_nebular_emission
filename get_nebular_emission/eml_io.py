@@ -55,21 +55,6 @@ def check_file(infile,verbose=False):
     return file_fine
 
 
-# def create_dir(outdir):
-#     '''
-#     Return True if directory has been created
-#     '''
-    
-#     if not os.path.exists(outdir):
-#         try:
-#             os.makedirs(outdir)
-#         except:
-#             print('WARNING (eml_io.create_dir): problem creating directory ',
-#                   outdir)
-#             return False
-#     return True
-
-
 def get_nheader(infile,firstchar=None):
     '''
     Given a text file with a structure: header+data, 
@@ -186,7 +171,7 @@ def locate_interval(val, edges):
     return ind
 
 def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
-              inputformat='HDF5',Plotting=False, Testing=False, verbose=True):
+              inputformat='hdf5',Testing=False, verbose=True):
     '''
     It reads star masses, star formation rates and metallicities from a file.
 
@@ -215,8 +200,6 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
       Model of dust attenuation.
     verbose : boolean
       If True print out messages
-    Plotting : boolean
-      If True run verification plots with all data.
     Testing : boolean
       If True only run over few entries for testing purposes
 
@@ -226,14 +209,11 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     cut : integers
     '''
     
-    if verbose:
-        print(infile)
-    
     check_file(infile, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
     
-    if (Testing and not Plotting):
+    if Testing:
         limit = 50
     else:
         limit = None
@@ -243,7 +223,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
             print('STOP (eml_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
-    elif inputformat=='HDF5':
+    elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as f:
             hf = f['data']
             
@@ -263,14 +243,14 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                 
             for i in range(ncomp):
                 if i==0:
-                    lms = [hf[cols[i][0]][:limit]]
-                    lssfr = [hf[cols[i][1]][:limit]]
-                    loh12 = [hf[cols[i][2]][:limit]]
+                    lms = np.array([hf[cols[i][0]][:limit]])
+                    lssfr = np.array([hf[cols[i][1]][:limit]])
+                    loh12 = np.array([hf[cols[i][2]][:limit]])
                 else:
                     lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
                     lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
                     loh12 = np.append(loh12,[hf[cols[i][2]][:limit]],axis=0)
-    elif inputformat=='textfile':
+    elif inputformat=='txt':
         ih = get_nheader(infile)
         
         cut = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)[:limit]))
@@ -280,20 +260,24 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                 param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)[:limit]
                 mincut = mincuts[i]
                 maxcut = maxcuts[i]
+                # if i<2:
                 if mincut and maxcut:
                     cut = np.intersect1d(cut,np.where((mincut<param)&(param<maxcut))[0])
                 elif mincut:
                     cut = np.intersect1d(cut,np.where(mincut<param)[0])
                 elif maxcut:
                     cut = np.intersect1d(cut,np.where(param<maxcut)[0])
+                # else:
+                #     param2 = np.loadtxt(infile,usecols=16,skiprows=ih)[:limit]
+                #     cut = np.intersect1d(cut,np.where(param2<param)[0])
         
         for i in range(ncomp):
             X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T[:,:limit]
             
             if i==0:
-                lms = [X[0]]
-                lssfr = [X[1]]
-                loh12 = [X[2]]
+                lms = np.array([X[0]])
+                lssfr = np.array([X[1]])
+                loh12 = np.array([X[2]])
             else:
                 lms = np.append(lms,[X[0]],axis=0)
                 lssfr = np.append(lssfr,[X[1]],axis=0)
@@ -310,12 +294,108 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
             
     return lms[cut], lssfr[cut], loh12[cut], cut
 
+def get_secondary_data2(i, infile, cut, infile_z0=None, epsilon_params=None, 
+                       Lagn_params=None, att_params=None, extra_params=None,
+                       inputformat='hdf5', attmod='cardelli89', verbose=True):    
+    '''
+    Get data for epsilon calculation in the adecuate units.
+    
+    Parameters
+    ----------
+    infile : string
+     - Name of the input file. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    inputformat : string
+     Format of the input file.
+    epsilon_params : list
+     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+     
+    Returns
+    -------
+    epsilon_param : floats
+    '''
+    
+    epsilon_param = [[None]]
+    epsilon_param_z0 = [[None]]
+    Lagn_param = [[None]]
+    extra_param = [[None]]
+    
+    if inputformat not in const.inputformats:
+        if verbose:
+            print('STOP (eml_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(const.inputformats))
+        sys.exit()
+    elif inputformat=='hdf5':
+        if verbose:
+            print('HDF5 not implemented yet for secondary params.')
+        sys.exit()
+    elif inputformat=='txt':
+        ih = get_nheader(infile[i])
+        
+        if epsilon_params:
+            epsilon_param = np.loadtxt(infile[i],skiprows=ih,usecols=epsilon_params)[cut].T
+            
+        if infile_z0[0]:
+            epsilon_param_z0 = np.loadtxt(infile_z0[i],skiprows=ih,usecols=epsilon_params)[cut].T
 
-def get_data(infile, cols, h0=None, inputformat='HDF5', 
+        if Lagn_params:
+            Lagn_param = np.loadtxt(infile[i],skiprows=ih,usecols=Lagn_params)[cut].T
+            
+        if extra_params:
+            extra_param = np.loadtxt(infile[i],skiprows=ih,usecols=extra_params)[cut].T
+            if len(extra_params)==1:
+                extra_param = np.array([extra_param])
+        
+        if att_params:
+                att_param = np.loadtxt(infile[i],skiprows=ih,usecols=att_params)[cut].T
+                
+    return epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param
+
+def get_secondary_data(infile, cols, cut, inputformat='hdf5',verbose=True):    
+    '''
+    Get data for epsilon calculation in the adecuate units.
+    
+    Parameters
+    ----------
+    infile : string
+     - Name of the input file. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    inputformat : string
+     Format of the input file.
+    epsilon_params : list
+     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+     
+    Returns
+    -------
+    epsilon_param : floats
+    '''
+    
+    if inputformat not in const.inputformats:
+        if verbose:
+            print('STOP (eml_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(const.inputformats))
+        sys.exit()
+    elif inputformat=='hdf5':
+        if verbose:
+            print('HDF5 not implemented yet for secondary params.')
+        sys.exit()
+    elif inputformat=='txt':
+        ih = get_nheader(infile)
+        param = np.loadtxt(infile,skiprows=ih,usecols=cols).T
+    
+    return param[:,cut]
+
+def get_data(i, infile, cols, h0=None, inputformat='hdf5', 
              IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM', LC2sfr=False, mtot2mdisk=True, 
-             verbose=False, Plotting=False, Testing=False):
+             verbose=False, Testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
 
@@ -340,10 +420,8 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
      Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
     maxcuts : list
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
-    att_param : list
-     Parameters to look for calculating attenuation. See eml_const to know what each model expects.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
+    attmod : string
+     Attenuation model.
     IMF_i : list
      Assumed IMF in the input data.
      - [[component1_IMF],[component2_IMF],...]
@@ -358,8 +436,6 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
       If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
       If True print out messages
-    Plotting : boolean
-      If True run verification plots with all data.
     Testing : boolean
       If True only run over few entries for testing purposes
 
@@ -369,9 +445,9 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
     cut : integers
     '''
     
-    lms,lssfr,loh12,cut = read_data(infile, cols=cols, cutcols=cutcols,
+    lms,lssfr,loh12,cut = read_data(infile[i], cols=cols, cutcols=cutcols,
                                 maxcuts=maxcuts, mincuts=mincuts, inputformat=inputformat, 
-                                Plotting=Plotting, Testing=Testing, verbose=verbose)
+                                Testing=Testing, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
 
@@ -462,10 +538,11 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
     # If instantaneous SFR as input:
     else:
         # Take the log of the ssfr:
-        ind = np.where(lssfr > 0.)
+        # ind = [np.where(lssfr[:,0] > 0.)[0], np.where(lssfr[:,1] > 0.)[0]]
         for comp in range(ncomp):
+            ind = np.where(lssfr[:,comp] > 0.)[0]
             lssfr[ind,comp] = lssfr[ind,comp]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF_f[comp]]/const.IMF_SFR[IMF_f[comp]])
-        lssfr[ind] = np.log10(lssfr[ind]) - lms[ind] - 9. 
+            lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
 
         if ncomp!=1:
             lssfr_tot = np.zeros(len(lssfr))
@@ -492,7 +569,7 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
 
     # Obtain 12+log10(O/H) from Z=MZcold/Mcold
     ind = np.where(loh12>0)
-    loh12[ind] = np.log10(loh12[ind]) + const.ohsun - np.log10(const.zsun)
+    loh12[ind] = np.log10(loh12[ind]) #+ const.ohsun - np.log10(const.zsun)
 
     if ncomp!=1:
         oh12 = np.zeros(loh12.shape)
@@ -508,22 +585,22 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
 
 
 
-    if Plotting: # here : Search more efficient form. Allow more components in the header
+    if Testing: # here : Search more efficient form. Allow more components in the header
         if ncomp==2:
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
                       ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
-                      '(12 + log(O/H))_tot, (12 + log (O/H))_disk, (12 + log (O/H))_bulge'
+                      'log(Z)_tot, log(Z)_disk, log(Z)_bulge'
             datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,loh12_tot,loh12))
         elif ncomp==1:
             header1 = 'log(mstars), ' \
                       'log(SFR), log(sSFR) ' \
-                      '(12 + log(O/H))'
+                      'log(Z)'
             datatofile=np.column_stack((lms,lsfr,lssfr,loh12))
 
         if LC2sfr:
-            outfil = r"example_data/tmp_LC_SAGE.dat"
+            outfil = r"example_data/tmp_LC.dat"
         else:
-            outfil = r"example_data/tmp_avSFR_SAGE.dat"
+            outfil = r"example_data/tmp_avSFR.dat"
 
         with open(outfil, 'w') as outf:
             np.savetxt(outf, datatofile, delimiter=' ', header=header1)
@@ -533,189 +610,53 @@ def get_data(infile, cols, h0=None, inputformat='HDF5',
                     
     return lms,lssfr,loh12,cut
 
-
-def get_reducedfile(infile, outfile, indcol, verbose=False):
-    '''
-    Get reduced file with only the wanted columns data
-
-    Parameters
-    ----------
-    infile : string
-     - Name of the input file.
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    outfile : string
-     - Name of the output file.
-     - Text file (*.dat, *txt, *.cat), columns separated by ' '.
-    indcol : list
-     - [mstars_total, mstars_bulge, mstardot, mstardot_burst, mag_LC_r_disk, mag_LC_r_bulge, zcold, zcold_burst]
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    verbose : boolean
-      If True print out messages
-    '''
-
-    check_file(infile,verbose=verbose)
-
-    if ('.hdf5' in infile):
-        print('Program not set to deal with hdf5 files yet, input a text file')
-    else:
-        with open(infile,"r") as ff:
-            ih = get_nheader(infile)
-            with open(outfile, "w") as outf:
-                for il,line in enumerate(ff):
-                    if il<ih-1:
-                        n=line
-                        #print(n,il,ih)
-                        #exit()
-                        outf.write(n)
-
-                    if il==ih-1:
-                        headlast=line.split()
-                        headlast=headlast[1:]
-                        headlast=np.array(headlast)
-
-                        # Here : Better with a matrix form. Future change.
-                        # This is necessary to only select the wanted columns of the header too:
-                        headlast=np.column_stack(('#',headlast[indcol[0]], headlast[indcol[1]],
-                                                  headlast[indcol[2]], headlast[indcol[3]],
-                                                  headlast[indcol[4]],headlast[indcol[5]],
-                                                  headlast[indcol[6]], headlast[indcol[7]]))
-                        #print(headlast)
-                        np.savetxt(outf,headlast,fmt='%s')
-
-                    if il>=ih: # Here : Remove the last line. Type string : Number of galaxies in the sample.
-                        if ('.csv' in infile):
-                            allcols = line.split(',')
-                        else:
-                            allcols = line.split()
-
-
-                        mstars_total = np.array(float(allcols[indcol[0]]))
-                        mstars_bulge = np.array(float(allcols[indcol[1]]))
-                        mstardot = np.array(float(allcols[indcol[2]]))
-                        mstardot_burst = np.array(float(allcols[indcol[3]]))
-                        mag_LC_r_disk = np.array(float(allcols[indcol[4]]))
-                        mag_LC_r_bulge = np.array(float(allcols[indcol[5]]))
-                        zcold = np.array(float(allcols[indcol[6]]))
-                        zcold_burst = np.array(float(allcols[indcol[7]]))
-
-                        print(mstars_total)
-
-
-                        datatofile = np.column_stack((mstars_total, mstars_bulge, mstardot,
-                                                    mstardot_burst, mag_LC_r_disk, mag_LC_r_bulge,
-                                                    zcold, zcold_burst))
-
-                        np.savetxt(outf,datatofile)
-
-
-            outf.closed
-        ff.closed
-
-    #outfile = print(outf, 'Output file :{}'.format(outfile))
-
-    return
-
-def hdf5_from_text(infile, outfile, galform=True, verbose=True):
-    '''
-    Create a .hdf5 file from a text file.
-
-    Parameters
-    ----------
-    infile : string
-     - Name of the input file.
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    outfile : string
-     Name of the output file.
-    galform : boolean
-     If True, it doesn't read the headers and instead has them hard-coded.
-    verbose : boolean
-      If True print out messages
-    '''
-
-    check_file(infile, verbose=verbose)
-
-    ih = get_nheader(infile)
-    
-    X = np.loadtxt(infile,skiprows=ih).T
-    
-    if galform:
-        headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
-                   'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
-                   'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
-                   'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
-                   'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
-                   'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
-                   'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
-                   'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
-                   'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
-                   'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
-                   'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
-                   'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
-                   'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
-    else:
-        with open(infile, "r") as ff:
-            for il, line in enumerate(ff):
-                # Read until the data starts
-                if (il<ih-1): continue
-            
-                # Read data
-                if ('.csv' in infile):
-                    allcols = line.split(',')
-                else:
-                    allcols = line.split()
-                
-                if (il==ih-1):
-                    headers = np.copy(allcols[1:])
-                    headers = headers.astype('<U30')
-                    break
-        
-    with h5py.File(outfile, 'w') as f:
-        f.create_dataset('header',(1,))
-        hf = f.create_group('data')
-        for i in range(len(headers)):
-            hf.create_dataset(headers[i],data=X[i])
-            
-    return X
-
-def write_data(lms,lssfr,lu,lne,loh12,nebline,nebline_att,outfile,attmod='ratios',
-               unemod='kashino20',photmod='gutkin16',first=True):
+def write_data(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
+               nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
+               extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
+               ew_notatt=None,ew_att=None,outfile='output.hdf5',attmod='ratios',
+               unemod_sfr='kashino20',photmod_sfr='gutkin16',first=True):
     '''
     Create a .hdf5 file from a .dat file.
 
     Parameters
     ----------
-    lms : floats
+    lms_sfr : floats
      Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
+    lssfr_sfr : floats
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lu : floats
+    lu_sfr : floats
      U of the galaxies per component.
-    lne : floats
+    lne_sfr : floats
      ne of the galaxies per component (cm^-3).
-    loh12 : floats
+    loh12_sfr : floats
      Metallicity of the galaxies per component (12+log(O/H))
-    nebline : floats
+    nebline_sfr : floats
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
-    nebline_att : floats
-      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
+    nebline_sfr_att : floats
+      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)    
+    ew_notatt : floats
+      Array with the equivalent width of the lines per component. (Angstroms)
+    ew_att : floats
+      Array with the equivalent width of the attenuated lines per component. (Angstroms)
     outfile : string
       Name of the output file.
-    unemod : string
-      Model to go from galaxy properties to U and ne
-    photmod : string
+    attmod : string
+      Attenuation model.
+    unemod_sfr : string
+      Model to go from galaxy properties to U and ne.
+    photmod_sfr : string
       Photoionisation model to be used for look up tables.
+    first : boolean
+      If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.
     verbose : boolean
-      If True print out messages
+      If True print out messages.
     '''
     
     if first: 
         with h5py.File(outfile,'w') as hf:
             head = hf.create_dataset('header',(1,))
-            head.attrs[u'HII model'] = unemod
-            head.attrs[u'Lines model'] = photmod
+            head.attrs[u'HII model'] = unemod_sfr
+            head.attrs[u'Lines model for SF'] = photmod_sfr
             head.attrs[u'Attenuation model'] = attmod
     
             # Data
@@ -727,33 +668,46 @@ def write_data(lms,lssfr,lu,lne,loh12,nebline,nebline_att,outfile,attmod='ratios
             hfdat.create_dataset('lssfr', data=lssfr, maxshape=(None,None))
             hfdat['lssfr'].dims[0].label = 'log10(SFR/M*) (1/yr)'
     
-            hfdat.create_dataset('lu', data=lu, maxshape=(None,None))
-            hfdat['lu'].dims[0].label = 'log10(U) (dimensionless)'
+            hfdat.create_dataset('lu_sfr', data=lu_sfr, maxshape=(None,None))
+            hfdat['lu_sfr'].dims[0].label = 'log10(U) (dimensionless)'
     
-            hfdat.create_dataset('lne',data=lne, maxshape=(None,None))
-            hfdat['lne'].dims[0].label = 'log10(nH) (cm**-3)'
+            hfdat.create_dataset('lne_sfr',data=lne_sfr, maxshape=(None,None))
+            hfdat['lne_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
     
-            hfdat.create_dataset('loh12', data=loh12, maxshape=(None,None))
-            hfdat['loh12'].dims[0].label = 'metallicity 12+log(O/H)'
+            hfdat.create_dataset('lz_sfr', data=loh12_sfr, maxshape=(None,None))
+            hfdat['lz_sfr'].dims[0].label = 'log10(Z)'
             
-            for i in range(len(const.lines_model[photmod])):           
-                hfdat.create_dataset(const.lines_model[photmod][i], 
-                                     data=nebline[:,i], maxshape=(None,None))
-                hfdat[const.lines_model[photmod][i]].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+            for i in range(len(const.lines_model[photmod_sfr])):           
+                hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr', 
+                                     data=nebline_sfr[:,i], maxshape=(None,None))
+                hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
                 
-                if nebline_att[0,i,0] >= 0:
-                    hfdat.create_dataset(const.lines_model[photmod][i] + '_att', 
-                                         data=nebline_att[:,i], maxshape=(None,None))
-                    hfdat[const.lines_model[photmod][i] + '_att'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                if fluxes_sfr.any():
+                    hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_flux', 
+                                         data=fluxes_sfr[:,i], maxshape=(None,None))
+                    hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                    
+                if fluxes_sfr_att.any():
+                    hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_flux_att', 
+                                         data=fluxes_sfr_att[:,i], maxshape=(None,None))
+                    hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+
+                
+                if nebline_sfr_att.any():
+                    if nebline_sfr_att[0,i,0] > 0:
+                        hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_att', 
+                                             data=nebline_sfr_att[:,i], maxshape=(None,None))
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+    
+            if extra_param[0][0] != None:
+                for i in range(len(extra_param)):
+                    hfdat.create_dataset(extra_params_names[i], data=extra_param[i][:,None], maxshape=(None,None))
+                    if extra_params_labels:
+                        hfdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
+    
     else:
         with h5py.File(outfile,'a') as hf:
             hfdat = hf['data']
-            
-            hfdat['lu'].resize((hfdat['lu'].shape[0] + lu.shape[0]),axis=0)
-            hfdat['lu'][-lu.shape[0]:] = lu
-            
-            hfdat['lne'].resize((hfdat['lne'].shape[0] + lne.shape[0]),axis=0)
-            hfdat['lne'][-lne.shape[0]:] = lne
             
             hfdat['lms'].resize((hfdat['lms'].shape[0] + lms.shape[0]),axis=0)
             hfdat['lms'][-lms.shape[0]:] = lms
@@ -761,14 +715,260 @@ def write_data(lms,lssfr,lu,lne,loh12,nebline,nebline_att,outfile,attmod='ratios
             hfdat['lssfr'].resize((hfdat['lssfr'].shape[0] + lssfr.shape[0]),axis=0)
             hfdat['lssfr'][-lssfr.shape[0]:] = lssfr
             
-            hfdat['loh12'].resize((hfdat['loh12'].shape[0] + loh12.shape[0]),axis=0)
-            hfdat['loh12'][-loh12.shape[0]:] = loh12
+            hfdat['lu_sfr'].resize((hfdat['lu_sfr'].shape[0] + lu_sfr.shape[0]),axis=0)
+            hfdat['lu_sfr'][-lu_sfr.shape[0]:] = lu_sfr
             
-            for i in range(len(const.lines_model[photmod])): 
-                hfdat[const.lines_model[photmod][i]].resize((hfdat[const.lines_model[photmod][i]].shape[1] + nebline.shape[2]),axis=1)
-                hfdat[const.lines_model[photmod][i]][:,-nebline.shape[2]:] = nebline[:,i]
+            hfdat['lne_sfr'].resize((hfdat['lne_sfr'].shape[0] + lne_sfr.shape[0]),axis=0)
+            hfdat['lne_sfr'][-lne_sfr.shape[0]:] = lne_sfr
+            
+            hfdat['lz_sfr'].resize((hfdat['lz_sfr'].shape[0] + loh12_sfr.shape[0]),axis=0)
+            hfdat['lz_sfr'][-loh12_sfr.shape[0]:] = loh12_sfr
+            
+            
+            for i in range(len(const.lines_model[photmod_sfr])): 
+                hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].shape[1] + nebline_sfr.shape[2]),axis=1)
+                hfdat[const.lines_model[photmod_sfr][i] + '_sfr'][:,-nebline_sfr.shape[2]:] = nebline_sfr[:,i]
                 
-                if nebline_att[0,i,0] >= 0:
-                    hfdat[const.lines_model[photmod][i] + '_att'].resize((hfdat[const.lines_model[photmod][i] + '_att'].shape[1] + nebline_att.shape[2]),axis=1)
-                    hfdat[const.lines_model[photmod][i] + '_att'][:,-nebline_att.shape[2]:] = nebline_att[:,i]
+                if fluxes_sfr.any():
+                    hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].shape[1] + nebline_sfr.shape[2]),axis=1)
+                    hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'][:,-nebline_sfr.shape[2]:] = fluxes_sfr[:,i]
+                
+                if fluxes_sfr_att.any():
+                     hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].shape[1] + nebline_sfr.shape[2]),axis=1)
+                     hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'][:,-nebline_sfr.shape[2]:] = fluxes_sfr_att[:,i]
+                
+                if nebline_sfr_att.any():
+                    if nebline_sfr_att[0,i,0] > 0:
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].shape[1] + nebline_sfr_att.shape[2]),axis=1)
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'][:,-nebline_sfr_att.shape[2]:] = nebline_sfr_att[:,i]
+
+            if extra_param[0][0] != None:
+                for i in range(len(extra_param)):
+                    hfdat[extra_params_names[i]].resize((hfdat[extra_params_names[i]].shape[0] + extra_param[i][:,None].shape[0]),axis=0)
+                    hfdat[extra_params_names[i]][-extra_param[i][:,None].shape[0]:] = extra_param[i][:,None]
+        
+
+def write_data_AGN(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,lu_agn,lne_agn,loh12_agn,
+               nebline_sfr,nebline_agn,nebline_sfr_att=None,nebline_agn_att=None,
+               fluxes_sfr=None,fluxes_agn=None,fluxes_sfr_att=None,fluxes_agn_att=None,
+               epsilon_sfr=None,epsilon_agn=None,
+               extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
+               ew_notatt=None,ew_att=None,outfile='output.hdf5',attmod='ratios',
+               unemod_sfr='kashino20',unemod_agn='panuzzo03',photmod_sfr='gutkin16',
+               photmod_agn='feltre16',first=True):
+    '''
+    Create a .hdf5 file from a .dat file.
+
+    Parameters
+    ----------
+    lms_sfr : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr_sfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lu_sfr : floats
+     U of the galaxies per component.
+    lne_sfr : floats
+     ne of the galaxies per component (cm^-3).
+    loh12_sfr : floats
+     Metallicity of the galaxies per component (12+log(O/H))
+    nebline_sfr : floats
+      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
+    nebline_sfr_att : floats
+      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
+    lms_agn : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr_agn : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lu_agn : floats
+     U of the galaxies per component.
+    lne_agn : floats
+     ne of the galaxies per component (cm^-3).
+    loh12_agn : floats
+     Metallicity of the galaxies per component (12+log(O/H))
+    nebline_agn : floats
+      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
+    nebline_agn_att : floats
+      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)      
+    ew_notatt : floats
+      Array with the equivalent width of the lines per component. (Angstroms)
+    ew_att : floats
+      Array with the equivalent width of the attenuated lines per component. (Angstroms)
+    outfile : string
+      Name of the output file.
+    attmod : string
+      Attenuation model.
+    unemod_sfr : string
+      Model to go from galaxy properties to U and ne.
+    unemod_agn : string
+      Model to go from galaxy properties to U and ne.
+    photmod_sfr : string
+      Photoionisation model to be used for look up tables.
+    photmod_agn : string
+      Photoionisation model to be used for look up tables.
+    first : boolean
+      If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.
+    verbose : boolean
+      If True print out messages.
+    '''
+    
+    if first: 
+        with h5py.File(outfile,'w') as hf:
+            head = hf.create_dataset('header',(1,))
+            head.attrs[u'HII model'] = unemod_sfr
+            head.attrs[u'AGN model'] = unemod_agn
+            head.attrs[u'Lines model for SF'] = photmod_sfr
+            head.attrs[u'Lines model for AGN'] = photmod_agn
+            head.attrs[u'Attenuation model'] = attmod
+    
+            # Data
+            hfdat = hf.create_group('data')
+            
+            hfdat.create_dataset('lms', data=lms, maxshape=(None,None))
+            hfdat['lms'].dims[0].label = 'log10(M*) (Msun)'
+            
+            hfdat.create_dataset('lssfr', data=lssfr, maxshape=(None,None))
+            hfdat['lssfr'].dims[0].label = 'log10(SFR/M*) (1/yr)'
+    
+            hfdat.create_dataset('lu_sfr', data=lu_sfr, maxshape=(None,None))
+            hfdat['lu_sfr'].dims[0].label = 'log10(U) (dimensionless)'
+    
+            hfdat.create_dataset('lne_sfr',data=lne_sfr, maxshape=(None,None))
+            hfdat['lne_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
+    
+            hfdat.create_dataset('lz_sfr', data=loh12_sfr, maxshape=(None,None))
+            hfdat['lz_sfr'].dims[0].label = 'log10(Z)'
+            
+            hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
+            hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
+    
+            hfdat.create_dataset('lne_agn',data=lne_agn, maxshape=(None,None))
+            hfdat['lne_agn'].dims[0].label = 'log10(nH) (cm**-3)'
+    
+            hfdat.create_dataset('lz_agn', data=loh12_agn, maxshape=(None,None))
+            hfdat['lz_agn'].dims[0].label = 'log10(Z)'
+            
+            hfdat.create_dataset('epsilon_agn', data=epsilon_agn[None,:], maxshape=(None,None))
+            hfdat['epsilon_agn'].dims[0].label = 'NLRs volume filling factor (dimensionless)'
+
+            for i in range(len(const.lines_model[photmod_sfr])):           
+                hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr', 
+                                     data=nebline_sfr[:,i], maxshape=(None,None))
+                hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].dims[0].label = 'Lines units: erg s^-1'
+                
+                if fluxes_sfr.any():
+                    hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_flux', 
+                                         data=fluxes_sfr[:,i], maxshape=(None,None))
+                    hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                    
+                if fluxes_sfr_att.any():
+                    if fluxes_sfr_att[0,i,0] >= 0:
+                        hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_flux_att', 
+                                             data=fluxes_sfr_att[:,i], maxshape=(None,None))
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                
+                if nebline_sfr_att.any():
+                    if nebline_sfr_att[0,i,0] >= 0:
+                        hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_att', 
+                                             data=nebline_sfr_att[:,i], maxshape=(None,None))
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].dims[0].label = 'Lines units: erg s^-1'
+
+            for i in range(len(const.lines_model[photmod_agn])):
+                hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn', 
+                                     data=nebline_agn[0,i][None,:], maxshape=(None,None))
+                hfdat[const.lines_model[photmod_agn][i] + '_agn'].dims[0].label = 'Lines units: egr s^-1'
+                
+                if fluxes_agn.any():
+                    hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn_flux', 
+                                         data=fluxes_agn[0,i][None,:], maxshape=(None,None))
+                    hfdat[const.lines_model[photmod_agn][i] + '_agn_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                    
+                if fluxes_agn_att.any():
+                    if fluxes_agn_att[0,i,0] >= 0:
+                        hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn_flux_att', 
+                                             data=fluxes_agn_att[0,i][None,:], maxshape=(None,None))
+                        hfdat[const.lines_model[photmod_agn][i] + '_agn_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                
+                if nebline_agn_att.any():
+                    if nebline_agn_att[0,i,0] >= 0:
+                        hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn_att', 
+                                             data=nebline_agn_att[0,i][None,:], maxshape=(None,None))
+                        hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].dims[0].label = 'Lines units: egr s^-1'
+
+            if extra_param[0][0] != None:
+                for i in range(len(extra_param)):
+                    hfdat.create_dataset(extra_params_names[i], data=extra_param[i][None,:], maxshape=(None,None))
+                    if extra_params_labels:
+                        hfdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
+    else:
+        with h5py.File(outfile,'a') as hf:
+            hfdat = hf['data']
+            
+            hfdat['lms'].resize((hfdat['lms'].shape[0] + lms.shape[0]),axis=0)
+            hfdat['lms'][-lms.shape[0]:] = lms
+            
+            hfdat['lssfr'].resize((hfdat['lssfr'].shape[0] + lssfr.shape[0]),axis=0)
+            hfdat['lssfr'][-lssfr.shape[0]:] = lssfr
+            
+            hfdat['lu_sfr'].resize((hfdat['lu_sfr'].shape[0] + lu_sfr.shape[0]),axis=0)
+            hfdat['lu_sfr'][-lu_sfr.shape[0]:] = lu_sfr
+            
+            hfdat['lne_sfr'].resize((hfdat['lne_sfr'].shape[0] + lne_sfr.shape[0]),axis=0)
+            hfdat['lne_sfr'][-lne_sfr.shape[0]:] = lne_sfr
+            
+            hfdat['lz_sfr'].resize((hfdat['lz_sfr'].shape[0] + loh12_sfr.shape[0]),axis=0)
+            hfdat['lz_sfr'][-loh12_sfr.shape[0]:] = loh12_sfr
+            
+            hfdat['lu_agn'].resize((hfdat['lu_agn'].shape[0] + lu_agn.shape[0]),axis=0)
+            hfdat['lu_agn'][-lu_agn.shape[0]:] = lu_agn
+            
+            hfdat['lne_agn'].resize((hfdat['lne_agn'].shape[0] + lne_agn.shape[0]),axis=0)
+            hfdat['lne_agn'][-lne_agn.shape[0]:] = lne_agn
+            
+            hfdat['lz_agn'].resize((hfdat['lz_agn'].shape[0] + loh12_agn.shape[0]),axis=0)
+            hfdat['lz_agn'][-loh12_agn.shape[0]:] = loh12_agn
+            
+            hfdat['epsilon_agn'].resize((hfdat['epsilon_agn'].shape[1] + epsilon_agn[None,:].shape[1]),axis=1)
+            hfdat['epsilon_agn'][0,-epsilon_agn[None,:].shape[1]:] = epsilon_agn[None,:]
+            
+            for i in range(len(const.lines_model[photmod_sfr])): 
+                hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].shape[1] + nebline_sfr.shape[2]),axis=1)
+                hfdat[const.lines_model[photmod_sfr][i] + '_sfr'][:,-nebline_sfr.shape[2]:] = nebline_sfr[:,i]
+                
+                if fluxes_sfr.any():
+                    if fluxes_sfr[0,i,0] >= 0:
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].shape[1] + nebline_sfr.shape[2]),axis=1)
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'][:,-nebline_sfr.shape[2]:] = fluxes_sfr[:,i]
+                
+                if fluxes_sfr_att.any():
+                    if fluxes_sfr_att[0,i,0] >= 0:
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].shape[1] + nebline_sfr.shape[2]),axis=1)
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'][:,-nebline_sfr.shape[2]:] = fluxes_sfr_att[:,i]
+                
+                if nebline_sfr_att.any():
+                    if nebline_sfr_att[0,i,0] >= 0:
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].resize((hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].shape[1] + nebline_sfr_att.shape[2]),axis=1)
+                        hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'][:,-nebline_sfr_att.shape[2]:] = nebline_sfr_att[:,i]
+                        
+            for i in range(len(const.lines_model[photmod_agn])):
+                hfdat[const.lines_model[photmod_agn][i] + '_agn'].resize((hfdat[const.lines_model[photmod_agn][i] + '_agn'].shape[1] + nebline_agn.shape[2]),axis=1)
+                hfdat[const.lines_model[photmod_agn][i] + '_agn'][:,-nebline_agn.shape[2]:] = nebline_agn[0,i][None,:]
+                
+                if fluxes_agn.any():
+                    hfdat[const.lines_model[photmod_agn][i] + '_agn_flux'].resize((hfdat[const.lines_model[photmod_agn][i] + '_agn_flux'].shape[1] + nebline_agn.shape[2]),axis=1)
+                    hfdat[const.lines_model[photmod_agn][i] + '_agn_flux'][:,-nebline_agn.shape[2]:] = fluxes_agn[0,i][None,:]
+                
+                if fluxes_agn_att.any():
+                    if fluxes_agn_att[0,i,0] >= 0:
+                        hfdat[const.lines_model[photmod_agn][i] + '_agn_flux_att'].resize((hfdat[const.lines_model[photmod_agn][i] + '_agn_flux_att'].shape[1] + nebline_agn.shape[2]),axis=1)
+                        hfdat[const.lines_model[photmod_agn][i] + '_agn_flux_att'][:,-nebline_agn.shape[2]:] = fluxes_agn_att[0,i][None,:]
+                
+                if nebline_agn_att.any():
+                    if nebline_agn_att[0,i,0] >= 0:
+                        hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].resize((hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].shape[1] + nebline_agn_att.shape[2]),axis=1)
+                        hfdat[const.lines_model[photmod_agn][i] + '_agn_att'][:,-nebline_agn_att.shape[2]:] = nebline_agn_att[0,i][None,:]
+            
+            if extra_param[0][0] != None:
+                for i in range(len(extra_param)):
+                    hfdat[extra_params_names[i]].resize((hfdat[extra_params_names[i]].shape[1] + extra_param[i][None,:].shape[1]),axis=1)
+                    hfdat[extra_params_names[i]][0,-extra_param[i][None,:].shape[1]:] = extra_param[i][None,:]
         
