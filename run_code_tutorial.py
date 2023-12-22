@@ -55,7 +55,7 @@ import glob
         # Stellar mass (M*).
         # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
         # Mean metallicity of the cold gas (Z).
-infile = glob.glob(r"GP20/GP20_0.0_*.txt")
+infile = glob.glob(r"GP20/GP20_0.0_0.txt")
 
 
 # OUTPUT FILE

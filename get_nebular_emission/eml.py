@@ -1,6 +1,5 @@
 from get_nebular_emission.eml_io import get_data, get_secondary_data, get_secondary_data2, write_data, write_data_AGN
 from get_nebular_emission.eml_une import get_une, bursttobulge, L_agn, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
-from get_nebular_emission.eml_ew import get_ew
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_photio import get_lines, get_limits, clean_photarray, calculate_flux
 from get_nebular_emission.eml_att import attenuation
