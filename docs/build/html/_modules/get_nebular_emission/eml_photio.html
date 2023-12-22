@@ -55,7 +55,7 @@
 <span class="c1">#------------------------------------------------------------------------------------</span>
 <span class="c1">#   Cardelli et al. 1989 extinction laws in FIR and IR/OPT:</span>
 <span class="c1">#------------------------------------------------------------------------------------</span>
-<div class="viewcode-block" id="cardelli"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.cardelli">[docs]</a><span class="k">def</span> <span class="nf">cardelli</span><span class="p">(</span><span class="n">waveA</span><span class="p">):</span>
+<div class="viewcode-block" id="cardelli"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.cardelli">[docs]</a><span class="k">def</span> <span class="nf">cardelli</span><span class="p">(</span><span class="n">waveA</span><span class="p">):</span>
     <span class="n">Rv</span><span class="o">=</span><span class="mf">3.1</span> 
     <span class="n">wave</span><span class="o">=</span><span class="n">waveA</span><span class="o">/</span><span class="mf">10000.</span>
     <span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="o">/</span><span class="n">wave</span>
@@ -89,7 +89,7 @@
         
     <span class="k">return</span> <span class="n">ax</span><span class="o">+</span><span class="n">bx</span><span class="o">/</span><span class="n">Rv</span></div>
 
-<div class="viewcode-block" id="coef_att_cardelli"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.coef_att_cardelli">[docs]</a><span class="k">def</span> <span class="nf">coef_att_cardelli</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">Mcold_disc</span><span class="p">,</span> <span class="n">rhalf_mass_disc</span><span class="p">,</span> <span class="n">Z_disc</span><span class="p">,</span> <span class="n">costheta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">albedo</span><span class="o">=</span><span class="mf">0.56</span><span class="p">):</span>
+<div class="viewcode-block" id="coef_att_cardelli"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.coef_att_cardelli">[docs]</a><span class="k">def</span> <span class="nf">coef_att_cardelli</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">Mcold_disc</span><span class="p">,</span> <span class="n">rhalf_mass_disc</span><span class="p">,</span> <span class="n">Z_disc</span><span class="p">,</span> <span class="n">costheta</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">albedo</span><span class="o">=</span><span class="mf">0.56</span><span class="p">):</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
     
     <span class="n">a_disc</span> <span class="o">=</span> <span class="mf">1.68</span>
@@ -114,7 +114,7 @@
     
     <span class="k">return</span> <span class="n">coef_att</span></div>
 
-<div class="viewcode-block" id="coef_att_galform"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.coef_att_galform">[docs]</a><span class="k">def</span> <span class="nf">coef_att_galform</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">cols</span><span class="p">,</span><span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">],</span><span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="coef_att_galform"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.coef_att_galform">[docs]</a><span class="k">def</span> <span class="nf">coef_att_galform</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">cols</span><span class="p">,</span><span class="n">lines</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">],</span><span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    It reads luminosities of lines with and without attenuation</span>
 <span class="sd">    from GALFORM data and it returns the attenuation coefficients.</span>
@@ -175,7 +175,7 @@
     <span class="k">return</span> <span class="n">coef_att</span></div>
 
 
-<div class="viewcode-block" id="get_zfile"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.get_zfile">[docs]</a><span class="k">def</span> <span class="nf">get_zfile</span><span class="p">(</span><span class="n">zmet_str</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="get_zfile"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_zfile">[docs]</a><span class="k">def</span> <span class="nf">get_zfile</span><span class="p">(</span><span class="n">zmet_str</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">):</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given a metallicity string get the name of the corresponding table</span>
@@ -204,7 +204,7 @@
 
     <span class="k">return</span> <span class="n">zfile</span></div>
 
-<div class="viewcode-block" id="clean_photarray"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.clean_photarray">[docs]</a><span class="k">def</span> <span class="nf">clean_photarray</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="clean_photarray"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.clean_photarray">[docs]</a><span class="k">def</span> <span class="nf">clean_photarray</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given the model, take the values outside the limits and give them the apropriate</span>
@@ -313,7 +313,7 @@
 
     <span class="k">return</span> <span class="n">lu</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">lne</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">loh12</span><span class="o">.</span><span class="n">T</span></div>
 
-<div class="viewcode-block" id="get_limits"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.get_limits">[docs]</a><span class="k">def</span> <span class="nf">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="p">,</span> <span class="n">photmod</span> <span class="o">=</span> <span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="get_limits"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_limits">[docs]</a><span class="k">def</span> <span class="nf">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="p">,</span> <span class="n">photmod</span> <span class="o">=</span> <span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Given a file with a structure: property + lower limit + upper limit,</span>
 <span class="sd">    gets the limits of the parameters of the photoionization model.</span>
@@ -375,7 +375,7 @@
         <span class="n">upper_limit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ind</span><span class="o">+</span><span class="n">ih</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">lower_limit</span><span class="p">,</span><span class="n">upper_limit</span></div>
 
-<div class="viewcode-block" id="get_lines_Gutkin"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.get_lines_Gutkin">[docs]</a><span class="k">def</span> <span class="nf">get_lines_Gutkin</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="get_lines_Gutkin"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_lines_Gutkin">[docs]</a><span class="k">def</span> <span class="nf">get_lines_Gutkin</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Get the interpolations for the emission lines,</span>
 <span class="sd">    using the tables</span>
@@ -655,7 +655,7 @@
     <span class="k">return</span> <span class="n">nebline</span></div>
 
 
-<div class="viewcode-block" id="get_lines"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.get_lines">[docs]</a><span class="k">def</span> <span class="nf">get_lines</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="get_lines"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.get_lines">[docs]</a><span class="k">def</span> <span class="nf">get_lines</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Get the emission lines</span>
 
@@ -695,7 +695,7 @@
 
     <span class="k">return</span> <span class="n">nebline</span></div>
 
-<div class="viewcode-block" id="attenuation"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_photio.attenuation">[docs]</a><span class="k">def</span> <span class="nf">attenuation</span><span class="p">(</span><span class="n">nebline</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Rvir&#39;</span><span class="p">,</span><span class="s1">&#39;ColdGas&#39;</span><span class="p">],</span> <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;GALFORM&#39;</span><span class="p">,</span> 
+<div class="viewcode-block" id="attenuation"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml_photio.attenuation">[docs]</a><span class="k">def</span> <span class="nf">attenuation</span><span class="p">(</span><span class="n">nebline</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Rvir&#39;</span><span class="p">,</span><span class="s1">&#39;ColdGas&#39;</span><span class="p">],</span> <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;GALFORM&#39;</span><span class="p">,</span> 
                 <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span> <span class="n">infile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cut</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Get the attenuated emission lines from the raw ones.</span>
@@ -793,8 +793,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme_include.html">Get nebular emission</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/modules.html">get_nebular_emission</a></li>
 </ul>
 
 <div id="searchbox" style="display: none" role="search">

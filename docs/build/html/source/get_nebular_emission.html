@@ -1384,6 +1384,134 @@ calculates the dynamical timescale of the bulge.</p>
 <dd></dd></dl>
 
 </section>
+<section id="module-get_nebular_emission.eml_att">
+<span id="get-nebular-emission-eml-att-module"></span><h2>get_nebular_emission.eml_att module<a class="headerlink" href="#module-get_nebular_emission.eml_att" title="Permalink to this heading">¶</a></h2>
+<p>Created on Wed Apr 12 14:36:13 2023</p>
+<p>&#64;author: expox7</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.attenuation">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">attenuation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nebline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_ratio_lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redshift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cardelli89'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sfr'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#attenuation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.attenuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the attenuated emission lines from the raw ones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nebline</strong> (<em>floats</em>) – Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr).</p></li>
+<li><p><strong>infile</strong> (<em>string</em>) – <ul>
+<li><p>Name of the input file.</p></li>
+<li><p>In text files (<a href="#id65"><span class="problematic" id="id66">*</span></a>.dat, <a href="#id67"><span class="problematic" id="id68">*</span></a>txt, <a href="#id69"><span class="problematic" id="id70">*</span></a>.cat), columns separated by ‘ ‘.</p></li>
+<li><p>In csv files (<a href="#id71"><span class="problematic" id="id72">*</span></a>.csv), columns separated by ‘,’.</p></li>
+</ul>
+</p></li>
+<li><p><strong>att_params</strong> (<em>list</em>) – Parameters to look for calculating attenuation. See eml_const to know what each model expects.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>redshift</strong> (<em>float</em>) – Redshift of the input data.</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>attmod</strong> (<em>string</em>) – Attenuation model.</p></li>
+<li><p><strong>cols_notatt</strong> (<em>list</em>) – Attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_att</strong> (<em>list</em>) – Not attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_photmod</strong> (<em>list</em>) – Index in the list of lines of the photoionization model of the lines for which
+attenuation is going to be calculated in the “ratio” attenuation model.</p></li>
+<li><p><strong>photmod</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>cut</strong> (<em>integers</em>) – Indeces of the not cutted galaxies.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>nebline_att, coef_att</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>It will ignore the lines for which, for any reason, attenuation can not be calculated.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.cardelli">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">cardelli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">waveA</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#cardelli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.cardelli" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the wavelength, returns Al/Av following Cardelli 1989.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>waveA</strong> (<em>floats</em>) – Wavelength (A)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Al_Av</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.coef_att_cardelli">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">coef_att_cardelli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mcold_disc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rhalf_mass_disc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Z_disc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">costheta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">albedo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.56</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#coef_att_cardelli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.coef_att_cardelli" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the wavelength, the cold gas mass, the half-mass radius and the global metallicity of the disk,
+along with the assumed albedo and scattering angle, it gives the attenuation coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>wavelength</strong> (<em>floats</em>) – Wavelength (A).</p></li>
+<li><p><strong>Mcold_disc</strong> (<em>floats</em>) – Cold gas mass (Msun).</p></li>
+<li><p><strong>rhalf_mass_disc</strong> (<em>floats</em>) – Half-mass radius of the disk (Msun).</p></li>
+<li><p><strong>Z_disc</strong> (<em>floats</em>) – Disc’s global metallicity.</p></li>
+<li><p><strong>costheta</strong> (<em>float</em>) – Cosine of the assumed cattering angle.</p></li>
+<li><p><strong>albedo</strong> (<em>float</em>) – Assumed albedo.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>coef_att</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="get_nebular_emission.eml_att.coef_att_ratios">
+<span class="sig-prename descclassname"><span class="pre">get_nebular_emission.eml_att.</span></span><span class="sig-name descname"><span class="pre">coef_att_ratios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">infile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_notatt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_att</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cols_photmod</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputformat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'HDF5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photmod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gutkin16'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/get_nebular_emission/eml_att.html#coef_att_ratios"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#get_nebular_emission.eml_att.coef_att_ratios" title="Permalink to this definition">¶</a></dt>
+<dd><p>It reads luminosities of lines with and without attenuation
+from line emission data and it returns the attenuation coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>string</em>) – Name of the input file.
+- In text files (<em>.dat, *txt, *.cat), columns separated by ‘ ‘.
+- In csv files (</em>.csv), columns separated by ‘,’.</p></li>
+<li><p><strong>cols_notatt</strong> (<em>list</em>) – Attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_att</strong> (<em>list</em>) – Not attenuated flux lines calculated by the semi-analytic model of the input data.
+Used to calculate attenuation coefficients for the “ratio” attenuation model.
+- For text or csv files: list of integers with column position.
+- For hdf5 files: list of data names.</p></li>
+<li><p><strong>cols_photmod</strong> (<em>list</em>) – Index in the list of lines of the photoionization model of the lines for which
+attenuation is going to be calculated in the “ratio” attenuation model.</p></li>
+<li><p><strong>inputformat</strong> (<em>string</em>) – Format of the input file.</p></li>
+<li><p><strong>photmod</strong> (<em>string</em>) – Photoionisation model to be used for look up tables.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em>) – If True print out messages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>coef_att</strong></p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>floats</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="module-get_nebular_emission.eml_style">
 <span id="get-nebular-emission-eml-style-module"></span><h2>get_nebular_emission.eml_style module<a class="headerlink" href="#module-get_nebular_emission.eml_style" title="Permalink to this heading">¶</a></h2>
 </section>

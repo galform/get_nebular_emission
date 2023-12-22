@@ -39,49 +39,141 @@
           <div class="body" role="main">
             
   <h1>Source code for get_nebular_emission.eml</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">get_data</span><span class="p">,</span> <span class="n">write_data</span>
-<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_une</span> <span class="kn">import</span> <span class="n">get_une</span>
+<span></span><span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">get_data</span><span class="p">,</span> <span class="n">get_secondary_data</span><span class="p">,</span> <span class="n">get_secondary_data2</span><span class="p">,</span> <span class="n">write_data</span><span class="p">,</span> <span class="n">write_data_AGN</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_une</span> <span class="kn">import</span> <span class="n">get_une</span><span class="p">,</span> <span class="n">bursttobulge</span><span class="p">,</span> <span class="n">L_agn</span><span class="p">,</span> <span class="n">calculate_epsilon</span><span class="p">,</span> <span class="n">calculate_ng_hydro_eq</span><span class="p">,</span> <span class="n">Z_blanc</span><span class="p">,</span> <span class="n">Z_tremonti</span><span class="p">,</span> <span class="n">Z_tremonti2</span><span class="p">,</span> <span class="n">n_ratio</span>
 <span class="kn">import</span> <span class="nn">get_nebular_emission.eml_const</span> <span class="k">as</span> <span class="nn">const</span>
-<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_photio</span> <span class="kn">import</span> <span class="n">get_lines</span><span class="p">,</span> <span class="n">attenuation</span><span class="p">,</span> <span class="n">get_limits</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_photio</span> <span class="kn">import</span> <span class="n">get_lines</span><span class="p">,</span> <span class="n">get_limits</span><span class="p">,</span> <span class="n">clean_photarray</span><span class="p">,</span> <span class="n">calculate_flux</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_att</span> <span class="kn">import</span> <span class="n">attenuation</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="c1">#import get_nebular_emission.eml_testplots as get_testplot</span>
 
-<div class="viewcode-block" id="eml"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml.eml">[docs]</a><span class="k">def</span> <span class="nf">eml</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cutcols</span><span class="o">=</span><span class="p">[],</span> <span class="n">mincuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> 
-        <span class="n">maxcuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">att_param</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Rvir&#39;</span><span class="p">,</span><span class="s1">&#39;ColdGas&#39;</span><span class="p">],</span>
-        <span class="n">volume</span> <span class="o">=</span> <span class="mf">542.16</span><span class="o">**</span><span class="mf">3.</span><span class="p">,</span><span class="n">IMF</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Kennicut&#39;</span><span class="p">,</span><span class="s1">&#39;Top-heavy&#39;</span><span class="p">],</span> <span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;HDF5&#39;</span><span class="p">,</span>
-        <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;cardelli89&#39;</span><span class="p">,</span><span class="n">unemod</span><span class="o">=</span><span class="s1">&#39;kashino20&#39;</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span>
-        <span class="n">LC2sfr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Zloh12</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mtot2mdisk</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="eml"><a class="viewcode-back" href="../../source/get_nebular_emission.html#get_nebular_emission.eml.eml">[docs]</a><span class="k">def</span> <span class="nf">eml</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">infile_z0</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">h0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">redshift</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">cutcols</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">mincuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">maxcuts</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> 
+        <span class="n">att</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">att_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">att_ratio_lines</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">flux</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">volume</span> <span class="o">=</span> <span class="mf">542.16</span><span class="o">**</span><span class="mf">3.</span><span class="p">,</span><span class="n">inputformat</span><span class="o">=</span><span class="s1">&#39;HDF5&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">IMF_i</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Kroupa&#39;</span><span class="p">,</span> <span class="s1">&#39;Kroupa&#39;</span><span class="p">],</span> <span class="n">IMF_f</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Kroupa&#39;</span><span class="p">,</span> <span class="s1">&#39;Kroupa&#39;</span><span class="p">],</span> 
+        <span class="n">q0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">q0_orsi</span><span class="p">,</span> <span class="n">z0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">Z0_orsi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span>
+        <span class="n">T</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+        <span class="n">AGN</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">AGNinputs</span><span class="o">=</span><span class="s1">&#39;Lagn&#39;</span><span class="p">,</span> <span class="n">Lagn_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Z_central_cor</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">epsilon_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">extra_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_params_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_params_labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">cols_att</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">cols_notatt</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span><span class="n">cols_photmod</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cols_ew_att</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cols_ew_notatt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">attmod</span><span class="o">=</span><span class="s1">&#39;cardelli89&#39;</span><span class="p">,</span><span class="n">unemod_sfr</span><span class="o">=</span><span class="s1">&#39;kashino19&#39;</span><span class="p">,</span> 
+        <span class="n">unemod_agn</span><span class="o">=</span><span class="s1">&#39;panuzzo03&#39;</span><span class="p">,</span> <span class="n">photmod_sfr</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span>
+        <span class="n">photmod_agn</span><span class="o">=</span><span class="s1">&#39;feltre16&#39;</span><span class="p">,</span> <span class="n">ewmod</span><span class="o">=</span><span class="s1">&#39;LandEW&#39;</span><span class="p">,</span>
+        <span class="n">LC2sfr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cutlimits</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mtot2mdisk</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">xid_feltre</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span><span class="n">alpha_feltre</span><span class="o">=-</span><span class="mf">1.7</span><span class="p">,</span>
+        <span class="n">xid_gutkin</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span><span class="n">co_gutkin</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">imf_cut_gutkin</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Calculate emission lines given the properties of model galaxies</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    infile : string</span>
-<span class="sd">     - Name of the input file. </span>
+<span class="sd">     Name of the input file. </span>
 <span class="sd">     - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
 <span class="sd">     - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">    outfile : string</span>
+<span class="sd">     Name of the output file.</span>
+<span class="sd">    inputformat : string</span>
+<span class="sd">     Format of the input file.</span>
 <span class="sd">    m_sfr_z : list</span>
 <span class="sd">     - [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]</span>
 <span class="sd">     - For text or csv files: list of integers with column position.</span>
 <span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cutcols : list</span>
+<span class="sd">     Parameters to look for cutting the data.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    mincuts : list</span>
+<span class="sd">     Minimum value of the parameter of cutcols in the same index. All the galaxies below won&#39;t be considered.</span>
+<span class="sd">    maxcuts : list</span>
+<span class="sd">     Maximum value of the parameter of cutcols in the same index. All the galaxies above won&#39;t be considered.</span>
+<span class="sd">    att_params : list</span>
+<span class="sd">     Parameters to look for calculating attenuation. See eml_const to know what each model expects.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    IMF_i : list</span>
+<span class="sd">     Assumed IMF in the input data.</span>
+<span class="sd">     - [[component1_IMF],[component2_IMF],...]</span>
+<span class="sd">    IMF_f : list</span>
+<span class="sd">     Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.</span>
+<span class="sd">     - [[component1_IMF],[component2_IMF],...]</span>
+<span class="sd">    q0 : float</span>
+<span class="sd">     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</span>
+<span class="sd">    z0 : float</span>
+<span class="sd">     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</span>
+<span class="sd">    gamma : float</span>
+<span class="sd">     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma</span>
+<span class="sd">    T : float</span>
+<span class="sd">     Typical temperature of ionizing regions.</span>
+<span class="sd">    AGNinputs : string</span>
+<span class="sd">     Type of inputs for AGN&#39;s bolometric luminosity calculations.</span>
+<span class="sd">    Lagn_params : list</span>
+<span class="sd">     Inputs for AGN&#39;s bolometric luminosity calculations.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    Z_central_correction : boolean</span>
+<span class="sd">     If False, the code supposes the central metallicity of the galaxy to be the mean one.</span>
+<span class="sd">     If True, the code estimates the central metallicity of the galaxy from the mean one.</span>
+<span class="sd">    epsilon_params : list</span>
+<span class="sd">     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_att : list</span>
+<span class="sd">     Attenuated flux lines calculated by the semi-analytic model of the input data. </span>
+<span class="sd">     Used to calculate attenuation coefficients for the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_notatt : list</span>
+<span class="sd">     Not attenuated flux lines calculated by the semi-analytic model of the input data. </span>
+<span class="sd">     Used to calculate attenuation coefficients for the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_photmod : list</span>
+<span class="sd">     Index in the list of lines of the photoionization model of the lines for which </span>
+<span class="sd">     attenuation is going to be calculated in the &quot;ratio&quot; attenuation model.</span>
+<span class="sd">    cols_ew_att : list</span>
+<span class="sd">     Equivalent widths calculated by the semi-analytic model of the input data, considering attenuation. </span>
+<span class="sd">     Used to calculate equivalent widths by calculating the corresponding continuum flux.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cols_ew_notatt : list</span>
+<span class="sd">     Equivalent widths calculated by the semi-analytic model of the input data, without considering attenuation. </span>
+<span class="sd">     Used to calculate equivalent widths by calculating the corresponding continuum flux.</span>
+<span class="sd">     - For text or csv files: list of integers with column position.</span>
+<span class="sd">     - For hdf5 files: list of data names.</span>
+<span class="sd">    cutlimits : boolean</span>
+<span class="sd">     If True the galaxies with U, ne and Z outside the photoionization model&#39;s grid limits won&#39;t be considered.</span>
 <span class="sd">    h0 : float</span>
 <span class="sd">      If not None: value of h, H0=100h km/s/Mpc.</span>
+<span class="sd">    redshift : float</span>
+<span class="sd">     Redshift of the input data.</span>
 <span class="sd">    volume : float</span>
 <span class="sd">      Carlton model default value = 500^3 Mpc^3/h^3. If not 500.**3. : value of the simulation volume in Mpc^3/h^3</span>
-<span class="sd">    unemod : string</span>
-<span class="sd">      Model to go from galaxy properties to U and ne</span>
-<span class="sd">    photmod : string</span>
+<span class="sd">    unemod_sfr : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne.</span>
+<span class="sd">    unemod_agn : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne.</span>
+<span class="sd">    attmod : string</span>
+<span class="sd">      Attenuation model.</span>
+<span class="sd">    photmod_sfr : string</span>
 <span class="sd">      Photoionisation model to be used for look up tables.</span>
+<span class="sd">    photmod_agn : string</span>
+<span class="sd">      Photoionisation model to be used for look up tables.</span>
+<span class="sd">    ewmod : string</span>
+<span class="sd">      Method for equivalent width calculation.</span>
 <span class="sd">    LC2sfr : boolean</span>
 <span class="sd">      If True magnitude of Lyman Continuum photons expected as input for SFR.</span>
 <span class="sd">    mtot2mdisk : boolean</span>
 <span class="sd">      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.</span>
 <span class="sd">    verbose : boolean</span>
 <span class="sd">      If True print out messages</span>
-<span class="sd">    Plotting : boolean</span>
-<span class="sd">      If True run verification plots with all data.</span>
 <span class="sd">    Testing : boolean</span>
 <span class="sd">      If True only run over few entries for testing purposes</span>
 
@@ -92,73 +184,166 @@
 
 <span class="sd">    &#39;&#39;&#39;</span>
     
-    <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Outfile: &#39;</span> <span class="o">+</span> <span class="n">outfile</span><span class="p">)</span>
+    
+    <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+    
+    <span class="n">start_total_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
     
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">infile</span><span class="p">)):</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Infile: &#39;</span> <span class="o">+</span> <span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">infile_z0</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Infile_z0: &#39;</span> <span class="o">+</span> <span class="n">infile_z0</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
         
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
         
         <span class="c1"># Read the input data and correct it to the adequate units, etc.</span>
-        <span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">cut</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="n">h0</span><span class="p">,</span>
-                                     <span class="n">cutcols</span><span class="o">=</span><span class="n">cutcols</span><span class="p">,</span> <span class="n">mincuts</span><span class="o">=</span><span class="n">mincuts</span><span class="p">,</span> <span class="n">maxcuts</span><span class="o">=</span><span class="n">maxcuts</span><span class="p">,</span>
-                                     <span class="n">inputformat</span><span class="o">=</span><span class="n">inputformat</span><span class="p">,</span> <span class="n">LC2sfr</span><span class="o">=</span><span class="n">LC2sfr</span><span class="p">,</span> 
-                                     <span class="n">Zloh12</span><span class="o">=</span><span class="n">Zloh12</span><span class="p">,</span> <span class="n">mtot2mdisk</span><span class="o">=</span><span class="n">mtot2mdisk</span><span class="p">,</span>
-                                     <span class="n">IMF</span><span class="o">=</span><span class="n">IMF</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> 
-                                     <span class="n">Plotting</span><span class="o">=</span><span class="n">Plotting</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="n">Testing</span><span class="p">)</span>
+        <span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">cut</span> <span class="o">=</span> <span class="n">get_data</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">infile</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="n">h0</span><span class="p">,</span>
+                                      <span class="n">cutcols</span><span class="o">=</span><span class="n">cutcols</span><span class="p">,</span> <span class="n">mincuts</span><span class="o">=</span><span class="n">mincuts</span><span class="p">,</span> <span class="n">maxcuts</span><span class="o">=</span><span class="n">maxcuts</span><span class="p">,</span>
+                                      <span class="n">inputformat</span><span class="o">=</span><span class="n">inputformat</span><span class="p">,</span> <span class="n">LC2sfr</span><span class="o">=</span><span class="n">LC2sfr</span><span class="p">,</span> 
+                                      <span class="n">mtot2mdisk</span><span class="o">=</span><span class="n">mtot2mdisk</span><span class="p">,</span>
+                                      <span class="n">IMF_i</span><span class="o">=</span><span class="n">IMF_i</span><span class="p">,</span> <span class="n">IMF_f</span><span class="o">=</span><span class="n">IMF_f</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> 
+                                      <span class="n">Testing</span><span class="o">=</span><span class="n">Testing</span><span class="p">)</span>
         
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Data read.&#39;</span><span class="p">)</span>
+        <span class="n">epsilon_param</span><span class="p">,</span> <span class="n">epsilon_param_z0</span><span class="p">,</span> <span class="n">Lagn_param</span><span class="p">,</span> <span class="n">att_param</span><span class="p">,</span> <span class="n">extra_param</span> <span class="o">=</span> <span class="n">get_secondary_data2</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">infile</span><span class="p">,</span> 
+                               <span class="n">cut</span><span class="p">,</span> <span class="n">infile_z0</span><span class="o">=</span><span class="n">infile_z0</span><span class="p">,</span> 
+                               <span class="n">epsilon_params</span><span class="o">=</span><span class="n">epsilon_params</span><span class="p">,</span> <span class="n">extra_params</span><span class="o">=</span><span class="n">extra_params</span><span class="p">,</span>
+                               <span class="n">Lagn_params</span><span class="o">=</span><span class="n">Lagn_params</span><span class="p">,</span> <span class="n">att_params</span><span class="o">=</span><span class="n">att_params</span><span class="p">,</span> 
+                               <span class="n">inputformat</span><span class="o">=</span><span class="n">inputformat</span><span class="p">,</span> <span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>        
         
-        <span class="c1"># lms = lms[:1153192]</span>
-        <span class="c1"># lssfr = lssfr[:1153192]</span>
-        <span class="c1"># loh12 = loh12[:1153192]</span>
-        
-        <span class="c1"># if Testing and Plotting:</span>
-        <span class="c1">#     lne = np.array([[2,2],[2,2]])</span>
-        <span class="c1">#     lu = np.array([[-3.2,-3.2],[-1.7,-1.7]])</span>
-        <span class="c1">#     loh12 = np.array([[np.log10(0.0008),np.log10(0.0008)],[np.log10(0.013),np.log10(0.013)]])</span>
-        <span class="c1"># else:</span>
-        <span class="c1">#     lu, lne, loh12 = get_une(lms, lssfr, loh12,</span>
-        <span class="c1">#                     unemod=unemod, LC2sfr=LC2sfr, verbose=verbose,</span>
-        <span class="c1">#                     Plotting=Plotting, Testing=Testing)</span>
-        
-        <span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span> <span class="o">=</span> <span class="n">get_une</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span>
-                            <span class="n">unemod</span><span class="o">=</span><span class="n">unemod</span><span class="p">,</span> <span class="n">LC2sfr</span><span class="o">=</span><span class="n">LC2sfr</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-                            <span class="n">Plotting</span><span class="o">=</span><span class="n">Plotting</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="n">Testing</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Data read.&#39;</span><span class="p">)</span>
             
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;U and ne calculated.&#39;</span><span class="p">)</span>
-        
-        <span class="n">minU</span><span class="p">,</span> <span class="n">maxU</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">)</span>
-        <span class="n">minnH</span><span class="p">,</span> <span class="n">maxnH</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;nH&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">)</span>
-        <span class="n">minZ</span><span class="p">,</span> <span class="n">maxZ</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flag</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">loh12</span> <span class="o">=</span> <span class="n">Z_tremonti</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">Lagn_param</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">flag</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">minZ</span><span class="p">,</span> <span class="n">maxZ</span> <span class="o">=</span> <span class="n">get_limits</span><span class="p">(</span><span class="n">propname</span><span class="o">=</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod_sfr</span><span class="p">)</span>
+            <span class="n">loh12</span> <span class="o">=</span> <span class="n">Z_tremonti2</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">minZ</span><span class="p">,</span><span class="n">maxZ</span><span class="p">,</span><span class="n">Lagn_param</span><span class="p">)</span>
             
-        <span class="n">limits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lu</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="n">minU</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lu</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="n">maxU</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">loh12</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">minZ</span><span class="p">))</span><span class="o">&amp;</span><span class="p">(</span><span class="n">loh12</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">maxZ</span><span class="p">))</span><span class="o">&amp;</span>
-                          <span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">minnH</span><span class="p">))</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lne</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">maxnH</span><span class="p">))</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lu</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">!=</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">Q_sfr</span><span class="p">,</span> <span class="n">lu_sfr</span><span class="p">,</span> <span class="n">lne_sfr</span><span class="p">,</span> <span class="n">loh12_sfr</span><span class="p">,</span> <span class="n">epsilon_sfr</span><span class="p">,</span> <span class="n">ng_ratio</span> <span class="o">=</span> <span class="n">get_une</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">q0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span>
+                            <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">IMF_f</span><span class="o">=</span><span class="n">IMF_f</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="n">h0</span><span class="p">,</span> <span class="n">redshift</span><span class="o">=</span><span class="n">redshift</span><span class="p">,</span>
+                            <span class="n">epsilon_param</span><span class="o">=</span><span class="n">epsilon_param</span><span class="p">,</span> <span class="n">epsilon_param_z0</span><span class="o">=</span><span class="n">epsilon_param_z0</span><span class="p">,</span>
+                            <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">,</span>
+                            <span class="n">unemod</span><span class="o">=</span><span class="n">unemod_sfr</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
         
-        <span class="n">lms</span> <span class="o">=</span> <span class="n">lms</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
-        <span class="n">lssfr</span> <span class="o">=</span> <span class="n">lssfr</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
-        <span class="n">loh12</span> <span class="o">=</span> <span class="n">loh12</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
-        <span class="n">lu</span> <span class="o">=</span> <span class="n">lu</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
-        <span class="n">lne</span> <span class="o">=</span> <span class="n">lne</span><span class="p">[</span><span class="n">limits</span><span class="p">]</span>
-        
-        <span class="c1"># From U and ne, obtain the emission lines from HII regions</span>
-        <span class="n">nebline</span> <span class="o">=</span> <span class="n">get_lines</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span><span class="n">lne</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
-                            <span class="n">Testing</span><span class="o">=</span><span class="n">Testing</span><span class="p">,</span><span class="n">Plotting</span><span class="o">=</span><span class="n">Plotting</span><span class="p">)</span>
-        
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Lines calculated.&#39;</span><span class="p">)</span>
-        
-        <span class="c1"># if Testing and Plotting:</span>
-        <span class="c1">#     nebline_att = np.copy(nebline)</span>
-        <span class="c1"># else:</span>
-        <span class="c1">#     nebline_att, coef_att, lines = attenuation(nebline, m_sfr_z, att_param=att_param, </span>
-        <span class="c1">#                         infile=infile[i], cut=cut, limits=limits, attmod=attmod, verbose=verbose)</span>
-        
-        <span class="n">nebline_att</span><span class="p">,</span> <span class="n">coef_att</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">attenuation</span><span class="p">(</span><span class="n">nebline</span><span class="p">,</span> <span class="n">m_sfr_z</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="n">att_param</span><span class="p">,</span> 
-                                 <span class="n">infile</span><span class="o">=</span><span class="n">infile</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">cut</span><span class="o">=</span><span class="n">cut</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="n">limits</span><span class="p">,</span> <span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SF:&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; U and ne calculated.&#39;</span><span class="p">)</span>
             
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Attenuation calculated.&#39;</span><span class="p">)</span>
+        <span class="n">lu_o_sfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">lu_sfr</span><span class="p">)</span>
+        <span class="n">lne_o_sfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">lne_sfr</span><span class="p">)</span>
+        <span class="n">loh12_o_sfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">loh12_sfr</span><span class="p">)</span>
+        
+        <span class="n">clean_photarray</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">lu_sfr</span><span class="p">,</span> <span class="n">lne_sfr</span><span class="p">,</span> <span class="n">loh12_sfr</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod_sfr</span><span class="p">)</span>
+        
+        <span class="n">nebline_sfr</span> <span class="o">=</span> <span class="n">get_lines</span><span class="p">(</span><span class="n">lu_sfr</span><span class="p">,</span><span class="n">lne_sfr</span><span class="p">,</span><span class="n">loh12_sfr</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="n">photmod_sfr</span><span class="p">,</span>
+                                <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                                <span class="n">xid_gutkin</span><span class="o">=</span><span class="n">xid_gutkin</span><span class="p">,</span><span class="n">co_gutkin</span><span class="o">=</span><span class="n">co_gutkin</span><span class="p">,</span><span class="n">imf_cut_gutkin</span><span class="o">=</span><span class="n">imf_cut_gutkin</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">m_sfr_z</span><span class="p">)):</span>
+            <span class="n">nebline_sfr</span><span class="p">[</span><span class="n">comp</span><span class="p">]</span> <span class="o">=</span> <span class="n">nebline_sfr</span><span class="p">[</span><span class="n">comp</span><span class="p">]</span><span class="o">*</span><span class="mf">3.826e33</span><span class="o">*</span><span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">lms</span><span class="p">[:,</span><span class="n">comp</span><span class="p">]</span><span class="o">+</span><span class="n">lssfr</span><span class="p">[:,</span><span class="n">comp</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Emission calculated.&#39;</span><span class="p">)</span>
             
-        <span class="n">write_data</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">lu</span><span class="p">,</span><span class="n">lne</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">nebline</span><span class="p">[:],</span><span class="n">nebline_att</span><span class="p">,</span><span class="n">outfile</span><span class="p">,</span><span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span>
-                   <span class="n">unemod</span><span class="o">=</span><span class="n">unemod</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="n">photmod</span><span class="p">,</span><span class="n">first</span><span class="o">=</span><span class="n">first</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">att</span><span class="p">:</span>
+            <span class="n">nebline_sfr_att</span><span class="p">,</span> <span class="n">coef_sfr_att</span> <span class="o">=</span> <span class="n">attenuation</span><span class="p">(</span><span class="n">nebline_sfr</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="n">att_param</span><span class="p">,</span> 
+                                      <span class="n">att_ratio_lines</span><span class="o">=</span><span class="n">att_ratio_lines</span><span class="p">,</span><span class="n">redshift</span><span class="o">=</span><span class="n">redshift</span><span class="p">,</span>
+                                      <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">,</span>
+                                      <span class="n">cut</span><span class="o">=</span><span class="n">cut</span><span class="p">,</span> <span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod_sfr</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Attenuation calculated.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nebline_sfr_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">flux</span><span class="p">:</span>
+            <span class="n">fluxes_sfr</span> <span class="o">=</span> <span class="n">calculate_flux</span><span class="p">(</span><span class="n">nebline_sfr</span><span class="p">,</span><span class="n">redshift</span><span class="p">,</span><span class="n">h0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">,</span><span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">)</span>
+            <span class="n">fluxes_sfr_att</span> <span class="o">=</span> <span class="n">calculate_flux</span><span class="p">(</span><span class="n">nebline_sfr_att</span><span class="p">,</span><span class="n">redshift</span><span class="p">,</span><span class="n">h0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">,</span><span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Flux calculated.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fluxes_sfr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">fluxes_sfr_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">AGN</span><span class="p">:</span>
+            <span class="n">bursttobulge</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">Lagn_param</span><span class="p">)</span>
+            
+            <span class="n">Lagn</span> <span class="o">=</span> <span class="n">L_agn</span><span class="p">(</span><span class="n">Lagn_param</span><span class="p">,</span><span class="n">AGNinputs</span><span class="o">=</span><span class="n">AGNinputs</span><span class="p">,</span>
+                         <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+            
+            <span class="n">Q_agn</span><span class="p">,</span> <span class="n">lu_agn</span><span class="p">,</span> <span class="n">lne_agn</span><span class="p">,</span> <span class="n">loh12_agn</span><span class="p">,</span> <span class="n">epsilon_agn</span><span class="p">,</span> <span class="n">ng_ratio</span> <span class="o">=</span> <span class="n">get_une</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> 
+                                <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">q0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span>
+                                <span class="n">Z_central_cor</span><span class="o">=</span><span class="n">Z_central_cor</span><span class="p">,</span>
+                                <span class="n">Lagn</span><span class="o">=</span><span class="n">Lagn</span><span class="p">,</span> <span class="n">T</span><span class="o">=</span><span class="n">T</span><span class="p">,</span> <span class="n">epsilon_param</span><span class="o">=</span><span class="n">epsilon_param</span><span class="p">,</span> 
+                                <span class="n">h0</span><span class="o">=</span><span class="n">h0</span><span class="p">,</span> <span class="n">IMF_f</span><span class="o">=</span><span class="n">IMF_f</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;agn&#39;</span><span class="p">,</span>
+                                <span class="n">unemod</span><span class="o">=</span><span class="n">unemod_agn</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;AGN:&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; U and ne calculated.&#39;</span><span class="p">)</span>
+            
+            <span class="n">lu_o_agn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">lu_agn</span><span class="p">)</span>
+            <span class="n">lne_o_agn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">lne_agn</span><span class="p">)</span>
+            <span class="n">loh12_o_agn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">loh12_agn</span><span class="p">)</span> 
+                
+            <span class="n">clean_photarray</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">lu_agn</span><span class="p">,</span> <span class="n">lne_agn</span><span class="p">,</span> <span class="n">loh12_agn</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod_agn</span><span class="p">)</span>
+                
+            <span class="n">nebline_agn</span> <span class="o">=</span> <span class="n">get_lines</span><span class="p">(</span><span class="n">lu_agn</span><span class="p">,</span><span class="n">lne_agn</span><span class="p">,</span><span class="n">loh12_agn</span><span class="p">,</span><span class="n">photmod</span><span class="o">=</span><span class="n">photmod_agn</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+                                <span class="n">xid_feltre</span><span class="o">=</span><span class="n">xid_feltre</span><span class="p">,</span><span class="n">alpha_feltre</span><span class="o">=</span><span class="n">alpha_feltre</span><span class="p">)</span>
+            <span class="n">nebline_agn</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">nebline_agn</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">Lagn</span><span class="o">/</span><span class="mf">1e45</span>
+            
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Emission calculated.&#39;</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">att</span><span class="p">:</span>
+                <span class="n">nebline_agn_att</span><span class="p">,</span> <span class="n">coef_agn_att</span> <span class="o">=</span> <span class="n">attenuation</span><span class="p">(</span><span class="n">nebline_agn</span><span class="p">,</span> <span class="n">att_param</span><span class="o">=</span><span class="n">att_param</span><span class="p">,</span> 
+                                              <span class="n">att_ratio_lines</span><span class="o">=</span><span class="n">att_ratio_lines</span><span class="p">,</span><span class="n">redshift</span><span class="o">=</span><span class="n">redshift</span><span class="p">,</span>
+                                              <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;agn&#39;</span><span class="p">,</span>
+                                              <span class="n">cut</span><span class="o">=</span><span class="n">cut</span><span class="p">,</span> <span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="n">photmod_agn</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Attenuation calculated.&#39;</span><span class="p">)</span>     
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">nebline_agn_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                
+            <span class="k">if</span> <span class="n">flux</span><span class="p">:</span>
+                <span class="n">fluxes_agn</span> <span class="o">=</span> <span class="n">calculate_flux</span><span class="p">(</span><span class="n">nebline_agn</span><span class="p">,</span><span class="n">redshift</span><span class="p">,</span><span class="n">h0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">,</span><span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">)</span>
+                <span class="n">fluxes_agn_att</span> <span class="o">=</span> <span class="n">calculate_flux</span><span class="p">(</span><span class="n">nebline_agn_att</span><span class="p">,</span><span class="n">redshift</span><span class="p">,</span><span class="n">h0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">,</span><span class="n">origin</span><span class="o">=</span><span class="s1">&#39;sfr&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; Flux calculated.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fluxes_agn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="n">fluxes_agn_att</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="n">write_data_AGN</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">lu_o_sfr</span><span class="p">,</span><span class="n">lne_o_sfr</span><span class="p">,</span><span class="n">loh12_o_sfr</span><span class="p">,</span><span class="n">lu_o_agn</span><span class="p">,</span><span class="n">lne_o_agn</span><span class="p">,</span><span class="n">loh12_o_agn</span><span class="p">,</span>
+                       <span class="n">nebline_sfr</span><span class="p">,</span><span class="n">nebline_agn</span><span class="p">,</span><span class="n">nebline_sfr_att</span><span class="p">,</span><span class="n">nebline_agn_att</span><span class="p">,</span>
+                       <span class="n">fluxes_sfr</span><span class="p">,</span><span class="n">fluxes_agn</span><span class="p">,</span><span class="n">fluxes_sfr_att</span><span class="p">,</span><span class="n">fluxes_agn_att</span><span class="p">,</span>
+                       <span class="n">epsilon_sfr</span><span class="p">,</span><span class="n">epsilon_agn</span><span class="p">,</span>
+                       <span class="n">extra_param</span><span class="o">=</span><span class="n">extra_param</span><span class="p">,</span> <span class="n">extra_params_names</span><span class="o">=</span><span class="n">extra_params_names</span><span class="p">,</span>
+                       <span class="n">extra_params_labels</span><span class="o">=</span><span class="n">extra_params_labels</span><span class="p">,</span>
+                       <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">,</span><span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span><span class="n">unemod_agn</span><span class="o">=</span><span class="n">unemod_agn</span><span class="p">,</span><span class="n">unemod_sfr</span><span class="o">=</span><span class="n">unemod_sfr</span><span class="p">,</span>
+                       <span class="n">photmod_agn</span><span class="o">=</span><span class="n">photmod_agn</span><span class="p">,</span><span class="n">photmod_sfr</span><span class="o">=</span><span class="n">photmod_sfr</span><span class="p">,</span><span class="n">first</span><span class="o">=</span><span class="n">first</span><span class="p">)</span>             
+            <span class="k">del</span> <span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span>
+            <span class="k">del</span> <span class="n">lu_sfr</span><span class="p">,</span> <span class="n">lne_sfr</span><span class="p">,</span> <span class="n">loh12_sfr</span><span class="p">,</span> <span class="n">lu_agn</span><span class="p">,</span> <span class="n">lne_agn</span><span class="p">,</span> <span class="n">loh12_agn</span> 
+            <span class="k">del</span> <span class="n">lu_o_sfr</span><span class="p">,</span> <span class="n">lne_o_sfr</span><span class="p">,</span> <span class="n">loh12_o_sfr</span><span class="p">,</span>  <span class="n">lu_o_agn</span><span class="p">,</span> <span class="n">lne_o_agn</span><span class="p">,</span> <span class="n">loh12_o_agn</span>
+            <span class="k">del</span> <span class="n">nebline_sfr</span><span class="p">,</span> <span class="n">nebline_sfr_att</span><span class="p">,</span> <span class="n">nebline_agn</span><span class="p">,</span> <span class="n">nebline_agn_att</span><span class="p">,</span> <span class="n">cut</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">write_data</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">lu_o_sfr</span><span class="p">,</span><span class="n">lne_o_sfr</span><span class="p">,</span><span class="n">loh12_o_sfr</span><span class="p">,</span>
+                       <span class="n">nebline_sfr</span><span class="p">,</span><span class="n">nebline_sfr_att</span><span class="p">,</span>
+                       <span class="n">fluxes_sfr</span><span class="p">,</span><span class="n">fluxes_sfr_att</span><span class="p">,</span>
+                       <span class="n">extra_param</span><span class="o">=</span><span class="n">extra_param</span><span class="p">,</span> <span class="n">extra_params_names</span><span class="o">=</span><span class="n">extra_params_names</span><span class="p">,</span>
+                       <span class="n">extra_params_labels</span><span class="o">=</span><span class="n">extra_params_labels</span><span class="p">,</span>
+                       <span class="n">outfile</span><span class="o">=</span><span class="n">outfile</span><span class="p">,</span><span class="n">attmod</span><span class="o">=</span><span class="n">attmod</span><span class="p">,</span><span class="n">unemod_sfr</span><span class="o">=</span><span class="n">unemod_sfr</span><span class="p">,</span>
+                       <span class="n">photmod_sfr</span><span class="o">=</span><span class="n">photmod_sfr</span><span class="p">,</span><span class="n">first</span><span class="o">=</span><span class="n">first</span><span class="p">)</span>             
+            <span class="k">del</span> <span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span>
+            <span class="k">del</span> <span class="n">lu_sfr</span><span class="p">,</span> <span class="n">lne_sfr</span><span class="p">,</span> <span class="n">loh12_sfr</span>
+            <span class="k">del</span> <span class="n">lu_o_sfr</span><span class="p">,</span> <span class="n">lne_o_sfr</span><span class="p">,</span> <span class="n">loh12_o_sfr</span>
+            <span class="k">del</span> <span class="n">nebline_sfr</span><span class="p">,</span> <span class="n">nebline_sfr_att</span><span class="p">,</span> <span class="n">cut</span>
+        
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="n">first</span><span class="p">:</span>
             <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
@@ -167,7 +352,10 @@
             <span class="nb">print</span><span class="p">()</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Subvolume&#39;</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;of&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">infile</span><span class="p">))</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Time:&#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;s.&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">()</span></div>
+            <span class="nb">print</span><span class="p">()</span>         
+    
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Total time: &#39;</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_total_time</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="s1">&#39;s.&#39;</span><span class="p">)</span></div>
 </pre></div>
 
             <div class="clearer"></div>
@@ -181,8 +369,10 @@
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme_include.html">Get nebular emission</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/modules.html">get_nebular_emission</a></li>
 </ul>
 
 <div id="searchbox" style="display: none" role="search">

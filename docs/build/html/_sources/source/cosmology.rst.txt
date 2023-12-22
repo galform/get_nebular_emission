@@ -1,0 +1,10 @@
+cosmology package
+============================
+
+Module contents
+---------------
+
+.. automodule:: cosmology
+    :members:
+    :undoc-members:
+    :show-inheritance:
