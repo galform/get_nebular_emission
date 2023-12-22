@@ -25,19 +25,14 @@ This code uses numpy as specified in docs/requirements.txt.
 The code can be run directly from a cloned GitHub `repository`_ and then makeing a local installation from the main directory (where you can see `setup.py`:
 :code:`python3 setup.py install`.
 
-
-The functions in the package can be used after importing novonix_add, for example as follows:
-
-
-
 .. _pyversion: https://uk.mathworks.com/help/matlab/getting-started-with-python.html
 
 .. _package: https://pypi.org/project/get_nebular_emission/
 
 .. _repository: https://github.com/galform/get_nebular_emission
 	     
-.. |docs| image:: https://readthedocs.org/projects/get_nebular_emission/badge/?version=latest
-   :target: https://get_nebular_emission.readthedocs.io/en/latest/
+.. |docs| image:: https://readthedocs.org/projects/get-nebular-emission/badge/?version=latest
+   :target: https://get-nebular-emission.readthedocs.io/en/latest/
    :alt: Documentation Status
 
 
