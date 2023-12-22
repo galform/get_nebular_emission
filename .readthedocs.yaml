@@ -25,7 +25,5 @@ sphinx:
 
 # Optionally declare the Python requirements required to build your docs
 python:
-  version: 3.6
   install:
-    - method: setuptools
-      requirements: docs/requirements.txt
+    - pip install -r docs/requirements.txt
