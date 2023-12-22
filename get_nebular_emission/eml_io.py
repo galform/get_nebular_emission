@@ -966,7 +966,6 @@ def write_data_AGN(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,lu_agn,lne_agn,loh12_agn,
                     if nebline_agn_att[0,i,0] >= 0:
                         hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].resize((hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].shape[1] + nebline_agn_att.shape[2]),axis=1)
                         hfdat[const.lines_model[photmod_agn][i] + '_agn_att'][:,-nebline_agn_att.shape[2]:] = nebline_agn_att[0,i][None,:]
-                        print(hfdat[const.lines_model[photmod_agn][i] + '_agn_att'][:,-nebline_agn_att.shape[2]:].shape, nebline_agn_att[0,i][None,:].shape)
             
             if extra_param[0][0] != None:
                 for i in range(len(extra_param)):

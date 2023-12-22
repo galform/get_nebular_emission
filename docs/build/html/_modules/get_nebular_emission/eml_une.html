@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>get_nebular_emission.eml_une &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_une</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for get_nebular_emission.eml_une</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">get_nebular_emission.eml_const</span> <span class="k">as</span> <span class="nn">const</span>
+
+<div class="viewcode-block" id="get_une_withmodel"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_une.get_une_withmodel">[docs]</a><span class="k">def</span> <span class="nf">get_une_withmodel</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">unemod</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given log10(Mstar), log10(sSFR) and 12+log(O/H),</span>
+<span class="sd">    get the ionizing parameter, logU, and the electron density, logne,</span>
+<span class="sd">    using the specified model.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lms : float</span>
+<span class="sd">      log10(Mstar/Msun)</span>
+<span class="sd">    lssfr : float</span>
+<span class="sd">      log10(sSFR/yr), it should be an instantaneous measurement</span>
+<span class="sd">    loh12 : float </span>
+<span class="sd">      12+log(O/H)</span>
+<span class="sd">    unemod : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      Yes = print out messages</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    u, ne : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">lu</span><span class="p">,</span> <span class="n">lne</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">lms</span><span class="p">),</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lssfr</span> <span class="o">&gt;</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span> <span class="o">&amp;</span>
+                   <span class="p">(</span><span class="n">lms</span> <span class="o">&gt;</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span> <span class="o">&amp;</span>
+                   <span class="p">(</span><span class="n">loh12</span> <span class="o">&gt;</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">unemod</span> <span class="o">==</span> <span class="s1">&#39;kashino20&#39;</span><span class="p">:</span> <span class="c1">#Coefficients in Table 2 from Kashino and Inoue 2019 (https://arxiv.org/pdf/1812.06939.pdf)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">ind</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">lne</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.066</span> <span class="o">+</span> <span class="mf">0.310</span><span class="o">*</span><span class="p">(</span><span class="n">lms</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">-</span><span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.492</span><span class="o">*</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+</span> <span class="mf">9.</span><span class="p">)</span>
+    
+            <span class="n">lu</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span>  <span class="o">-</span><span class="mf">2.316</span> <span class="o">-</span> <span class="mf">0.360</span><span class="o">*</span><span class="p">(</span><span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span><span class="mf">8.</span><span class="p">)</span> <span class="o">-</span><span class="mf">0.292</span><span class="o">*</span><span class="n">lne</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.428</span><span class="o">*</span><span class="p">(</span><span class="n">lssfr</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+</span> <span class="mf">9.</span><span class="p">)</span>
+            <span class="c1"># lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)</span>
+        <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">loh12</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">const</span><span class="o">.</span><span class="n">ohsun</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">zsun</span><span class="p">)</span> <span class="c1"># We leave it in log(Z)</span>
+    
+
+    <span class="k">return</span> <span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span></div>
+    
+<div class="viewcode-block" id="get_une"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_une.get_une">[docs]</a><span class="k">def</span> <span class="nf">get_une</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">lssfr</span><span class="p">,</span> <span class="n">loh12</span><span class="p">,</span> <span class="n">unemod</span><span class="o">=</span><span class="s1">&#39;kashino20&#39;</span><span class="p">,</span> <span class="n">LC2sfr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Testing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Plotting</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given log10(Mstar), log10(sSFR) and 12+log(O/H),</span>
+<span class="sd">    get the ionizing parameter, U, and the electron density, ne.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lms : float</span>
+<span class="sd">      log10(Mstar/Msun)</span>
+<span class="sd">    lssfr : float</span>
+<span class="sd">      log10(sSFR/yr), it should be an instantaneous measurement</span>
+<span class="sd">    loh12 : float </span>
+<span class="sd">      12+log(O/H)</span>
+<span class="sd">    unemod : string</span>
+<span class="sd">      Model to go from galaxy properties to U and ne</span>
+<span class="sd">    LC2sfr : boolean</span>
+<span class="sd">      True = Do the change from Lyman Continuum photons to instantaneus SFR</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      Yes = print out messages</span>
+<span class="sd">    Plotting : boolean</span>
+<span class="sd">      If True run verification plots with all data.</span>
+<span class="sd">    Testing : boolean</span>
+<span class="sd">      Yes = to only run over few entries for testing purposes</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lu, lne : floats</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">lu</span> <span class="o">=</span> <span class="kc">None</span> <span class="p">;</span> <span class="n">lne</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="n">ncomp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lms</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="k">if</span> <span class="n">unemod</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">unemods</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;STOP (eml_une): Unrecognised model to get U and ne.&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;                Possible unemod= </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">unemods</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">unemod</span> <span class="o">==</span> <span class="s1">&#39;kashino20&#39;</span><span class="p">):</span>
+        <span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span> <span class="o">=</span> <span class="n">get_une_withmodel</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span><span class="n">lssfr</span><span class="p">,</span><span class="n">loh12</span><span class="p">,</span><span class="n">unemod</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">Plotting</span><span class="p">:</span>  <span class="c1"># here : Search more efficient form. Allow more components in the header</span>
+        <span class="k">if</span> <span class="n">ncomp</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="n">header1</span> <span class="o">=</span> <span class="s1">&#39;log(u_disk),log(u_bulge),log(ne_disk),log(ne_bulge)&#39;</span>
+            <span class="n">datatofile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ncomp</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">header1</span> <span class="o">=</span> <span class="s1">&#39;log(u), log(ne)&#39;</span>
+            <span class="n">datatofile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            
+        <span class="c1"># print(ncomp)</span>
+            
+        <span class="k">if</span> <span class="n">LC2sfr</span><span class="p">:</span>
+            <span class="n">outfil</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;example_data/tmp_une_LC_SAGE.dat&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">outfil</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;example_data/tmp_une_avSFR_SAGE.dat&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfil</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">outf</span><span class="p">,</span> <span class="n">datatofile</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header1</span><span class="p">)</span>
+            <span class="c1"># outf.closed</span>
+        
+    <span class="k">return</span> <span class="n">lu</span><span class="p">,</span> <span class="n">lne</span><span class="p">,</span> <span class="n">loh12</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_une</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

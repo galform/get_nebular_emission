@@ -1,0 +1,823 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>get_nebular_emission.eml_plots &#8212; get_nebular_emission 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_plots</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for get_nebular_emission.eml_plots</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib.gridspec</span> <span class="k">as</span> <span class="nn">gridspec</span>
+<span class="kn">import</span> <span class="nn">get_nebular_emission.eml_style</span> <span class="k">as</span> <span class="nn">style</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.stats</span> <span class="kn">import</span> <span class="n">perc_2arrays</span>
+<span class="kn">import</span> <span class="nn">get_nebular_emission.eml_const</span> <span class="k">as</span> <span class="nn">const</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_io</span> <span class="kn">import</span> <span class="n">get_nheader</span><span class="p">,</span> <span class="n">check_file</span>
+<span class="kn">from</span> <span class="nn">get_nebular_emission.eml_photio</span> <span class="kn">import</span> <span class="n">get_lines_Gutkin</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">random</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">style</span><span class="o">.</span><span class="n">style1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="test_sfrf"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_plots.test_sfrf">[docs]</a><span class="k">def</span> <span class="nf">test_sfrf</span><span class="p">(</span><span class="n">obsSFR</span><span class="p">,</span> <span class="n">obsGSM</span><span class="p">,</span> <span class="n">colsSFR</span><span class="p">,</span><span class="n">colsGSM</span><span class="p">,</span><span class="n">labelObs</span><span class="p">,</span> <span class="n">outplot</span><span class="p">,</span> <span class="n">h0</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">vol_pm</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    </span>
+<span class="sd">    Given log10(Mstar) and log10(sSFR) get the plots to compare log10(SFR) vs log10(Mstar).</span>
+<span class="sd">    Get the GSMF and the SFRF plots. </span>
+<span class="sd">    Given the observations, compare the plots with the observations too.</span>
+<span class="sd"> </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd"> </span>
+<span class="sd">    obsSFR : string</span>
+<span class="sd">      - Name of the input file for the SFR data observed.</span>
+<span class="sd">      - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">      - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">      - Expected histogram mode:</span>
+<span class="sd">       - A column with the low value of the bin,</span>
+<span class="sd">       - A column with the high value of the bin,</span>
+<span class="sd">       - A column with the frequency in the bin,</span>
+<span class="sd">       - A column with the error. </span>
+<span class="sd"> </span>
+<span class="sd">    obsGSM : string</span>
+<span class="sd">      - Name of the input file for the GSM data observed.</span>
+<span class="sd">      - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">      - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">      - Expected histogram mode:</span>
+<span class="sd">       - A column with the low value of the bin,</span>
+<span class="sd">       - A column with the high value of the bin,</span>
+<span class="sd">       - A column with the frequency in the bin,</span>
+<span class="sd">       - A column with the error.</span>
+<span class="sd"> </span>
+<span class="sd">    colsSFR : list</span>
+<span class="sd">      - Columns with the data required to do the observational histogram of the SFR.</span>
+<span class="sd">      - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]</span>
+<span class="sd">       - column1 is the column with the low values of the bins, in Msun/yr,</span>
+<span class="sd">       - column2 with the high values of the bins, in Msun/yr,</span>
+<span class="sd">       - column3 with the frequency, in Mpc^-3 dex^-1</span>
+<span class="sd">       - column4 with the error, in Mpc^-3 dex^-1</span>
+<span class="sd">       </span>
+<span class="sd">    colsGSM : list</span>
+<span class="sd">      - Columns with the data required to do the observational histogram of the GSM.</span>
+<span class="sd">      - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]</span>
+<span class="sd">       - column1 is the column with the low values of the bins, in h^-2Msun,</span>
+<span class="sd">       - column2 with the high values of the bins, in h^-2Msun,</span>
+<span class="sd">       - column3 with the frequency, in h^-3 Mpc^-3,</span>
+<span class="sd">       - column4 with the error, in h^-3 Mpc^-3.</span>
+<span class="sd"> </span>
+<span class="sd">    labelObs : list of strings</span>
+<span class="sd">      - For the legend, add the name to cite the observational data source.</span>
+<span class="sd">      - [&#39;GSM observed&#39;, &#39;SFR observed&#39;]</span>
+<span class="sd"> </span>
+<span class="sd">    outplot : string</span>
+<span class="sd">      - Name of the output file.</span>
+<span class="sd">      - Image-type files (*.pdf, *.jpg, ...)</span>
+<span class="sd"> </span>
+<span class="sd">    h0 : float</span>
+<span class="sd">      If not None: value of h, H0=100h km/s/Mpc.</span>
+<span class="sd">      </span>
+<span class="sd">    volume : float</span>
+<span class="sd">      - Carlton model default value = 542.16^3 Mpc^3/h^3.</span>
+<span class="sd">      - table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract</span>
+<span class="sd">      - If not 542.16**3. : valume of the simulation volume in Mpc^3/h^3</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+<span class="sd"> </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -------</span>
+<span class="sd">    It makes plot(log10(SFR),log10(Mstar)), plot GSMF and plot SFRF,</span>
+<span class="sd">    all three in one grid and saves it in the outplot path.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+
+
+    <span class="c1"># Define a class that forces representation of float to look a certain way</span>
+    <span class="c1"># This remove trailing zero so &#39;1.0&#39; becomes &#39;1&#39;</span>
+    <span class="k">class</span> <span class="nc">nf</span><span class="p">(</span><span class="nb">float</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%.1f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__float__</span><span class="p">(),)</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.0f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__float__</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.1f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__float__</span><span class="p">()</span>
+    <span class="c1"># -----------------------------------------------------</span>
+    
+    <span class="n">volume</span> <span class="o">=</span> <span class="mi">1</span><span class="o">*</span><span class="p">(</span><span class="mi">1010</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">1</span> <span class="c1">#1*(542.16**3)/200</span>
+
+
+    <span class="c1"># Correct the units of the simulation volume to Mpc^3:</span>
+    <span class="c1"># if h0:</span>
+    <span class="c1">#     volume=volume*(h0**3)</span>
+
+    <span class="c1">#Prepare the plot</span>
+    <span class="n">lsty</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span><span class="p">,(</span><span class="mi">0</span><span class="p">,(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">))]</span> <span class="c1"># Line form</span>
+
+    <span class="n">nds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">2.</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.</span><span class="p">])</span> <span class="c1"># Contours values</span>
+    <span class="n">al</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">nds</span><span class="p">)</span>
+
+    <span class="n">SFR</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;avSFR&#39;</span><span class="p">]</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;average SFR&#39;</span><span class="p">]</span>
+
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;tab10&#39;</span><span class="p">)</span>  <span class="c1"># Colour map to draw colours from</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">cm</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span>
+        <span class="n">color</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>  <span class="c1"># col change for each iteration</span>
+
+
+    <span class="c1"># Initialize GSMF (Galaxy Cosmological Mass Function)</span>
+    <span class="n">mmin</span> <span class="o">=</span> <span class="mf">8.5</span> <span class="c1">#10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)</span>
+    <span class="n">mmax</span> <span class="o">=</span> <span class="mi">15</span> 
+    <span class="n">dm</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">mbins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mmin</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">dm</span><span class="p">)</span>
+    <span class="n">mhist</span> <span class="o">=</span> <span class="n">mbins</span> <span class="o">+</span> <span class="n">dm</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">gsmf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">mhist</span><span class="p">)))</span>
+
+    <span class="c1"># Initialize SSFRF</span>
+    <span class="n">smin</span> <span class="o">=</span> <span class="o">-</span><span class="mi">5</span>
+    <span class="n">smax</span> <span class="o">=</span> <span class="mf">2.5</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">sbins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">smin</span><span class="p">,</span> <span class="n">smax</span><span class="p">,</span> <span class="n">ds</span><span class="p">)</span>
+    <span class="n">shist</span> <span class="o">=</span> <span class="n">sbins</span> <span class="o">+</span> <span class="n">ds</span> <span class="o">*</span> <span class="mf">0.5</span>
+    <span class="n">ssfrf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">shist</span><span class="p">)))</span>
+
+    <span class="c1"># Initialize SFR vs M function</span>
+    <span class="n">lenm</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mhist</span><span class="p">)</span>
+    <span class="n">lens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shist</span><span class="p">)</span>
+    <span class="n">smf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">lens</span><span class="p">,</span><span class="n">lenm</span><span class="p">))</span>
+
+    <span class="c1"># Plots limits and style</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">8.5</span><span class="p">,</span> <span class="mf">9.</span><span class="p">))</span>
+    <span class="n">gs</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">gs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">hspace</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Fig. sSFR vs M</span>
+    <span class="n">xtit</span> <span class="o">=</span> <span class="s2">&quot;log$_</span><span class="si">{10}</span><span class="s2">(</span><span class="se">\\</span><span class="s2">rm M_{*}/M_{\odot}h^{-1})$&quot;</span>
+    <span class="n">ytit</span> <span class="o">=</span> <span class="s2">&quot;log$_</span><span class="si">{10}</span><span class="s2">(</span><span class="se">\\</span><span class="s2">rm SFR/M_{\odot} yr^{-1})$&quot;</span>
+    <span class="n">xmin</span> <span class="o">=</span> <span class="n">mmin</span><span class="p">;</span> <span class="n">xmax</span> <span class="o">=</span> <span class="mf">11.9</span><span class="p">;</span> <span class="n">ymin</span> <span class="o">=</span> <span class="n">smin</span><span class="p">;</span>  <span class="n">ymax</span> <span class="o">=</span> <span class="n">smax</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xtit</span><span class="p">);</span> <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ytit</span><span class="p">)</span>
+
+    <span class="c1"># GSMF</span>
+    <span class="n">axm</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span><span class="n">sharex</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">ytit</span><span class="o">=</span><span class="s2">&quot;log$_</span><span class="si">{10}</span><span class="s2">(\Phi(M_*))$&quot;</span> <span class="p">;</span> <span class="n">axm</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ytit</span><span class="p">)</span>
+    <span class="n">axm</span><span class="o">.</span><span class="n">set_autoscale_on</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span> <span class="p">;</span>  <span class="n">axm</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
+    <span class="n">axm</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">5.5</span><span class="p">,</span><span class="o">-</span><span class="mf">1.</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">axm</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># SSFRF</span>
+    <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">gs</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">sharey</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+    <span class="n">xtit</span> <span class="o">=</span> <span class="s2">&quot;log$_</span><span class="si">{10}</span><span class="s2">(\Phi(SFR))$&quot;</span><span class="p">;</span> <span class="n">axs</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xtit</span><span class="p">)</span>
+    <span class="n">axs</span><span class="o">.</span><span class="n">set_autoscale_on</span><span class="p">(</span><span class="kc">False</span><span class="p">);</span> <span class="n">axs</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
+    <span class="n">axs</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="mf">5.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">axs</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+    <span class="n">axs</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">4.</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="mf">1.</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">axs</span><span class="o">.</span><span class="n">get_yticklabels</span><span class="p">(),</span> <span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Data Observations</span>
+
+    <span class="c1"># SFR observed</span>
+
+    <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">obsSFR</span><span class="p">)</span>
+
+    <span class="n">dataSFR</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">colsSFR</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">colsSFR</span><span class="p">):</span>
+        <span class="c1">#print(ii,col,colsSFR[ii])</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">obsSFR</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dataSFR</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="n">dex</span> <span class="o">=</span> <span class="n">dataSFR</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">dataSFR</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">histSFR</span> <span class="o">=</span> <span class="n">dataSFR</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">dex</span>
+    <span class="n">errorSFR</span> <span class="o">=</span> <span class="n">dataSFR</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="c1"># GSM observed</span>
+
+    <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">obsGSM</span><span class="p">)</span>
+
+    <span class="n">dataGSM</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">colsGSM</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">colsGSM</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">obsGSM</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dataGSM</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="n">dex</span> <span class="o">=</span> <span class="n">dataGSM</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dataGSM</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Change the units from h^-2 Msun to h^-1 Msun.</span>
+    <span class="n">histGSM</span> <span class="o">=</span> <span class="n">dataGSM</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">dex</span>
+
+    <span class="c1"># Change the units from h^3 Mpc^-3 to Mpc^-3</span>
+    <span class="n">freqGSM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">((</span><span class="n">dataGSM</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span><span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span>
+    
+    <span class="n">lowGSM</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">dataGSM</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">dataGSM</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span>
+    
+    <span class="n">lowGSM</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lowGSM</span> <span class="o">-</span> <span class="n">freqGSM</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">sfr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">SFR</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;output_data/emlines_SAGE_total.hdf5&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            
+            <span class="n">lms</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lms&#39;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">lsfr</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lssfr&#39;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">lms</span>
+            
+            
+            <span class="n">lms</span> <span class="o">=</span> <span class="n">lms</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">h0</span><span class="p">)</span>
+            
+            <span class="k">del</span> <span class="n">data</span>
+        <span class="c1"># lssfr = data[&#39;lssfr&#39;][:,0] + 9</span>
+
+
+        <span class="c1"># Make the histograms</span>
+
+        <span class="n">H</span><span class="p">,</span> <span class="n">bins_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">lms</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mbins</span><span class="p">,</span> <span class="n">mmax</span><span class="p">))</span>
+        <span class="n">gsmf</span> <span class="o">=</span> <span class="n">H</span> <span class="o">/</span> <span class="n">volume</span> <span class="o">/</span> <span class="n">dm</span>  <span class="c1"># In Mpc^3/h^3</span>
+
+        <span class="n">H</span><span class="p">,</span> <span class="n">bins_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">lsfr</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sbins</span><span class="p">,</span> <span class="n">smax</span><span class="p">))</span>
+        <span class="n">sfrf</span> <span class="o">=</span> <span class="n">H</span> <span class="o">/</span> <span class="n">volume</span> <span class="o">/</span> <span class="n">ds</span>
+
+        <span class="n">H</span><span class="p">,</span> <span class="n">xedges</span><span class="p">,</span> <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram2d</span><span class="p">(</span><span class="n">lsfr</span><span class="p">,</span> <span class="n">lms</span><span class="p">,</span>
+                                           <span class="n">bins</span><span class="o">=</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sbins</span><span class="p">,</span> <span class="n">smax</span><span class="p">),</span>
+                                                  <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mbins</span><span class="p">,</span> <span class="n">mmax</span><span class="p">)]))</span>
+        <span class="n">smf</span> <span class="o">=</span> <span class="n">H</span> <span class="o">/</span> <span class="n">volume</span> <span class="o">/</span> <span class="n">dm</span> <span class="o">/</span> <span class="n">ds</span>
+
+
+        <span class="c1"># Plot SMF vs SFR</span>
+
+        <span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;contour.negative_linestyle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lsty</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+        <span class="n">zz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shist</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">mhist</span><span class="p">)));</span> <span class="n">zz</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">smf</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">zz</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">smf</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+        
+        <span class="c1"># print(zz[ind])</span>
+
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">zz</span> <span class="o">&gt;</span> <span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">ind</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+
+            <span class="c1"># Contours</span>
+            <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">mbins</span><span class="p">,</span> <span class="n">sbins</span><span class="p">)</span>
+            <span class="c1"># Here: How to find the levels of the data?</span>
+            <span class="n">cs</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">,</span> <span class="n">zz</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="n">al</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">color</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)):</span>
+                <span class="n">cs</span><span class="o">.</span><span class="n">collections</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="c1"># Plot GSMF</span>
+        <span class="n">py</span> <span class="o">=</span> <span class="n">gsmf</span><span class="p">;</span> <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">py</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">mhist</span><span class="p">[</span><span class="n">ind</span><span class="p">];</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">py</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">&lt;</span> <span class="mf">0.</span><span class="p">)</span>
+
+        <span class="n">axm</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span>
+                 <span class="n">linestyle</span><span class="o">=</span><span class="n">lsty</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">labels</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
+
+        <span class="c1"># Plot observations GSMF</span>
+        <span class="n">axm</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">histGSM</span><span class="p">,</span> <span class="n">freqGSM</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="n">lowGSM</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+
+        <span class="c1"># Plot SFRF</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="n">sfrf</span><span class="p">;</span> <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">px</span> <span class="o">&gt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">shist</span><span class="p">[</span><span class="n">ind</span><span class="p">];</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">px</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.</span><span class="p">)</span>
+        <span class="n">axs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span>
+                 <span class="n">linestyle</span><span class="o">=</span><span class="n">lsty</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">labels</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
+
+        <span class="c1"># Plot observations SFRF</span>
+        <span class="n">axs</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">dataSFR</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">histSFR</span><span class="p">,</span> <span class="n">xerr</span><span class="o">=</span><span class="n">errorSFR</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span>
+                  <span class="n">label</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="o">+</span> <span class="n">labelObs</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="c1"># leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize=&#39;small&#39;,</span>
+    <span class="c1">#                  handlelength=1.2, handletextpad=0.4)</span>
+    <span class="c1"># # for item in leg.legendHandles:</span>
+    <span class="c1"># # item.set_visible(True)</span>
+    <span class="c1"># leg.get_texts()</span>
+    <span class="c1"># leg.draw_frame(False)</span>
+
+    <span class="c1"># for col,text in zip(color,leg.get_texts()):</span>
+    <span class="c1">#   text.set_color(color)</span>
+    <span class="c1">#  leg.draw_frame(False)</span>
+
+    <span class="n">plotf</span> <span class="o">=</span> <span class="n">outplot</span>
+
+    <span class="c1"># Save figures</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Plot: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">plotf</span><span class="p">))</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plotf</span><span class="p">)</span></div>
+
+    <span class="c1"># os.remove(r&quot;example_data/tmp_LC.dat&quot;)</span>
+    <span class="c1"># os.remove(r&quot;example_data/tmp_avSFR.dat&quot;)</span>
+
+<div class="viewcode-block" id="test_zm"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_plots.test_zm">[docs]</a><span class="k">def</span> <span class="nf">test_zm</span><span class="p">(</span><span class="n">obsZF</span><span class="p">,</span> <span class="n">obsGSM</span><span class="p">,</span> <span class="n">colsZ</span> <span class="p">,</span><span class="n">colsGSM</span><span class="p">,</span><span class="n">labelObs</span><span class="p">,</span><span class="n">outplot</span><span class="p">,</span><span class="n">h0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">volume</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">vol_pm</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given log10(Mstar) and (12 + log(O/H)) get the plots to compare (12 + log(O/H)) vs log10(Mstar).</span>
+<span class="sd">    Get the GSMF and the ZF plots.</span>
+<span class="sd">    Given the observations, compare the plots with the observations too.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    obsGSM : string</span>
+<span class="sd">      - Name of the input file for the Z data observed.</span>
+<span class="sd">      - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">      - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">      - Expected histogram mode:</span>
+<span class="sd">       - A column with the low value of the bin</span>
+<span class="sd">       - A column with the high value of the bin</span>
+<span class="sd">       - A column with the frequency in the bin</span>
+<span class="sd">       - A column with the error</span>
+<span class="sd">       </span>
+<span class="sd">    obsGSM : string</span>
+<span class="sd">      - Name of the input file for the GSM data observed.</span>
+<span class="sd">      - In text files (*.dat, *txt, *.cat), columns separated by &#39; &#39;.</span>
+<span class="sd">      - In csv files (*.csv), columns separated by &#39;,&#39;.</span>
+<span class="sd">      - Expected histogram mode:</span>
+<span class="sd">       - A column with the low value of the bin</span>
+<span class="sd">       - A column with the high value of the bin</span>
+<span class="sd">       - A column with the frequency in the bin</span>
+<span class="sd">       - A column with the error</span>
+<span class="sd">       </span>
+<span class="sd">    colsZ : list</span>
+<span class="sd">     - Columns with the data required to do the observational histogram of Z.</span>
+<span class="sd">     - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]</span>
+<span class="sd">      - column1 is the column with the low values of the bins</span>
+<span class="sd">      - column2 with the high values of the bins</span>
+<span class="sd">      - column3 with the frequency</span>
+<span class="sd">      - column4 with the error  </span>
+<span class="sd">      </span>
+<span class="sd">    colsGSM : list</span>
+<span class="sd">      - Columns with the data required to do the observational histogram of the GSM.</span>
+<span class="sd">      - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]</span>
+<span class="sd">       - column1 is the column with the low values of the bins, in h^-2Msun</span>
+<span class="sd">       - column2 with the high values of the bins, in h^-2Msun</span>
+<span class="sd">       - column3 with the frequency, in h^-3 Mpc^-3</span>
+<span class="sd">       - column4 with the error, in h^-3 Mpc^-3</span>
+<span class="sd">       </span>
+<span class="sd">    labelObs : list of strings</span>
+<span class="sd">      - For the legend, add the name to cite the observational data source.</span>
+<span class="sd">      - [&#39;GSM observed&#39;, &#39;Z observed&#39;]</span>
+<span class="sd">      </span>
+<span class="sd">    outplot : string</span>
+<span class="sd">      - Name of the output file.</span>
+<span class="sd">      - Image-type files (*.pdf, *.jpg, ...)</span>
+<span class="sd">      </span>
+<span class="sd">    h0 : float</span>
+<span class="sd">      If not None: value of h, H0=100h km/s/Mpc.</span>
+<span class="sd">      </span>
+<span class="sd">    volume : float</span>
+<span class="sd">      - Carlton model default value = 542.16^3 Mpc^3/h^3.</span>
+<span class="sd">      - table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract</span>
+<span class="sd">      - If not 542.16**3. : valume of the simulation volume in Mpc^3/h^3</span>
+<span class="sd">      </span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">      If True print out messages</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    plot((12 + log(O/H)),log10(Mstar)), plot GSMF and plot ZF,</span>
+<span class="sd">    all three in one grid.</span>
+<span class="sd">    Save it in the outplot path.</span>
+<span class="sd">    &#39;&#39;&#39;</span></div>
+
+<div class="viewcode-block" id="test_medians"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_plots.test_medians">[docs]</a><span class="k">def</span> <span class="nf">test_medians</span><span class="p">(</span><span class="n">outplot</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Given U and ne calculated from the Mstar and the SFR in eml_une.</span>
+<span class="sd">    get the plot of the medians of these quantities in masses bins.</span>
+<span class="sd">    Compare the plots between the data calculated from the average SFR and</span>
+<span class="sd">    from the SFR calculated from the LC photons.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    outplot : string</span>
+<span class="sd">     Path to the folder where save the plot.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">     If True print out messages</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Medians U and ne for each bin of mass in two differents plots.</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># Prepare the plots</span>
+    
+    <span class="n">SFR</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;avSFR&#39;</span><span class="p">]</span>
+    <span class="n">U_ne</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;u&#39;</span><span class="p">,</span> <span class="s1">&#39;ne&#39;</span><span class="p">]</span>
+    <span class="n">col_une</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="c1"># [U, ne]</span>
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;tab10&#39;</span><span class="p">)</span>  <span class="c1"># Colour map to draw colours from</span>
+    <span class="n">color</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Prepare the bins</span>
+    <span class="n">mmin</span> <span class="o">=</span> <span class="mf">8.5</span>
+    <span class="n">mmax</span> <span class="o">=</span> <span class="mf">11.5</span>
+    <span class="n">dm</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">mbins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mmin</span><span class="p">,</span> <span class="p">(</span><span class="n">mmax</span> <span class="o">+</span> <span class="n">dm</span><span class="p">),</span> <span class="n">dm</span><span class="p">)</span>
+    <span class="n">mbinsH</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mmin</span><span class="p">,</span> <span class="n">mmax</span><span class="p">,</span> <span class="n">dm</span><span class="p">)</span>
+    <span class="n">mhist</span> <span class="o">=</span> <span class="n">mbinsH</span> <span class="o">+</span> <span class="n">dm</span> <span class="o">*</span> <span class="mf">0.5</span>
+
+    <span class="k">for</span> <span class="n">iu</span><span class="p">,</span> <span class="n">une</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">U_ne</span><span class="p">):</span>
+
+        <span class="c1"># Prepare the figures</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\log M_*/h^{-1} (M_\odot)$&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+        <span class="n">plotf</span> <span class="o">=</span> <span class="n">outplot</span> <span class="o">+</span> <span class="s1">&#39;/test_medians_&#39;</span><span class="o">+</span> <span class="n">une</span><span class="o">+</span><span class="s1">&#39;_subvol.pdf&#39;</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">cm</span><span class="p">(</span><span class="n">iu</span><span class="p">)</span>
+        <span class="n">color</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>  <span class="c1"># col change for each iteration</span>
+        
+        <span class="k">if</span> <span class="n">iu</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">((</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\log U$&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">((</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span><span class="mf">2.5</span><span class="p">))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\log n_e (cm^{-3})$&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span><span class="n">sfr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">SFR</span><span class="p">):</span>
+            
+            <span class="c1"># Read the data</span>
+            <span class="n">tempfile_io</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;example_data/tmp_&quot;</span> <span class="o">+</span> <span class="n">sfr</span> <span class="o">+</span> <span class="s2">&quot;.dat&quot;</span>
+
+            <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">tempfile_io</span><span class="p">)</span>
+            <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">tempfile_io</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+            
+            <span class="n">lms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;lms.npy&#39;</span><span class="p">)[:</span><span class="mi">4424</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+            
+            <span class="n">col</span> <span class="o">=</span> <span class="n">cm</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span>
+            <span class="c1">#color.append(col)  # col change for each iteration</span>
+            <span class="n">tempfile_une</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;example_data/tmp_une_&quot;</span> <span class="o">+</span> <span class="n">sfr</span> <span class="o">+</span> <span class="s2">&quot;.dat&quot;</span>
+            <span class="c1"># ih = get_nheader(tempfile_une) : Not necessary, it is the same that tempfile_io always.</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">tempfile_une</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span><span class="n">usecols</span><span class="o">=</span><span class="n">col_une</span><span class="p">,</span><span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># data[0] = lu, data[1] = lne</span>
+
+            <span class="n">lu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;lu.npy&#39;</span><span class="p">)[:</span><span class="mi">4424</span><span class="p">]</span>
+            <span class="n">lne</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;lne.npy&#39;</span><span class="p">)[:</span><span class="mi">4424</span><span class="p">]</span>
+            
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">lu</span><span class="p">],</span> <span class="p">[</span><span class="n">lne</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            
+            <span class="n">cut</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lms</span><span class="o">&gt;</span><span class="mi">7</span><span class="p">)</span>
+            
+            <span class="c1"># MEDIANS:</span>
+            <span class="n">median</span> <span class="o">=</span> <span class="n">perc_2arrays</span><span class="p">(</span><span class="n">mbins</span><span class="p">,</span> <span class="n">lms</span><span class="p">[</span><span class="n">cut</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">iu</span><span class="p">][</span><span class="n">cut</span><span class="p">],</span> <span class="mf">0.5</span><span class="p">)</span> <span class="c1">#data[iu]</span>
+
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">median</span><span class="o">&gt;</span><span class="n">const</span><span class="o">.</span><span class="n">notnum</span><span class="p">)</span>
+            
+            <span class="n">median</span> <span class="o">=</span> <span class="n">median</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+
+            <span class="c1"># QUARTILES:</span>
+            <span class="n">up_qu</span> <span class="o">=</span> <span class="n">perc_2arrays</span><span class="p">(</span><span class="n">mbins</span><span class="p">,</span> <span class="n">lms</span><span class="p">[</span><span class="n">cut</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">iu</span><span class="p">][</span><span class="n">cut</span><span class="p">],</span> <span class="mf">0.75</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
+            <span class="c1">#qup[ii] = up_qu</span>
+            <span class="n">low_qu</span> <span class="o">=</span> <span class="n">perc_2arrays</span><span class="p">(</span><span class="n">mbins</span><span class="p">,</span> <span class="n">lms</span><span class="p">[</span><span class="n">cut</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">iu</span><span class="p">][</span><span class="n">cut</span><span class="p">],</span> <span class="mf">0.25</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
+            <span class="c1">#qlow[ii] = low_qu</span>
+            
+            <span class="n">qu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">median</span><span class="o">-</span><span class="n">low_qu</span><span class="p">],[</span><span class="n">up_qu</span><span class="o">-</span><span class="n">median</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1">#plt.plot(mhist[ind],median[ind],&#39;o&#39;, color=col, label=&#39;Calculated from the &#39; + SFR[ii] + &#39;&#39;)</span>
+            <span class="c1">#plt.plot(mhist[ind],up_qu[ind],&#39;o&#39;, color=&#39;r&#39;)</span>
+            <span class="c1">#plt.plot(mhist[ind],low_qu[ind],&#39;o&#39;, color=&#39;r&#39;)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">mhist</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span><span class="n">median</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span><span class="n">yerr</span><span class="o">=</span><span class="n">qu</span><span class="p">,</span><span class="n">elinewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Calculated from the &#39;</span> <span class="o">+</span> <span class="n">SFR</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plotf</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="test_bpt"><a class="viewcode-back" href="../../get_nebular_emission.html#get_nebular_emission.eml_plots.test_bpt">[docs]</a><span class="k">def</span> <span class="nf">test_bpt</span><span class="p">(</span><span class="n">outplot</span><span class="p">,</span> <span class="n">photmod</span><span class="o">=</span><span class="s1">&#39;gutkin16&#39;</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Run a test of the interpolations done in eml_photio.</span>
+<span class="sd">    Two plots, one to verify the U interpolation and the other one to verify the Z interpolation</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    outplot : string</span>
+<span class="sd">     Path to the folder plot.</span>
+<span class="sd">    verbose : boolean</span>
+<span class="sd">     If True print out messages</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Plot of BPT diagram with the photoionisation model data and two points of our interpolation</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># if photmod == &#39;gutkin16&#39;:</span>
+    <span class="c1">#     print(get_lines_Gutkin(Testing=True,Plotting=True,verbose=True))</span>
+    <span class="c1"># else:</span>
+    <span class="c1">#     print(&#39;STOP (eml_plots): Unrecognised model to get the interpolations ({})&#39;.format(photmod))</span>
+    <span class="c1">#     print(&#39;                  Possible photmod = {}&#39;.format(const.photmods))</span>
+    <span class="c1">#     exit()</span>
+
+    <span class="n">Z</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;0001&#39;</span><span class="p">,</span> <span class="s1">&#39;0002&#39;</span><span class="p">,</span> <span class="s1">&#39;0005&#39;</span><span class="p">,</span> <span class="s1">&#39;001&#39;</span><span class="p">,</span> <span class="s1">&#39;002&#39;</span><span class="p">,</span> <span class="s1">&#39;004&#39;</span><span class="p">,</span> <span class="s1">&#39;006&#39;</span><span class="p">,</span> <span class="s1">&#39;008&#39;</span><span class="p">,</span> <span class="s1">&#39;010&#39;</span><span class="p">,</span> <span class="s1">&#39;014&#39;</span><span class="p">,</span> <span class="s1">&#39;017&#39;</span><span class="p">,</span> <span class="s1">&#39;020&#39;</span><span class="p">,</span> <span class="s1">&#39;030&#39;</span><span class="p">,</span> <span class="s1">&#39;040&#39;</span><span class="p">]</span>
+
+    <span class="n">zz</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0001</span><span class="p">,</span> <span class="mf">0.0002</span><span class="p">,</span> <span class="mf">0.0005</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.002</span><span class="p">,</span> <span class="mf">0.004</span><span class="p">,</span> <span class="mf">0.006</span><span class="p">,</span> <span class="mf">0.008</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.014</span><span class="p">,</span> <span class="mf">0.017</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.03</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">]</span>
+    
+    
+    <span class="c1"># Z = [&#39;0001&#39;, &#39;002&#39;, &#39;014&#39;, &#39;030&#39;]</span>
+    <span class="c1"># zz = [0.0001,0.002,0.014,0.030]</span>
+
+    <span class="n">uu</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.</span><span class="p">]</span>
+
+    <span class="n">ne</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;100&#39;</span><span class="p">]</span>  <span class="c1"># [&#39;10&#39;, &#39;100&#39;, &#39;1000&#39;,&#39;10000&#39;]</span>
+
+    <span class="n">cm</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;tab20&#39;</span><span class="p">)</span> <span class="c1"># Colour map to draw colours from</span>
+
+    <span class="k">for</span> <span class="n">iz</span><span class="p">,</span> <span class="n">zname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Z</span><span class="p">):</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;nebular_data/gutkin_tables/nebular_emission_Z&quot;</span> <span class="o">+</span> <span class="n">zname</span> <span class="o">+</span> <span class="s2">&quot;.txt&quot;</span>
+
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+
+        <span class="n">datane</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">datalu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">OIII5007</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Hb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">NII6548</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">Ha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">nh</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ne</span><span class="p">):</span>
+            <span class="n">outfile</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;output_data/Gutkinfile_n_&quot;</span> <span class="o">+</span> <span class="n">nh</span> <span class="o">+</span> <span class="s2">&quot;.txt&quot;</span>
+
+            <span class="n">header1</span> <span class="o">=</span> <span class="s1">&#39;Z, U, NII6584[ind]/Ha[ind]  OIII5007[ind]/Hb[ind]&#39;</span>
+
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">datane</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="n">nh</span><span class="p">))</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">NII6548</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">/</span> <span class="n">Ha</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">OIII5007</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">/</span> <span class="n">Hb</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>
+            <span class="n">u</span> <span class="o">=</span> <span class="n">datalu</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">u</span><span class="p">),</span> <span class="n">zz</span><span class="p">[</span><span class="n">iz</span><span class="p">])</span>
+
+            <span class="n">tofile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">z</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">outf</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">iz</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">outf</span><span class="p">,</span> <span class="n">tofile</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="n">header1</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">outf</span><span class="p">,</span> <span class="n">tofile</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+                <span class="n">outf</span><span class="o">.</span><span class="n">closed</span>
+
+    <span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">iz</span><span class="p">,</span> <span class="n">lz</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">zz</span><span class="p">):</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="n">cm</span><span class="p">(</span><span class="n">iz</span><span class="p">)</span>
+        <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">nh</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ne</span><span class="p">):</span>
+        <span class="n">infile</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;output_data/Gutkinfile_n_&quot;</span> <span class="o">+</span> <span class="n">nh</span> <span class="o">+</span> <span class="s2">&quot;.txt&quot;</span>
+
+        <span class="n">ih</span> <span class="o">=</span> <span class="n">get_nheader</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="n">ih</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1">#os.remove(infile)</span>
+
+        <span class="n">file</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;output_data/emlines_SAGE.hdf5&quot;</span>
+        <span class="n">check_file</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;header&#39;</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="n">lu_disk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lu&#39;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1">#lu_bulge = data[&#39;lu&#39;][:,1]</span>
+        <span class="n">lne_disk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;lne&#39;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1">#lne_bulge = data[&#39;lne&#39;][:,1]</span>
+        <span class="n">loh12_disk</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;loh12&#39;</span><span class="p">][:,</span><span class="mi">0</span><span class="p">])</span>
+        <span class="c1">#loh12_bulge = (data[&#39;loh12&#39;][:,1])</span>
+        <span class="n">neblines_disk</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;nebline&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,:]</span>
+        <span class="c1">#neblines_bulge = data[&#39;nebline&#39;][1,:]</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">neblines_disk</span><span class="p">))</span> <span class="c1">###### SHAPE neblines_disk &gt;&gt;&gt; (18,n) 18 lines n data for each line</span>
+
+        <span class="c1"># Take the galaxies with ne &gt;= 2:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">lne_disk</span> <span class="o">&gt;=</span> <span class="mf">1.5</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lu_disk</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">lne_disk</span> <span class="o">&lt;=</span> <span class="mf">2.5</span><span class="p">))</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        
+        <span class="c1"># ind2 = np.copy(ind)</span>
+        
+        <span class="c1"># while len(ind2)!=4:</span>
+        <span class="c1">#     randn = random.rand(len(ind))</span>
+        <span class="c1">#     ind2 = ind[(randn&lt;0.02)&amp;(np.log10(neblines_disk[4][ind]/neblines_disk[5][ind])&lt;-1.6)]</span>
+        <span class="c1">#     print(len(ind2))</span>
+        
+        <span class="c1"># ind = ind2</span>
+        <span class="c1"># print(ind) #[578, 2259, 3442, 1539]</span>
+        
+        <span class="n">cm2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;tab20b&#39;</span><span class="p">)</span>
+        <span class="n">cols2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)):</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">cm2</span><span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span>
+            <span class="n">cols2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+
+        <span class="c1"># lne_disk = lne_disk[ind]</span>
+        <span class="c1"># #lne_bulge = lne_bulge[ind]</span>
+        <span class="c1"># loh12_disk = loh12_disk[ind]</span>
+        <span class="c1"># #loh12_bulge = loh12_bulge[ind]</span>
+        <span class="c1"># lu_disk = lu_disk[ind]</span>
+        <span class="c1">#lu_bulge = lu_bulge[ind]</span>
+
+        <span class="c1"># DIFERENTS COLORS FOR U:</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">15</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">iu</span><span class="p">,</span> <span class="n">lu</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">uu</span><span class="p">):</span>
+            <span class="n">ind2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">u</span> <span class="o">==</span> <span class="n">uu</span><span class="p">[</span><span class="n">iu</span><span class="p">])</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ind2</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">ind2</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">cols</span><span class="p">[</span><span class="n">iu</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;U = &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lu</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="n">labelsU</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">lu_disk</span><span class="p">:</span> <span class="n">labelsU</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;U = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span><span class="mi">2</span><span class="p">)))</span>
+        
+        <span class="n">Hbeta</span> <span class="o">=</span> <span class="n">neblines_disk</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">OIII5007</span> <span class="o">=</span> <span class="n">neblines_disk</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">NII6548</span> <span class="o">=</span> <span class="n">neblines_disk</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">Halpha</span> <span class="o">=</span> <span class="n">neblines_disk</span><span class="p">[</span><span class="mi">5</span><span class="p">][</span><span class="n">ind</span><span class="p">]</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">Hbeta</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">neblines_disk</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        
+        <span class="n">my_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">NII6548</span> <span class="o">/</span> <span class="n">Halpha</span><span class="p">)</span>
+        <span class="n">my_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">OIII5007</span> <span class="o">/</span> <span class="n">Hbeta</span><span class="p">)</span>
+        
+        <span class="c1"># for i in range(len(ind)):</span>
+            <span class="c1">#plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=10, linewidth=0, color=cols2[i])</span>
+            <span class="c1"># plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=5, linewidth=0, color=&#39;black&#39;)</span>
+            
+        <span class="nb">print</span><span class="p">(</span><span class="n">my_x</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">my_y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">my_x</span><span class="p">,</span> <span class="n">my_y</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;log$_</span><span class="si">{10}</span><span class="s1">$([NII]$</span><span class="se">\\</span><span class="s1">lambda$6584/H$</span><span class="se">\\</span><span class="s1">alpha$)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;log$_</span><span class="si">{10}</span><span class="s1">$([OIII]$</span><span class="se">\\</span><span class="s1">lambda$5007/H$</span><span class="se">\\</span><span class="s1">beta$)&#39;</span><span class="p">)</span>
+
+        <span class="c1"># for i, label in enumerate(labelsU):</span>
+        <span class="c1">#     plt.annotate(label, (my_x[i], my_y[i]))</span>
+        <span class="n">plotnom</span> <span class="o">=</span> <span class="n">outplot</span> <span class="o">+</span> <span class="s1">&#39;/BPTplot_n_&#39;</span> <span class="o">+</span> <span class="n">nh</span> <span class="o">+</span> <span class="s1">&#39;_U_test_SAGE.png&#39;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        
+        <span class="c1"># cut = np.load(&#39;cut_GALFORM_subvol8.npy&#39;)</span>
+        <span class="c1"># limits = np.load(&#39;limits_GALFORM_subvol8.npy&#39;)</span>
+        
+        <span class="c1"># Hbeta = np.load(&#39;Hbeta_sub8.npy&#39;)</span>
+        <span class="c1"># OIII5007 = np.load(&#39;OIII_sub8.npy&#39;)</span>
+        <span class="c1"># NII6548 = np.load(&#39;NII_sub8.npy&#39;)</span>
+        <span class="c1"># Halpha = np.load(&#39;Halpha_sub8.npy&#39;)</span>
+        
+        <span class="c1"># Hbeta = Hbeta[cut]</span>
+        <span class="c1"># OIII5007 = OIII5007[cut]</span>
+        <span class="c1"># NII6548 = NII6548[cut]</span>
+        <span class="c1"># Halpha = Halpha[cut]</span>
+        
+        <span class="c1"># Hbeta = Hbeta[limits]</span>
+        <span class="c1"># OIII5007 = OIII5007[limits]</span>
+        <span class="c1"># NII6548 = NII6548[limits]</span>
+        <span class="c1"># Halpha = Halpha[limits]</span>
+        
+        <span class="c1"># Hbeta = Hbeta[ind]</span>
+        <span class="c1"># OIII5007 = OIII5007[ind]</span>
+        <span class="c1"># NII6548 = NII6548[ind]</span>
+        <span class="c1"># Halpha = Halpha[ind]</span>
+        
+        <span class="c1"># my_x = np.log10(NII6548 / Halpha)</span>
+        <span class="c1"># my_y = np.log10(OIII5007 / Hbeta)</span>
+        
+        <span class="c1"># for i in range(len(ind)):</span>
+        <span class="c1">#     #plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=10, linewidth=0, color=cols2[i])</span>
+        <span class="c1">#     plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=2, linewidth=0, color=&#39;blue&#39;)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plotnom</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="c1">#plt.show()</span>
+
+        <span class="c1"># DIFFERENTS COLORS FOR Z:</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">15</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">iz</span><span class="p">,</span> <span class="n">lz</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">zz</span><span class="p">):</span>
+            <span class="n">ind2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">z</span> <span class="o">==</span> <span class="n">zz</span><span class="p">[</span><span class="n">iz</span><span class="p">])</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ind2</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">ind2</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">cols</span><span class="p">[</span><span class="n">iz</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Z = &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">lz</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="n">labelsZ</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">loh12_disk</span><span class="p">:</span> <span class="n">labelsZ</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;Z = </span><span class="si">{:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="n">elem</span><span class="p">)))</span>
+        
+        <span class="c1"># Hbeta = neblines_disk[1][ind]</span>
+        <span class="c1"># OIII5007 = neblines_disk[3][ind]</span>
+        <span class="c1"># NII6548 = neblines_disk[4][ind]</span>
+        <span class="c1"># Halpha = neblines_disk[5][ind]</span>
+        
+        <span class="c1"># my_x = np.log10(NII6548 / Halpha)</span>
+        <span class="c1"># my_y = np.log10(OIII5007 / Hbeta)</span>
+        
+        <span class="c1"># # for i in range(len(ind)):</span>
+        <span class="c1">#     #plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=10, linewidth=0, color=cols2[i])</span>
+        <span class="c1">#     # plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=2, linewidth=0, color=&#39;black&#39;)</span>
+            
+        <span class="c1"># print(my_x.shape,my_y.shape)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">my_x</span><span class="p">,</span> <span class="n">my_y</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># for i, label in enumerate(labelsZ):</span>
+        <span class="c1">#     plt.annotate(label, (my_x[i], my_y[i]))</span>
+        <span class="n">plotnom</span> <span class="o">=</span> <span class="n">outplot</span> <span class="o">+</span> <span class="s1">&#39;/BPTplot_n_&#39;</span> <span class="o">+</span> <span class="n">nh</span> <span class="o">+</span> <span class="s1">&#39;_Z_test_SAGE.png&#39;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        
+        <span class="c1"># Hbeta = np.load(&#39;Hbeta_sub8.npy&#39;)[ind]</span>
+        <span class="c1"># OIII5007 = np.load(&#39;OIII_sub8.npy&#39;)[ind]</span>
+        <span class="c1"># NII6548 = np.load(&#39;NII_sub8.npy&#39;)[ind]</span>
+        <span class="c1"># Halpha = np.load(&#39;Halpha_sub8.npy&#39;)[ind]</span>
+
+        <span class="c1"># my_x = np.log10(NII6548 / Halpha)</span>
+        <span class="c1"># my_y = np.log10(OIII5007 / Hbeta)</span>
+        
+        <span class="c1"># for i in range(len(ind)):</span>
+        <span class="c1">#     #plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=10, linewidth=0, color=cols2[i])</span>
+        <span class="c1">#     plt.plot(my_x[i], my_y[i], marker=&#39;o&#39;, markersize=5, linewidth=0, color=&#39;blue&#39;)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;log$_</span><span class="si">{10}</span><span class="s1">$([NII]$</span><span class="se">\\</span><span class="s1">lambda$6584/H$</span><span class="se">\\</span><span class="s1">alpha$)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;log$_</span><span class="si">{10}</span><span class="s1">$([OIII]$</span><span class="se">\\</span><span class="s1">lambda$5007/H$</span><span class="se">\\</span><span class="s1">beta$)&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plotnom</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+        <span class="c1">#os.remove(file)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Documentation for get_nebular_emission</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">Code overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../features.html">Code Features</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">get_nebular_emission 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">get_nebular_emission.eml_plots</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, GALFORM collaboration.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>
