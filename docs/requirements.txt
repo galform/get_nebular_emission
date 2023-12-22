@@ -2,5 +2,5 @@ numpy==1.22.0
 matplotlib==3.3.1
 pre-commit==2.13.0
 pytest-cov==2.7.1
-codecov==2.0.16
+codecov==2.1.13
 h5py==1.8.4
