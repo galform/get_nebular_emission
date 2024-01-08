@@ -16,7 +16,7 @@ from cosmology import set_cosmology
 import mpl_style
 
 # File selection
-infile = ["output_data/emlines_GP20_z0.0_Kashino_alpha_-1.7.hdf5"]
+infile = ["output_data/emlines_GP20_z0.0_Kashino_test.hdf5"]
 file = 0
 
 # Flux, Luminosity, Mass, Metallicity, Ratio, sSFR
@@ -25,18 +25,18 @@ color_labels = [r'$\log H_\alpha \ [\rm erg/s]$', r'$\log L[H_\alpha] \ [\rm erg
                 r'$\frac{L_{\rm Ha, AGN}}{L_{\rm Ha}}$', r'$\log sSFR \ [yr^{-1}]$']
 color = 4
 
-# NII, SII, M, OII
-plot = 1
+# NII, SII
+plot = 0
 
 # Redshift of the galaxies from the sample. Selection criteria stablished for
 # z = 0.1, 0.8, 1.5, following Exposito-Marquez et. al. 2023.
 redshift = 0.1
 
 # Minimum ratio between luminosity in Halpha from AGNs and total luminosity.
-ratio_min = 0.1
+ratio_min = -0.1
 
 # Consider attenuation?
-att = True
+att = False
 
 ##########################################
 
@@ -284,24 +284,16 @@ r = r[ind2]
 k = k[ind2]
 
 bpt_x = ['log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)',
-         'log$_{10}$([SII]$\\lambda$6724/H$\\alpha$)',
-         'log$_{10}$ M$_*$',
-         'log$_{10}$([NII]$\\lambda$6584/[OII]$\\lambda$3727)',
-         'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)']
-my_x = np.array([np.log10(NII6548 / Halpha),np.log10(SII6731 / Halpha),np.log10(NII6548 / OII3727)])
+         'log$_{10}$([SII]$\\lambda$6724/H$\\alpha$)']
+my_x = np.array([np.log10(NII6548 / Halpha),np.log10(SII6731 / Halpha)])
 
 bpt_y = ['log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
-         'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
-         'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
-         'log$_{10}$([OIII]$\\lambda$5007/[OII]$\\lambda$3727)',
-         'log$_{10}$(EW(H$\\alpha$)/$\dot{A}$)']
-my_y = np.array([np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / OII3727)])
+         'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)']
+my_y = np.array([np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / Hbeta)])
 
 
-my_x_obs = [np.log10(NII6548_favole / Ha_favole),
-            np.log10(SII6731_favole / Ha_favole),np.log10(NII6548_favole / OII3727_favole)]
-my_y_obs = [np.log10(OIII5007_favole / Hb_favole),
-            np.log10(OIII5007_favole / Hb_favole),np.log10(OIII5007_favole / Hb_favole)]
+my_x_obs = [np.log10(NII6548_favole / Ha_favole),np.log10(SII6731_favole / Ha_favole)]
+my_y_obs = [np.log10(OIII5007_favole / Hb_favole),np.log10(OIII5007_favole / Hb_favole)]
 
 lum_Halpha = np.log10(Halpha*const.h**2) 
 
@@ -341,16 +333,6 @@ elif plot==1:
     plt.plot(x[x<0.32], SFR_AGN[x<0.32], 'k.', markersize=3)
     
     plt.plot(x[(Seyfert_LINER>SFR_AGN)|(x>=0.32)], Seyfert_LINER[(Seyfert_LINER>SFR_AGN)|(x>=0.32)], 'k.', markersize=3)   
-elif plot==2:
-    xmin=-1.9
-    xmax=0.9
-    ymin=-2.1
-    ymax=1.6
-elif plot==3:
-    xmin=-2.2
-    xmax=1.2
-    ymin=-1
-    ymax=3
     
 if redshift==0.1:
     flux = 2e-16
@@ -362,6 +344,8 @@ elif redshift==0.8:
 elif redshift==1.5:
     flux = 5e-17
     ind3 = (np.where((Ha_flux>5e-17)&(k<23.5)&(Halpha_ratio>ratio_min))[0])
+else:
+    ind3 = np.where(r == r)[0]
 
 plt.scatter(my_x_obs[plot], my_y_obs[plot], s=20, c='darkgrey', alpha=0.8)
 

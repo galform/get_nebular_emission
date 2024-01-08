@@ -7,7 +7,7 @@ This code is in beta. Please report issues and be patient with the incomplete do
 Get nebular emission
 ======================
 
-**get_nebular_emission** is a Python package that given the metallicity of cold gas, the stellar mass and either the specific star formation or the number of ionizing photons, calculates the intensity of nebular emission lines from star forming HII regions. It also calculates the emission lines from narrow-line regions of AGNs from the AGN luminosity and the size and mass of galactic components.
+**get_nebular_emission** is a Python package that given the metallicity of cold gas, the stellar mass and either the specific star formation or the number of ionizing photons, calculates the intensity of nebular emission lines from star forming HII regions. It also calculates the emission lines from narrow-line regions of AGNs from the AGN luminosity and the size and mass of galactic components. 
 
 The current version of the code is based on the Fortran90 one used for the paper Baugh, Lacey, Gonzalez-Perez and Manzoni 2022 (https://arxiv.org/abs/2112.00129).
 
@@ -25,6 +25,11 @@ This code uses numpy as specified in docs/requirements.txt.
 The code can be run directly from a cloned GitHub `repository`_ and then makeing a local installation from the main directory (where you can see `setup.py`:
 :code:`python3 setup.py install`.
 
+Tutorial
+-----------------------------
+
+|NII|
+
 .. _pyversion: https://uk.mathworks.com/help/matlab/getting-started-with-python.html
 
 .. _package: https://pypi.org/project/get_nebular_emission/
@@ -34,6 +39,8 @@ The code can be run directly from a cloned GitHub `repository`_ and then makeing
 .. |docs| image:: https://readthedocs.org/projects/get-nebular-emission/badge/?version=latest
    :target: https://get-nebular-emission.readthedocs.io/en/latest/
    :alt: Documentation Status
+   
+.. |NII| image:: https://i.ibb.co/xSxQr58/NII-test.png
 
 
 

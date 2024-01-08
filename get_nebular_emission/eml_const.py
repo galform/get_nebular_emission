@@ -37,11 +37,9 @@ photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"nebular_data/gutkin16_tables/limits_gutkin.txt",
            'feltre16': r"nebular_data/feltre16_tables/limits_feltre.txt"}
 
-unemods = ['kashino20', 'orsi14', 'panuzzo03', 'carton17']
+unemods = ['kashino20', 'orsi14', 'panuzzo03']
 
 attmods = ['ratios', 'cardelli89']
-
-ewmods = ['LandEW']
 
 inputformats = ['txt','hdf5']
 

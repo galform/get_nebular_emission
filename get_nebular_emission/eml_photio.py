@@ -148,6 +148,22 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         return lower_limit,upper_limit
     
 def calculate_flux(nebline,redshift,h0=const.h,origin='sfr'):
+    '''
+    Get the fluxes for the emission lines given the luminosity and redshift.
+    nebline : floats
+     Array with the luminosities of the lines per component. (Lsun for L_AGN = 10^45 erg/s)
+    h0 : float
+      If not None: value of h, H0=100h km/s/Mpc.
+    redshift : float
+     Redshift of the input data.
+    origin : string
+     Emission source (star-forming region or AGN).
+      
+    Returns
+    -------
+    fluxes : floats
+     Array with the fluxes of the lines per component.
+    '''
     
     if nebline.any():
         set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=h0)
@@ -180,6 +196,10 @@ def get_lines_Feltre(lu, lne, loh12, verbose=True,
      ne of the galaxies per component (cm^-3).
     loh12 : floats
      Metallicity of the galaxies per component (log10(Z))
+    xid_feltre : float
+     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
+    alpha_feltre : float
+     Alpha value for the Feltre et. al. photoionisation model.
     verbose : boolean
       If True print out messages
       
@@ -379,6 +399,12 @@ def get_lines_Gutkin(lu, lne, loh12, verbose=True,
      ne of the galaxies per component (cm^-3).
     loh12 : floats
      Metallicity of the galaxies per component (log10(Z))
+    xid_gutkin : float
+     Dust-to-metal ratio for the Gutkin et. al. photoionisation model.
+    co_gutkin : float
+     C/O ratio for the Gutkin et. al. photoionisation model.
+    imf_cut_gutkin : float
+     Solar mass high limit for the IMF for the Gutkin et. al. photoionisation model.
     verbose : boolean
       If True print out messages
       
@@ -643,6 +669,16 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True,
      Metallicity of the galaxies per component (log10(Z))
     photomod : string
       Name of the considered photoionisation model.
+    xid_gutkin : float
+     Dust-to-metal ratio for the Gutkin et. al. photoionisation model.
+    co_gutkin : float
+     C/O ratio for the Gutkin et. al. photoionisation model.
+    imf_cut_gutkin : float
+     Solar mass high limit for the IMF for the Gutkin et. al. photoionisation model.
+    xid_feltre : float
+     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
+    alpha_feltre : float
+     Alpha value for the Feltre et. al. photoionisation model.
     verbose : boolean
       If True print out messages
 

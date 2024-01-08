@@ -55,7 +55,7 @@ import glob
         # Stellar mass (M*).
         # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
         # Mean metallicity of the cold gas (Z).
-infile = glob.glob(r"GP20/GP20_0.0_0.txt")
+infile = glob.glob(r"example_data/GP20_62.5kpc_z0_example.txt")
 
 
 # OUTPUT FILE
@@ -326,7 +326,6 @@ extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','m_K','m_R','m_R_SDSS','m_
                       'Mdot_stb','Mdot_hh','Mhot','Lagn']
 extra_params_labels = ['Type of halo (central = 0)',
                        r'Black hole mass ($M_\odot \ h^{-1}$)',
-                       r'Bulge mass ($M_\odot \ h^{-1}$)',
                        r'Halo mass ($M_\odot \ h^{-1}$)',
                        r'Stellar mass of bulge ($M_\odot \ h^{-1}$)',
                        'K band (Apparent magnitude, attenuated)',
@@ -362,7 +361,9 @@ maxcuts = [None]
     # galaxies with more than 20 DM particles in the simulations.
 ####################################################
 
-eml.eml(infile, outfile, m_sfr_z=cols, infile_z0=infile_z0, 
+eml.eml(infile, outfile, 
+            m_sfr_z=cols, infile_z0=infile_z0, 
+            cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             att=att,
             att_params=att_params, att_ratio_lines=att_ratio_lines,
             flux=flux,

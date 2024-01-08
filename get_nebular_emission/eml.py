@@ -1,4 +1,4 @@
-from get_nebular_emission.eml_io import get_data, get_secondary_data, get_secondary_data2, write_data, write_data_AGN
+from get_nebular_emission.eml_io import get_data, get_secondary_data, write_data, write_data_AGN
 from get_nebular_emission.eml_une import get_une, bursttobulge, L_agn, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
 import get_nebular_emission.eml_const as const
 from get_nebular_emission.eml_photio import get_lines, get_limits, clean_photarray, calculate_flux
@@ -7,25 +7,23 @@ import time
 import numpy as np
 #import get_nebular_emission.eml_testplots as get_testplot
 
-def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
+def eml(infile, outfile, m_sfr_z, 
+        inputformat='HDF5',infile_z0=[None], h0=None, redshift=0,
         cutcols=[None], mincuts=[None], maxcuts=[None], 
         att=False, att_params=None, att_ratio_lines=None,
         flux=False,
-        volume = 542.16**3.,inputformat='HDF5', flag=0,
+        flag=0,
         IMF_i=['Kroupa', 'Kroupa'], IMF_f=['Kroupa', 'Kroupa'], 
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,
-        AGN=False,
-        AGNinputs='Lagn', Lagn_params=None, Z_central_cor=False,
+        AGN=False, AGNinputs='Lagn', Lagn_params=None, Z_central_cor=False,
         epsilon_params=None,
         extra_params=None, extra_params_names=None, extra_params_labels=None,
-        cols_att = None,cols_notatt = None,cols_photmod = None,
-        cols_ew_att=None, cols_ew_notatt=None,
-        attmod='cardelli89',unemod_sfr='kashino19', 
-        unemod_agn='panuzzo03', photmod_sfr='gutkin16',
-        photmod_agn='feltre16', ewmod='LandEW',
-        LC2sfr=False, cutlimits=False, mtot2mdisk = True,
-        verbose=True, Testing=False,
+        attmod='cardelli89',
+        unemod_sfr='kashino19', unemod_agn='panuzzo03',
+        photmod_sfr='gutkin16', photmod_agn='feltre16',
+        LC2sfr=False, cutlimits=False, mtot2mdisk=True,
+        verbose=True, testing=False,
         xid_feltre=0.5,alpha_feltre=-1.7,
         xid_gutkin=0.3,co_gutkin=1,imf_cut_gutkin=100):
     '''
@@ -33,34 +31,49 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
 
     Parameters
     ----------
-    infile : string
-     Name of the input file. 
+    infile : strings
+     List with the name of the input files. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
      - In csv files (*.csv), columns separated by ','.
     outfile : string
      Name of the output file.
-    inputformat : string
-     Format of the input file.
     m_sfr_z : list
      - [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
+    inputformat : string
+     Format of the input file.
+    infile_z0 : strings
+     List with the name of the input files with the galaxies at redshift 0. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    h0 : float
+      If not None: value of h, H0=100h km/s/Mpc.
+    redshift : float
+     Redshift of the input data.
     cutcols : list
      Parameters to look for cutting the data.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    mincuts : list
+    mincuts : floats
      Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
-    maxcuts : list
+    maxcuts : floats
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
+    att : boolean
+     If True calculates attenuated emission.
     att_params : list
      Parameters to look for calculating attenuation. See eml_const to know what each model expects.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    IMF_i : list
+    att_ratio_lines : strings
+     Names of the lines corresponding to the values in att_params when attmod=ratios.
+     They should be written as they are in the selected model (see eml_const).
+    flux : boolean
+     If True calculates flux of the emission lines based on the given redshift.
+    IMF_i : strings
      Assumed IMF in the input data.
      - [[component1_IMF],[component2_IMF],...]
-    IMF_f : list
+    IMF_f : strings
      Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
      - [[component1_IMF],[component2_IMF],...]
     q0 : float
@@ -71,6 +84,8 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     T : float
      Typical temperature of ionizing regions.
+    AGN : boolean
+     If True calculates emission from the narrow-line region of AGNs.
     AGNinputs : string
      Type of inputs for AGN's bolometric luminosity calculations.
     Lagn_params : list
@@ -81,60 +96,49 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
      If False, the code supposes the central metallicity of the galaxy to be the mean one.
      If True, the code estimates the central metallicity of the galaxy from the mean one.
     epsilon_params : list
-     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
+     Inputs for the calculation of the volume-filling factor.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    cols_att : list
-     Attenuated flux lines calculated by the semi-analytic model of the input data. 
-     Used to calculate attenuation coefficients for the "ratio" attenuation model.
+    extra_params : list
+     Parameters from the input files which will be saved in the output file.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    cols_notatt : list
-     Not attenuated flux lines calculated by the semi-analytic model of the input data. 
-     Used to calculate attenuation coefficients for the "ratio" attenuation model.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cols_photmod : list
-     Index in the list of lines of the photoionization model of the lines for which 
-     attenuation is going to be calculated in the "ratio" attenuation model.
-    cols_ew_att : list
-     Equivalent widths calculated by the semi-analytic model of the input data, considering attenuation. 
-     Used to calculate equivalent widths by calculating the corresponding continuum flux.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cols_ew_notatt : list
-     Equivalent widths calculated by the semi-analytic model of the input data, without considering attenuation. 
-     Used to calculate equivalent widths by calculating the corresponding continuum flux.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
+    extra_params_names : strings
+     Names of the datasets in the output files for the extra parameters.
+    extra_params_labels : strings
+     Description labels of the datasets in the output files for the extra parameters.
+    attmod : string
+     Attenuation model.
+    unemod_sfr : string
+     Model to go from galaxy properties to U and ne.
+    unemod_agn : string
+     Model to go from galaxy properties to U and ne.
+    photmod_sfr : string
+     Photoionisation model to be used for look up tables.
+    photmod_agn : string
+     Photoionisation model to be used for look up tables.
+    LC2sfr : boolean
+     If True magnitude of Lyman Continuum photons expected as input for SFR.
     cutlimits : boolean
      If True the galaxies with U, ne and Z outside the photoionization model's grid limits won't be considered.
-    h0 : float
-      If not None: value of h, H0=100h km/s/Mpc.
-    redshift : float
-     Redshift of the input data.
-    volume : float
-      Carlton model default value = 500^3 Mpc^3/h^3. If not 500.**3. : value of the simulation volume in Mpc^3/h^3
-    unemod_sfr : string
-      Model to go from galaxy properties to U and ne.
-    unemod_agn : string
-      Model to go from galaxy properties to U and ne.
-    attmod : string
-      Attenuation model.
-    photmod_sfr : string
-      Photoionisation model to be used for look up tables.
-    photmod_agn : string
-      Photoionisation model to be used for look up tables.
-    ewmod : string
-      Method for equivalent width calculation.
-    LC2sfr : boolean
-      If True magnitude of Lyman Continuum photons expected as input for SFR.
     mtot2mdisk : boolean
-      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
+     If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
-      If True print out messages
-    Testing : boolean
-      If True only run over few entries for testing purposes
+     If True print out messages.
+    testing : boolean
+     If True only run over few entries for testing purposes.
+    xid_feltre : float
+     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
+    alpha_feltre : float
+     Alpha value for the Feltre et. al. photoionisation model.
+    xid_gutkin : float
+     Dust-to-metal ratio for the Gutkin et. al. photoionisation model.
+    co_gutkin : float
+     C/O ratio for the Gutkin et. al. photoionisation model.
+    imf_cut_gutkin : float
+     Solar mass high limit for the IMF for the Gutkin et. al. photoionisation model.
+    
+    
 
     Notes
     -------
@@ -165,13 +169,13 @@ def eml(infile, outfile, m_sfr_z, infile_z0=[None], h0=None, redshift=0,
                                       inputformat=inputformat, LC2sfr=LC2sfr, 
                                       mtot2mdisk=mtot2mdisk,
                                       IMF_i=IMF_i, IMF_f=IMF_f, verbose=verbose, 
-                                      Testing=Testing)
+                                      testing=testing)
         
-        epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param = get_secondary_data2(i, infile, 
+        epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param = get_secondary_data(i, infile, 
                                cut, infile_z0=infile_z0, 
                                epsilon_params=epsilon_params, extra_params=extra_params,
                                Lagn_params=Lagn_params, att_params=att_params, 
-                               inputformat=inputformat, attmod=attmod, verbose=verbose)        
+                               inputformat=inputformat, attmod=attmod, verbose=verbose) 
         
         if verbose:
             print('Data read.')

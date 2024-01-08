@@ -171,7 +171,7 @@ def locate_interval(val, edges):
     return ind
 
 def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
-              inputformat='hdf5',Testing=False, verbose=True):
+              inputformat='hdf5',testing=False, verbose=True):
     '''
     It reads star masses, star formation rates and metallicities from a file.
 
@@ -200,7 +200,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
       Model of dust attenuation.
     verbose : boolean
       If True print out messages
-    Testing : boolean
+    testing : boolean
       If True only run over few entries for testing purposes
 
     Returns
@@ -213,7 +213,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
 
     ncomp = get_ncomponents(cols)
     
-    if Testing:
+    if testing:
         limit = 50
     else:
         limit = None
@@ -255,21 +255,20 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
         
         cut = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)[:limit]))
         
-        if cutcols:
+        if cutcols[0]:
             for i in range(len(cutcols)):
+                
                 param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)[:limit]
                 mincut = mincuts[i]
                 maxcut = maxcuts[i]
-                # if i<2:
+                
                 if mincut and maxcut:
                     cut = np.intersect1d(cut,np.where((mincut<param)&(param<maxcut))[0])
                 elif mincut:
                     cut = np.intersect1d(cut,np.where(mincut<param)[0])
                 elif maxcut:
                     cut = np.intersect1d(cut,np.where(param<maxcut)[0])
-                # else:
-                #     param2 = np.loadtxt(infile,usecols=16,skiprows=ih)[:limit]
-                #     cut = np.intersect1d(cut,np.where(param2<param)[0])
+                    
         
         for i in range(ncomp):
             X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T[:,:limit]
@@ -294,7 +293,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
             
     return lms[cut], lssfr[cut], loh12[cut], cut
 
-def get_secondary_data2(i, infile, cut, infile_z0=None, epsilon_params=None, 
+def get_secondary_data(i, infile, cut, infile_z0=None, epsilon_params=None, 
                        Lagn_params=None, att_params=None, extra_params=None,
                        inputformat='hdf5', attmod='cardelli89', verbose=True):    
     '''
@@ -306,16 +305,34 @@ def get_secondary_data2(i, infile, cut, infile_z0=None, epsilon_params=None,
      - Name of the input file. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
      - In csv files (*.csv), columns separated by ','.
+    infile_z0 : string
+     Name of the files with the galaxies at redshift 0. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    cut : strings
+     List of indexes of the selected galaxies from the samples.
     inputformat : string
      Format of the input file.
     epsilon_params : list
      Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
+    Lagn_params : list
+     Inputs for AGN's bolometric luminosity calculations.
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    attmod : string
+     Attenuation model.
+    verbose : boolean
+     If True print out messages.
+    extra_params : list
+     Parameters from the input files which will be saved in the output file.
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
      
     Returns
     -------
-    epsilon_param : floats
+    epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param : floats
     '''
     
     epsilon_param = [[None]]
@@ -354,55 +371,20 @@ def get_secondary_data2(i, infile, cut, infile_z0=None, epsilon_params=None,
                 
     return epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param
 
-def get_secondary_data(infile, cols, cut, inputformat='hdf5',verbose=True):    
-    '''
-    Get data for epsilon calculation in the adecuate units.
-    
-    Parameters
-    ----------
-    infile : string
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    inputformat : string
-     Format of the input file.
-    epsilon_params : list
-     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-     
-    Returns
-    -------
-    epsilon_param : floats
-    '''
-    
-    if inputformat not in const.inputformats:
-        if verbose:
-            print('STOP (eml_io): Unrecognised input format.',
-                  'Possible input formats = {}'.format(const.inputformats))
-        sys.exit()
-    elif inputformat=='hdf5':
-        if verbose:
-            print('HDF5 not implemented yet for secondary params.')
-        sys.exit()
-    elif inputformat=='txt':
-        ih = get_nheader(infile)
-        param = np.loadtxt(infile,skiprows=ih,usecols=cols).T
-    
-    return param[:,cut]
-
 def get_data(i, infile, cols, h0=None, inputformat='hdf5', 
              IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM', LC2sfr=False, mtot2mdisk=True, 
-             verbose=False, Testing=False):
+             verbose=False, testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
 
     Parameters
     ----------
-    infile : string
-     - Name of the input file. 
+    i : integer
+     Index of the file from the infile list.
+    infile : strings
+     List with the name of the input files. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
      - In csv files (*.csv), columns separated by ','.
     inputformat : string
@@ -416,16 +398,16 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
      Parameters to look for cutting the data.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    mincuts : list
+    mincuts : strings
      Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
-    maxcuts : list
+    maxcuts : strings
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
     attmod : string
      Attenuation model.
-    IMF_i : list
+    IMF_i : strings
      Assumed IMF in the input data.
      - [[component1_IMF],[component2_IMF],...]
-    IMF_f : list
+    IMF_f : strings
      Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
      - [[component1_IMF],[component2_IMF],...]
     h0 : float
@@ -436,7 +418,7 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
       If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
       If True print out messages
-    Testing : boolean
+    testing : boolean
       If True only run over few entries for testing purposes
 
     Returns
@@ -447,7 +429,7 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
     
     lms,lssfr,loh12,cut = read_data(infile[i], cols=cols, cutcols=cutcols,
                                 maxcuts=maxcuts, mincuts=mincuts, inputformat=inputformat, 
-                                Testing=Testing, verbose=verbose)
+                                testing=testing, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
 
@@ -585,7 +567,7 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
 
 
 
-    if Testing: # here : Search more efficient form. Allow more components in the header
+    if testing: # here : Search more efficient form. Allow more components in the header
         if ncomp==2:
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
                       ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
@@ -613,7 +595,7 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
 def write_data(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
                nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
                extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
-               ew_notatt=None,ew_att=None,outfile='output.hdf5',attmod='ratios',
+               outfile='output.hdf5',attmod='ratios',
                unemod_sfr='kashino20',photmod_sfr='gutkin16',first=True):
     '''
     Create a .hdf5 file from a .dat file.
@@ -634,10 +616,14 @@ def write_data(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     nebline_sfr_att : floats
       Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)    
-    ew_notatt : floats
-      Array with the equivalent width of the lines per component. (Angstroms)
-    ew_att : floats
-      Array with the equivalent width of the attenuated lines per component. (Angstroms)
+    extra_params : list
+     Parameters from the input files which will be saved in the output file.
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    extra_params_names : strings
+     Names of the datasets in the output files for the extra parameters.
+    extra_params_labels : strings
+     Description labels of the datasets in the output files for the extra parameters.
     outfile : string
       Name of the output file.
     attmod : string
@@ -648,8 +634,6 @@ def write_data(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
       Photoionisation model to be used for look up tables.
     first : boolean
       If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.
-    verbose : boolean
-      If True print out messages.
     '''
     
     if first: 
@@ -789,10 +773,14 @@ def write_data_AGN(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,lu_agn,lne_agn,loh12_agn,
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     nebline_agn_att : floats
       Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)      
-    ew_notatt : floats
-      Array with the equivalent width of the lines per component. (Angstroms)
-    ew_att : floats
-      Array with the equivalent width of the attenuated lines per component. (Angstroms)
+    extra_params : list
+     Parameters from the input files which will be saved in the output file.
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    extra_params_names : strings
+     Names of the datasets in the output files for the extra parameters.
+    extra_params_labels : strings
+     Description labels of the datasets in the output files for the extra parameters.
     outfile : string
       Name of the output file.
     attmod : string
@@ -807,8 +795,6 @@ def write_data_AGN(lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,lu_agn,lne_agn,loh12_agn,
       Photoionisation model to be used for look up tables.
     first : boolean
       If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.
-    verbose : boolean
-      If True print out messages.
     '''
     
     if first: 
