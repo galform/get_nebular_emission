@@ -11,9 +11,15 @@ Get nebular emission
 
 The current version of the code is based on the Fortran90 one used for the paper Baugh, Lacey, Gonzalez-Perez and Manzoni 2022 (https://arxiv.org/abs/2112.00129).
 
-The code reads galaxy properties from an input text or HDF5 file with values separated by spaces. This can have a header, as long as the header lines start with characters or signs well specify (different from the minus sign). The file can contain several columns with properties for different galactic components. For each component, the column number (starting from 0) should be provided for the following properties: the stellar mass (Msun), the (instantaneous) star formation rate (SFR Msun/Gyr), the metallicity of the cold gas (defined as the ratio MZcold/Mcold).
+The code expects text or HDF5 files with data of global galactic properties from one or more galaxies. These properties can correspond to any number of galaxy component (for example, disk and bulge), for which the code calculates emission lines independently. Finally, it outputs a HDF5 file with all the results.
 
-If a h0 value is specified, then the units will be assumed to be: stellar mass (Msun/h), SFR (Msun/h/Gyr).
+It considers two possible sources of emission: star-forming or HII regions and the narrow-line regions (NLR) of AGNs. The spectral emission line luminosities are calculated separately for star-forming or HII regions and the narrow-line regions (NLR) of AGNs. Although the code structure is the same for both ionising origins, different inputs are required. A comprehesive list of the input parameters can be found below. 
+
+First, global galactic properties are connected to the ionising source, either HII regions or the NLR. Then, a photoionisation model is used to obtain the emission line luminosities given the characteristics of the ionising sources. This is done interpolating the values from predefined photoionisation grids.
+
+As long as the needed input parameters are available, the code can be coupled with model galaxies produced with different codes: hydrodynamical simulations, semi-analytical models, empirical ones, etc. Each part of the procedure is handled by a different module, specified in the flowchart:
+
+|flowchart|
 
 Requirements and Installation
 -----------------------------
@@ -25,8 +31,15 @@ This code uses numpy as specified in docs/requirements.txt.
 The code can be run directly from a cloned GitHub `repository`_ and then makeing a local installation from the main directory (where you can see `setup.py`:
 :code:`python3 setup.py install`.
 
-Tutorial
+Tutorial and testing
 -----------------------------
+
+A brief tutorial going through all the main options of the code is available at `run_code_tutorial.py`. A more in-depth review of all the options in the code can be found at Expósito-Márquez et. al. 2024 in prep.
+
+`run_code_tutorial.py` is already prepared to run a z = 0 subvolume of GP20 model galaxies (Gonzalez-Perez et. al. 2020, https://academic.oup.com/mnras/article/498/2/1852/5894931) in the 'example_data' directory. The repository also has a program to plot OIII/Hb vs NII/Ha or OIII/Hb vs SII/Ha line-ratio diagrams from the output files of the code, with several predefined selection criteria. 
+
+A BPT with the results for the example file without considering attenuation and with the selection criteria for local galaxies from Favole et. al. 2023 (https://arxiv.org/abs/2303.11031) can be seen below for testing purposes.
+
 
 |NII|
 
@@ -41,6 +54,8 @@ Tutorial
    :alt: Documentation Status
    
 .. |NII| image:: https://i.ibb.co/xSxQr58/NII-test.png
+
+.. |flowchart| image:: https://i.ibb.co/CsdZjgm/flow-chart.png
 
 
 
