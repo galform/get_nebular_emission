@@ -22,14 +22,14 @@ file = 0
 # Flux, Luminosity, Mass, Metallicity, Ratio, sSFR
 color_labels = [r'$\log H_\alpha \ [\rm erg/s]$', r'$\log L[H_\alpha] \ [\rm erg/s]$',
                 r'$\log M_* \ [M_\odot]$', r'$\log Z$',
-                r'$\frac{L_{\rm Ha, AGN}}{L_{\rm Ha}}$', r'$\log sSFR \ [yr^{-1}]$']
+                r'$\frac{L_{\rm H_\alpha, AGN}}{L_{\rm H_\alpha}}$', r'$\log sSFR \ [yr^{-1}]$']
 color = 4
 
 # NII, SII
 plot = 0
 
 # Redshift of the galaxies from the sample. Selection criteria stablished for
-# z = 0.1, 0.8, 1.5, following Exposito-Marquez et. al. 2023.
+# z = 0.1, 0.8, 1.5, following Exposito-Marquez et. al. 2024.
 redshift = 0.1
 
 # Minimum ratio between luminosity in Halpha from AGNs and total luminosity.

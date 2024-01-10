@@ -36,7 +36,7 @@ Tutorial and testing
 
 A brief tutorial going through all the main options of the code is available at `run_code_tutorial.py`. A more in-depth review of all the options in the code can be found at Expósito-Márquez et. al. 2024 in prep.
 
-`run_code_tutorial.py` is already prepared to run a z = 0 subvolume of GP20 model galaxies (Gonzalez-Perez et. al. 2020, https://academic.oup.com/mnras/article/498/2/1852/5894931) in the 'example_data' directory. The repository also has a program to plot OIII/Hb vs NII/Ha or OIII/Hb vs SII/Ha line-ratio diagrams from the output files of the code, with several predefined selection criteria. 
+`run_code_tutorial.py` is already prepared to run a z = 0 subvolume of GP20 model galaxies (Gonzalez-Perez et. al. 2020, https://academic.oup.com/mnras/article/498/2/1852/5894931) in the 'example_data' directory. The repository also has a program to plot line-ratio diagrams from the output files of the code, with several predefined selection criteria. 
 
 A BPT with the results for the example file without considering attenuation and with the selection criteria for local galaxies from Favole et. al. 2023 (https://arxiv.org/abs/2303.11031) can be seen below for testing purposes.
 
