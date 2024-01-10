@@ -9,13 +9,18 @@ from get_nebular_emission.eml_io import get_nheader
 
 
 def bursttobulge(lms,Lagn_param):
+    '''
+    Changes the bulge component of the stellar mass from the mass of the starburst
+    to the total mass of the bulge.
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    Lagn_params : floats
+     Parameters to calculate the AGN emission. 
+     The last one is always the stellar mass of the bulge.
+    '''
     ind = np.where(Lagn_param[-1]>0)
     lms[:,1] = const.notnum
     lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
-    
-    
-def epsilon_MZ(lms,lz,a=const.epsilon_a_sfr,b=const.epsilon_b_sfr):
-    return a*lms + b*lz
 
 def Z_blanc(logM_or):
     logZ = np.zeros(logM_or.shape)
@@ -37,7 +42,6 @@ def Z_blanc(logM_or):
 
 def Z_tremonti(logM,logZ,Lagn_param=[[None],[None]]): # Ms and Z scale relation from Tremonti et. al. 2004
     
-    # logZ = -1.492 + 1.847*logM - 0.08026*logM**2
     try:
         if logZ.shape[1] > 1:
             if Lagn_param[-1][0] != None:
@@ -63,11 +67,12 @@ def Z_tremonti2(logM,logZ,minZ,maxZ,Lagn_param=[[None],[None]]): # Correction in
     logZtot = logZ[:,0]
     logZt = logZt[:,0]
     
-    ind_lims = np.where((logZtot > np.log10(minZ)) & (logZtot < np.log10(maxZ)))[0]
+    # ind_lims = np.where((logZtot > np.log10(minZ)) & (logZtot < np.log10(maxZ)))[0]
+    ind_lims = np.where((logZtot > -900) & (logZtot < 900))[0]
     
     smin = 7
     smax = 12
-    ds = 0.1
+    ds = 0.05
     sbins = np.arange(smin, (smax + ds), ds)
     sbinsH = np.arange(smin, smax, ds)
     shist = sbinsH + ds * 0.5
@@ -88,8 +93,23 @@ def Z_tremonti2(logM,logZ,minZ,maxZ,Lagn_param=[[None],[None]]): # Correction in
 
     for i in range(len(sbins)-1):
         ind = np.where((logMtot>sbins[i])&(logMtot<sbins[i+1]))
-        # print(sbins[i],sbins[i+1],median[i],median_t[i],dif[i])
-        logZ[ind] = logZ[ind] + dif[i]
+        logZ[:,0][ind] = logZ[:,0][ind] + dif[i]
+        logZ[:,1][ind] = logZ[:,1][ind] + dif[i]
+        
+    # smin = 7
+    # smax = 12
+    # ds = 0.05
+    # sbins = np.arange(smin, (smax + ds), ds)
+    # sbinsH = np.arange(smin, smax, ds)
+    # shist = sbinsH + ds * 0.5
+
+    # median2 = perc_2arrays(sbins, logMtot[ind_lims], logZ[:,0][ind_lims], 0.5)
+    # ind_med = np.where(median2 != -999.)[0]
+    # median2 = median2[ind_med]
+        
+    # print(median2)
+    # print()
+    # print(median_t)
     
     return logZ
     
@@ -212,17 +232,10 @@ def L_agn(Lagn_params_vals,AGNinputs='complete',verbose=True):
 
     Parameters
     ----------
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    inputformat : string
-     Format of the input file.
+    Lagn_params : floats
+     Parameters to calculate the AGN emission. 
     AGNinputs : string
      Type of inputs for AGN's bolometric luminosity calculations.
-    Lagn_params : list
-     Inputs for AGN's bolometric luminosity calculations.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
     verbose : boolean
       If True print out messages.
 
@@ -482,7 +495,21 @@ def enclosed_mass_sphere(x,M,reff,profile='exponential',verbose=True):
         return mass_enclosed
     
 def vol_sphere(r):
-    return (4/3)*np.pi*r**3
+    '''
+    Given the radius of a sphere, returns its value.
+
+    Parameters
+    ----------
+    r : float
+     Radius of the sphere.
+     
+    Returns
+    -------
+    V : float
+    '''
+    
+    V = (4/3)*np.pi*r**3
+    return V
 
 def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     '''
@@ -501,6 +528,9 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
      Half-mass radius of the galaxy (Mpc)
     profile : string
      Assumed density profile form for the surface density.
+    bulge : boolean
+     True if the calculation is being applied to a bulge.
+     False if the calculation is being applied to a disk.
     verbose : boolean
      If True print out messages.
      
@@ -550,6 +580,8 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
       Cold gas mass of the galaxy (Msun).
     r_hm : floats
       Half-mass radius of the galaxy (Mpc)
+    T : float
+     Typical temperature of ionizing regions.
     profile : string
       Assumed density profile form for the surface density.
     verbose : boolean
@@ -578,12 +610,32 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     return n
 
 def gamma_gas_func():
-    
+    '''
+    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
+     
+    Returns
+    -------
+    gamma_gas : float
+    '''
     gamma_gas = 10 #km s^-1, Lagos et al. 2011
     
     return gamma_gas
 
 def gamma_star_func(h_star,den_star):
+    '''
+    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
+    
+    Parameters
+    ----------
+    h_star : float
+     Stellar scaleheight.
+    den_star : float
+     Stellar surface density.
+     
+    Returns
+    -------
+    gamma_gas : float
+    '''
     
     gamma_star = np.sqrt(np.pi*const.G*h_star*den_star) # GALFORM
     
@@ -680,6 +732,9 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
      Assumed hydrogen density in the ionizing regions.
     profile : string
      Assumed density profile form for the surface density.
+    bulge : boolean
+     True if the calculation is being applied to a bulge.
+     False if the calculation is being applied to a disk.
     verbose : boolean
      If True print out messages.
      
@@ -706,10 +761,8 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
      - In csv files (*.csv), columns separated by ','.
     max_r : floats
      Distance to the center within the surface density is going to be calculated (Mpc).
-    epsilon_params : list
-     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
+    epsilon_param : floats
+     Parameters for epsilon calculation.
     cut : integers
      Indeces of the galaxies which have survived the specified cut in the main program. 
     h0 : float
@@ -767,22 +820,31 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
     epsilon[epsilon>1] = 1
     return epsilon
 
-def n_ratio2(n,n_z0):
-    ratio = np.full(n.shape,1.)
-    ind = np.where((n>0)&(n_z0>0))[0]
-    
-    ratio[ind]  = n[ind]/n_z0[ind]
-    
-    return ratio
-
 def n_ratio(n,n_z0):
+    '''
+    Estimates the metallicity of the AGN from the global metallicity.
+
+    Parameters
+    ----------
+    n : floats
+     Particle number density.
+    n_z0 : floats
+     Particle number density of the galaxies from the sample at redshift 0.
+     
+    Returns
+    -------
+    ratio : floats
+    '''
+    
     ratio = np.full(n.shape,1.)
     ind = np.where((n>0)&(n_z0>0))[0]
     
     mean = np.mean(n[ind])
     mean_0 = np.mean(n_z0[ind])
     
-    return mean/mean_0
+    ratio = mean/mean_0
+    
+    return ratio
     
 
 def Zagn(logM,logz):
@@ -818,11 +880,11 @@ def Zagn(logM,logz):
         if Ms[i]<9.5:
             continue
         elif Ms[i]<10:
-            logz[i,0] = logz[i,0] + 0.1
+            logz[i] = logz[i] + 0.1
         elif Ms[i]<10.5:
-            logz[i,0] = logz[i,0] + 0.3
+            logz[i] = logz[i] + 0.3
         elif Ms[i]<11:
-            logz[i,0] = logz[i,0] + 0.1
+            logz[i] = logz[i] + 0.1
         else:
             continue
     
@@ -831,6 +893,29 @@ def Zagn(logM,logz):
 ######################
 
 def phot_rate(lssfr=None, lms=None, IMF_f=None, Lagn=None, origin='sfr'):
+    '''
+    Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
+    get the rate of ionizing photons in photon per second.
+
+    Parameters
+    ----------
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    loh12 : floats
+     Metallicity of the galaxies per component (log10(Z)).
+    IMF_f : string
+     Assumed IMF.
+    Lagn : floats
+     Bolometric luminosity of the AGN (Lsun).
+    origin : string
+     Source of the emission (star-forming region or AGN)
+     
+    Returns
+    -------
+    Q : floats
+    '''
     
     if origin=='sfr':
         Q = np.zeros(np.shape(lssfr))
@@ -855,13 +940,18 @@ def get_une_kashino20(Q, lms, lssfr, loh12, T, ng_ratio, IMF_f):
     Parameters
     ----------
     Q : floats
-     Rate of ionizing photons (phot/s)
+     Rate of ionizing photons (phot/s).
     lms : floats
      Masses of the galaxies per component (log10(M*) (Msun)).
     lssfr : floats
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     loh12 : floats
      Metallicity of the galaxies per component (log10(Z)).
+    T : float
+     Typical temperature of ionizing regions.
+    ng_ratio : floats
+     Ratio between the mean particle number density of the cold gas of the 
+     input sample and the sample at redshift 0.
     IMF_f : string
      Assumed IMF.
 
@@ -921,7 +1011,7 @@ def get_une_kashino20(Q, lms, lssfr, loh12, T, ng_ratio, IMF_f):
 
     return lu, lne, loh12
 
-def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, epsilon0, ng_ratio):
+def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, ng_ratio):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z) and the values for the free parameters,
     get the ionizing parameter, logU, and the electron density, logne,
@@ -929,18 +1019,25 @@ def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, epsilon0, ng_ratio):
 
     Parameters
     ----------
+    Q : floats
+     Rate of ionizing photons (phot/s).
     lms : floats
      Masses of the galaxies per component (log10(M*) (Msun)).
     lssfr : floats
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     loh12 : floats
      Metallicity of the galaxies per component (log10(Z)).
+    T : float
+     Typical temperature of ionizing regions.
     q0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     z0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     gamma : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+    ng_ratio : floats
+     Ratio between the mean particle number density of the cold gas of the 
+     input sample and the sample at redshift 0.
 
     Returns
     -------
@@ -985,37 +1082,37 @@ def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, epsilon0, ng_ratio):
 
     return lu, lne, loh12
 
-def get_une_carton17(lms, lssfr, loh12):
-    '''
-    Given log10(Mstar), log10(sSFR), log10(Z),
-    get the ionizing parameter, logU, and the electron density, logne,
-    using the model from Carton 2017.
+# def get_une_carton17(lms, lssfr, loh12):
+#     '''
+#     Given log10(Mstar), log10(sSFR), log10(Z),
+#     get the ionizing parameter, logU, and the electron density, logne,
+#     using the model from Carton 2017.
 
-    Parameters
-    ----------
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    loh12 : floats
-     Metallicity of the galaxies per component (log10(Z)).
+#     Parameters
+#     ----------
+#     lms : floats
+#      Masses of the galaxies per component (log10(M*) (Msun)).
+#     lssfr : floats
+#      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+#     loh12 : floats
+#      Metallicity of the galaxies per component (log10(Z)).
 
-    Returns
-    -------
-    lu, lne, loh12 : floats
-    '''
+#     Returns
+#     -------
+#     lu, lne, loh12 : floats
+#     '''
     
-    lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
+#     lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
 
-    ind = np.where((lssfr > const.notnum) &
-                   (lms > 0) &
-                   (loh12 > const.notnum))
+#     ind = np.where((lssfr > const.notnum) &
+#                    (lms > 0) &
+#                    (loh12 > const.notnum))
     
-    if (np.shape(ind)[1]>1):
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
-        lu[ind] = -0.8*np.log10(10**loh12[ind]/const.zsun) - 3.58   
+#     if (np.shape(ind)[1]>1):
+#         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
+#         lu[ind] = -0.8*np.log10(10**loh12[ind]/const.zsun) - 3.58   
 
-    return lu, lne, loh12
+#     return lu, lne, loh12
 
 def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f):
     '''
@@ -1037,8 +1134,13 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
      Metallicity of the galaxies per component (log10(Z)).
     T : float
      Typical temperature of ionizing regions.
-    epsilon : floats
-     Volume filling-factor of the galaxy.
+    epsilon0 : floats
+     Volume filling-factor of the galaxies.
+    ng_ratio : floats
+     Ratio between the mean particle number density of the cold gas of the 
+     input sample and the sample at redshift 0.
+    origin : string
+     Source of the ionizing photons.
     IMF_f : string
      Assumed IMF.
 
@@ -1141,10 +1243,18 @@ def get_une(lms_o, lssfr_o, loh12_o,
      Bolometric luminosity of the AGNs (erg/s).
     T : float
      Typical temperature of ionizing regions.
+    epsilon_param : floats
+     Parameters for epsilon calculation.
+    epsilon_param_z0 : floats
+     Parameters for epsilon calculation in the sample of galaxies at redshift 0.
     epsilon : floats
      Volume filling-factor of the galaxy.
+    h0 : float
+     If not None: value of h, H0=100h km/s/Mpc.
     IMF_f : string
      Assumed IMF.
+    redshift : float
+     Redshift of the input data. 
     unemod : string
      Model to go from galaxy properties to U and ne.
     origin : string
@@ -1196,7 +1306,5 @@ def get_une(lms_o, lssfr_o, loh12_o,
         lu, lne, loh12 = get_une_orsi14(Q,lms_o,lssfr_o,loh12,T,q0,z0,gamma,ng_ratio)
     elif (unemod == 'panuzzo03'):
         lu, lne, loh12 = get_une_panuzzo03(Q,lms_o,lssfr_o,loh12,T,epsilon,ng_ratio,origin,IMF_f)
-    elif (unemod == 'carton17'):
-        lu, lne, loh12 = get_une_carton17(lms_o,lssfr_o,loh12)
         
     return Q, lu, lne, loh12, epsilon, ng_ratio

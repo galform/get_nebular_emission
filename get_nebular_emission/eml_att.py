@@ -115,95 +115,6 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, costheta=
     
     return coef_att
 
-def coef_att_ratios(infile,cols_notatt,cols_att,cols_photmod,inputformat='HDF5',photmod='gutkin16',verbose=True):
-    '''
-    It reads luminosities of lines with and without attenuation
-    from line emission data and it returns the attenuation coefficients.
-
-    Parameters
-    ----------
-    infile : string
-     Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    cols_notatt : list
-     Attenuated flux lines calculated by the semi-analytic model of the input data. 
-     Used to calculate attenuation coefficients for the "ratio" attenuation model.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cols_att : list
-     Not attenuated flux lines calculated by the semi-analytic model of the input data. 
-     Used to calculate attenuation coefficients for the "ratio" attenuation model.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cols_photmod : list
-     Index in the list of lines of the photoionization model of the lines for which 
-     attenuation is going to be calculated in the "ratio" attenuation model.
-    inputformat : string
-     Format of the input file.
-    photmod : string
-     Photoionisation model to be used for look up tables.
-    verbose : boolean
-     If True print out messages.
-
-    Returns
-    -------
-    coef_att : floats
-    '''
-    
-    check_file(infile, verbose=verbose)
-    
-    ncomp = len(cols_notatt)
-        
-    lines = const.lines_model[photmod]
-    numlines = len(lines)
-    
-    cols_att = np.array(cols_att)
-    cols_notatt = np.array(cols_notatt)
-    cols_photmod = np.array(cols_photmod)
-    
-    if inputformat=='HDF5':
-        with h5py.File(infile, 'r') as f:
-            hf = f['data']
-            
-            coef_att = np.empty((ncomp,numlines,len(hf[cols_notatt[0,0]])))
-            coef_att.fill(const.notnum)
-            
-            for i in range(len(cols_photmod)):
-                for comp in range(ncomp):
-                    ind = np.where(hf[cols_notatt[comp,i]][:]!=0)
-                    ind2 = np.where(hf[cols_notatt[comp,i]][:]==0)
-                    coef_att[comp,cols_photmod[i]][ind] = hf[cols_att[comp,i]][ind]/hf[cols_notatt[comp,i]][ind]
-                    coef_att[comp,cols_photmod[i]][ind2] = 1
-    elif inputformat=='textfile':
-        ih = get_nheader(infile)        
-        X = np.loadtxt(infile,skiprows=ih).T
-        
-        coef_att = np.empty((ncomp,numlines,len(X[0])))
-        coef_att.fill(const.notnum)
-        
-        for i in range(len(cols_photmod)):
-            for comp in range(ncomp):
-                if ncomp!=1:
-                    ind = np.where(X[cols_notatt[comp,i]]!=0)
-                    ind2 = np.where(X[cols_notatt[comp,i]]==0)
-                    coef_att[comp,cols_photmod[i]][ind] = X[cols_att[comp,i]][ind]/X[cols_notatt[comp,i]][ind]
-                    coef_att[comp,cols_photmod[i]][ind2] = 1
-                else:
-                    ind = np.where(X[cols_notatt[comp,i]]!=0)
-                    ind2 = np.where(X[cols_notatt[comp,i]]==0)
-                    if comp==0:
-                        coef_att[comp,cols_photmod[i]][ind] = (X[cols_att[comp,i]][ind]-X[cols_att[1,i]][ind])/(X[cols_notatt[comp,i]][ind]-X[cols_notatt[1,i]][ind])
-                        coef_att[comp,cols_photmod[i]][ind2] = 1
-                    else:
-                        coef_att[comp,cols_photmod[i]][ind] = X[cols_att[comp,i]][ind]/X[cols_notatt[comp,i]][ind]
-                        coef_att[comp,cols_photmod[i]][ind2] = 1
-                    
-                    
-        del X        
-    
-    return coef_att
-
 def attenuation(nebline, att_param=None, att_ratio_lines=None,
                 redshift=0, attmod='cardelli89',origin='sfr',
                 photmod='gutkin16', cut=None, verbose=True):
@@ -214,37 +125,19 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     ----------
     nebline : floats
      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr).
-    infile : string
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    att_params : list
-     Parameters to look for calculating attenuation. See eml_const to know what each model expects.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
+    att_param : floats
+     Array with the parameter values of the attenuation model.
+    att_ratio_lines : strings
+     Names of the lines corresponding to the values in att_params when attmod=ratios.
+     They should be written as they are in the selected model (see eml_const).
     redshift : float
      Redshift of the input data.
-    inputformat : string
-     Format of the input file.
     attmod : string
      Attenuation model.
-    cols_notatt : list
-     Attenuated flux lines calculated by the semi-analytic model of the input data. 
-     Used to calculate attenuation coefficients for the "ratio" attenuation model.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cols_att : list
-     Not attenuated flux lines calculated by the semi-analytic model of the input data. 
-     Used to calculate attenuation coefficients for the "ratio" attenuation model.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cols_photmod : list
-     Index in the list of lines of the photoionization model of the lines for which 
-     attenuation is going to be calculated in the "ratio" attenuation model.
     photmod : string
      Photoionisation model to be used for look up tables.
     cut : integers
-     Indeces of the not cutted galaxies.
+     List of indexes of the selected galaxies from the samples.
     verbose : boolean
      If True print out messages.
 
@@ -303,3 +196,92 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     nebline_att[ind] = nebline[ind]*coef_att[ind]
     
     return nebline_att, coef_att
+
+# def coef_att_ratios(infile,cols_notatt,cols_att,cols_photmod,inputformat='HDF5',photmod='gutkin16',verbose=True):
+#     '''
+#     It reads luminosities of lines with and without attenuation
+#     from line emission data and it returns the attenuation coefficients.
+
+#     Parameters
+#     ----------
+#     infile : string
+#      Name of the input file. 
+#      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+#      - In csv files (*.csv), columns separated by ','.
+#     cols_notatt : list
+#      Attenuated flux lines calculated by the semi-analytic model of the input data. 
+#      Used to calculate attenuation coefficients for the "ratio" attenuation model.
+#      - For text or csv files: list of integers with column position.
+#      - For hdf5 files: list of data names.
+#     cols_att : list
+#      Not attenuated flux lines calculated by the semi-analytic model of the input data. 
+#      Used to calculate attenuation coefficients for the "ratio" attenuation model.
+#      - For text or csv files: list of integers with column position.
+#      - For hdf5 files: list of data names.
+#     cols_photmod : list
+#      Index in the list of lines of the photoionization model of the lines for which 
+#      attenuation is going to be calculated in the "ratio" attenuation model.
+#     inputformat : string
+#      Format of the input file.
+#     photmod : string
+#      Photoionisation model to be used for look up tables.
+#     verbose : boolean
+#      If True print out messages.
+
+#     Returns
+#     -------
+#     coef_att : floats
+#     '''
+    
+#     check_file(infile, verbose=verbose)
+    
+#     ncomp = len(cols_notatt)
+        
+#     lines = const.lines_model[photmod]
+#     numlines = len(lines)
+    
+#     cols_att = np.array(cols_att)
+#     cols_notatt = np.array(cols_notatt)
+#     cols_photmod = np.array(cols_photmod)
+    
+#     if inputformat=='HDF5':
+#         with h5py.File(infile, 'r') as f:
+#             hf = f['data']
+            
+#             coef_att = np.empty((ncomp,numlines,len(hf[cols_notatt[0,0]])))
+#             coef_att.fill(const.notnum)
+            
+#             for i in range(len(cols_photmod)):
+#                 for comp in range(ncomp):
+#                     ind = np.where(hf[cols_notatt[comp,i]][:]!=0)
+#                     ind2 = np.where(hf[cols_notatt[comp,i]][:]==0)
+#                     coef_att[comp,cols_photmod[i]][ind] = hf[cols_att[comp,i]][ind]/hf[cols_notatt[comp,i]][ind]
+#                     coef_att[comp,cols_photmod[i]][ind2] = 1
+#     elif inputformat=='textfile':
+#         ih = get_nheader(infile)        
+#         X = np.loadtxt(infile,skiprows=ih).T
+        
+#         coef_att = np.empty((ncomp,numlines,len(X[0])))
+#         coef_att.fill(const.notnum)
+        
+#         for i in range(len(cols_photmod)):
+#             for comp in range(ncomp):
+#                 if ncomp!=1:
+#                     ind = np.where(X[cols_notatt[comp,i]]!=0)
+#                     ind2 = np.where(X[cols_notatt[comp,i]]==0)
+#                     coef_att[comp,cols_photmod[i]][ind] = X[cols_att[comp,i]][ind]/X[cols_notatt[comp,i]][ind]
+#                     coef_att[comp,cols_photmod[i]][ind2] = 1
+#                 else:
+#                     ind = np.where(X[cols_notatt[comp,i]]!=0)
+#                     ind2 = np.where(X[cols_notatt[comp,i]]==0)
+#                     if comp==0:
+#                         coef_att[comp,cols_photmod[i]][ind] = (X[cols_att[comp,i]][ind]-X[cols_att[1,i]][ind])/(X[cols_notatt[comp,i]][ind]-X[cols_notatt[1,i]][ind])
+#                         coef_att[comp,cols_photmod[i]][ind2] = 1
+#                     else:
+#                         coef_att[comp,cols_photmod[i]][ind] = X[cols_att[comp,i]][ind]/X[cols_notatt[comp,i]][ind]
+#                         coef_att[comp,cols_photmod[i]][ind2] = 1
+                    
+                    
+#         del X        
+    
+#     return coef_att
