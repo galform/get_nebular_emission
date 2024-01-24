@@ -367,4 +367,4 @@ plt.xlim((xmin,xmax))
 plt.ylim((ymin,ymax))
 plt.grid()
 
-plt.savefig('BPT_test.png')
+plt.savefig('plots/BPT.png')
