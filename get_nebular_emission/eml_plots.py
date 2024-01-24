@@ -164,11 +164,8 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     #Prepare the plot
     lsty = ['-',(0,(2,3))] # Line form
 
-    nds = np.array([-2., -3., -4.]) # Contours values
+    nds = np.array([-2., -3., -4., -5.]) # Contours values
     al = np.sort(nds)
-
-    SFR = ['avSFR']
-    labels = ['SFR','SFR2','SFR3']
 
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
@@ -178,17 +175,17 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 
 
     # Initialize GSMF (Galaxy Cosmological Mass Function)
-    mmin = 8.5 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
+    mmin = 8 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
     mmax = 15 
-    dm = 0.1
+    dm = 0.2
     mbins = np.arange(mmin, mmax, dm)
     mhist = mbins + dm * 0.5
     gsmf = np.zeros((len(mhist)))
 
     # Initialize SSFRF
     smin = -4.4
-    smax = 1
-    ds = 0.1
+    smax = 3
+    ds = 0.2
     sbins = np.arange(smin, smax, ds)
     shist = sbins + ds * 0.5
     ssfrf = np.zeros((len(shist)))
@@ -205,12 +202,12 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     ax = plt.subplot(gs[1:, :-1])
 
     # Fig. sSFR vs M
-    xtit = "log$_{10}(\\rm M_{*}/M_{\odot})$"
+    xtit = "log$_{10}(\\rm M_{*}$ [M$_\odot$])"
     if specific:
         ytit = "log$_{10}(\\rm sSFR/Gyr^{-1})$"
     else:
-        ytit = "log$_{10}(\\rm SFR/M_{\odot} yr^{-1})$"
-    xmin = 8.5; xmax = 11.8; ymin = smin;  ymax = smax
+        ytit = "log$_{10}(\\rm SFR$ [M$_\odot$ yr$^{-1}$])"
+    xmin = 8.5; xmax = 12.25; ymin = smin;  ymax = smax
     ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
     ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
@@ -239,14 +236,14 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 
     if obsSFR:
         ih = get_nheader(obsSFR)
-    
+
         dataSFR = [0]*len(colsSFR)
-    
+
         for ii, col in enumerate(colsSFR):
             #print(ii,col,colsSFR[ii])
             data = np.loadtxt(obsSFR,skiprows=ih, usecols=col, unpack=True)
             dataSFR[ii] = np.array(data)
-    
+
         dex = dataSFR[1]-dataSFR[0]
         histSFR = dataSFR[1]-0.5*dex
         errorSFR = dataSFR[3]
@@ -254,18 +251,18 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     # GSM observed
     if obsGSM:
         ih = get_nheader(obsGSM)
-    
+
         dataGSM = [0]*len(colsGSM)
-    
+
         for ii, col in enumerate(colsGSM):
             data = np.loadtxt(obsGSM,skiprows=ih, usecols=col, unpack=True)
             dataGSM[ii] = np.array(data)
-    
+
         dex = dataGSM[1] - dataGSM[0]
-    
+
         # Change the units from h^-2 Msun to Msun.
         histGSM = dataGSM[1] - 2*np.log10(h0) - 0.5*dex
-    
+
         # Change the units from h^3 Mpc^-3 to Mpc^-3
         freqGSM = np.log10((dataGSM[2])) + 3 * np.log10(h0)
         
@@ -274,9 +271,10 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
         lowGSM = abs(lowGSM - freqGSM)
 
     for ii in range(len(inputdata)):
+
         with h5py.File(inputdata[ii],'r') as file:
             data = file['data']          
-            lms = np.log10((10**data['lms'][:,0])/const.IMF_M['Chabrier']+data['Ms_bulge'][:,0]*const.IMF_M['Top-heavy']/const.IMF_M['Chabrier']) #+ np.log10(h0)
+            lms = np.log10((10**data['lms'][:,0])/const.IMF_M['Chabrier']+10**data['lms'][:,1]*const.IMF_M['Top-heavy']/const.IMF_M['Chabrier']) #+ np.log10(h0)
             if specific:
                 lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
             else: 
@@ -318,44 +316,38 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
             # Here: How to find the levels of the data?
             cs = ax.contour(xx, yy, zz, levels=al, colors=color[ii])
             ax.clabel(cs, inline=1, fontsize=10)
-            for i in range(len(labels)):
-                cs.collections[i].set_label(labels[i])
 
         # Plot GSMF
         py = gsmf; ind = np.where(py > 0.)
         x = mhist[ind]; y = np.log10(py[ind])
         ind = np.where(y < 0.)
+        axm.plot(x[ind], y[ind], color=color[ii])
 
-        axm.plot(x[ind], y[ind], color=color[ii],
-                 linestyle=lsty[ii])
-    
         # Plot observations GSMF
-        if obsGSM:
-            axm.errorbar(histGSM, freqGSM, yerr=lowGSM, marker='o', color=color[ii + 1],
+        if obsGSM and ii==0:
+            axm.errorbar(histGSM, freqGSM, yerr=lowGSM, marker='o', color=color[ii + 2],
                              label=''+ labelObs[0] +'')
                 
-            leg2 = axm.legend(bbox_to_anchor=(0.135, -0.34, 1.5, 1.4), fontsize='small',
+            leg2 = axm.legend(bbox_to_anchor=(0.025, -0.87, 1.5, 1.5), fontsize='small',
                               handlelength=1.2, handletextpad=0.4)
             leg2.get_texts()
             leg2.draw_frame(False)
-
-
+        
         # Plot SFRF
         px = sfrf; ind = np.where(px > 0.)
         y = shist[ind]; x = np.log10(px[ind])
         ind = np.where(x < 0.)
-        axs.plot(x[ind], y[ind], color=color[ii],
-                 linestyle=lsty[ii])
+        axs.plot(x[ind], y[ind], color=color[ii], label='Model')
             
-            # Plot observations SFRF
-        if obsSFR:
-            axs.errorbar(dataSFR[2], histSFR, xerr=errorSFR, marker='o', color=color[ii + 2],
+        # Plot observations SFRF
+        if obsSFR and ii==0:
+            axs.errorbar(dataSFR[2], histSFR, xerr=errorSFR, marker='o', color=color[ii + 3],
                           label=''+ labelObs[1] +'')
 
-            leg = axs.legend(bbox_to_anchor=(1.5, 1.4), fontsize='small',
-                              handlelength=1.2, handletextpad=0.4)
-            leg.get_texts()
-            leg.draw_frame(False)
+        leg = axs.legend(bbox_to_anchor=(-0.47, 0.1, 1.5, 1.38), fontsize='small',
+                          handlelength=1.2, handletextpad=0.4)
+        leg.get_texts()
+        leg.draw_frame(False)
 
     plotf = outplot
 
@@ -363,7 +355,7 @@ def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
     print('Plot: {}'.format(plotf))
     fig.savefig(plotf)
 
-def test_medians(infile, outplot, verbose=False):
+def test_medians(infile, outplot, lines_cut=0, r_cut=999 ,i_cut=999 ,k_cut=999, verbose=False):
     '''
     Given U and ne calculated from the Mstar and the SFR in eml_une.
     get the plot of the medians of these quantities in masses bins.
@@ -375,8 +367,15 @@ def test_medians(infile, outplot, verbose=False):
     outplot : string
      Path to the folder where save the plot.
     verbose : boolean
-     If True print out messages
-
+     If True print out messages.
+    lines_cut : float
+     Minimum flux for emision lines (Ha, Hb, OIII, NII and SII; Units: erg s^-1 cm^-2).
+    r_cut : float
+     Maximum r magnitude.
+    i_cut : float
+     Maximum i magnitude.
+    k_cut : float
+     Maximum k magnitude.
 
     Notes
     -------
@@ -385,127 +384,171 @@ def test_medians(infile, outplot, verbose=False):
     '''
     
     set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=const.h)
-
-    # Prepare the plots
-    
-    SFR = ['avSFR']
     U_ne = ['u', 'ne']
     cm = plt.get_cmap('tab10')  # Colour map to draw colours from
     color = []
 
     # Prepare the bins
-    mmin = 8.5
-    mmax = 11.5
+    mmin = 9.25
+    mmax = 12.25
     dm = 0.2
     mbins = np.arange(mmin, (mmax + dm), dm)
     mbinsH = np.arange(mmin, mmax, dm)
     mhist = mbinsH + dm * 0.5
 
     for iu, une in enumerate(U_ne):
+        
+        if iu==0:
+            mmin = 9.5
+            mmax = 11.5
+            dm = 0.2
+            mbins = np.arange(mmin, (mmax + dm), dm)
+            mbinsH = np.arange(mmin, mmax, dm)
+            mhist = mbinsH + dm * 0.5
+            
+            fig, ax = plt.subplots(2, 1, figsize=(10,20), sharex=True, sharey=True)
 
-        # Prepare the figures
-        plt.figure()
-        plt.xlabel(r'$\log M_*/h^{-1} (M_\odot)$',size=15)
+            for axis in ax.flat:
+                axis.tick_params(labelsize=35)
+                axis.set_xlim((mmin,mmax))
+                axis.set_ylim((-4.75,-1.25))
+                # axis.locator_params(axis='both', nbins=6)
+                axis.locator_params(axis='x', nbins=6)
+                axis.locator_params(axis='y', nbins=12)
+                axis.grid()
+                
+            ax[1].set_xlabel(r'$\log M_*$ [M$_\odot$]',size=35)
+            ylabels = [r'$\log U_{\rm SF}$',r'$\log U_{\rm SF}$',r'$\log U_{\rm AGN}$']
+        else:
+            mmin = 9.25
+            mmax = 12.25
+            dm = 0.2
+            mbins = np.arange(mmin, (mmax + dm), dm)
+            mbinsH = np.arange(mmin, mmax, dm)
+            mhist = mbinsH + dm * 0.5
+            
+            plt.figure()
+            plt.xlabel(r'$\log M_*$ [M$_\odot$]',size=15)
+            plt.ylim((1.25,2.75))
+            plt.ylabel(r'$\log n_e$ [cm$^{-3}$]',size=15)
+
         plotf = outplot + '/test_medians_'+ une+'.pdf'
         col = cm(iu)
         color.append(col)# col change for each iteration
         
         if iu==0:
-            plt.ylim((-5,-1))
-            plt.ylabel(r'$\log U$',size=15)
+            plt.ylim((-4.75,-1.25))
+            ylabels = [r'$\log U_{\rm SF}$',r'$\log U_{\rm SF}$',r'$\log U_{\rm AGN}$']
         else:
-            plt.ylim((0.5,2.5))
-            plt.ylabel(r'$\log n_e (cm^{-3})$',size=15)
+            plt.ylim((1.25,2.75))
+            plt.ylabel(r'$\log n_e$ [cm$^{-3}$]',size=15)
 
-        for ii,sfr in enumerate(SFR):
+        with h5py.File(infile,'r') as file:
+            f = file['data']
             
-            with h5py.File(infile,'r') as file:
-                print(infile)
-                f = file['data']
-                lu = f['lu_sfr'][:,0]
-                lne = f['lne_sfr'][:,0]   
-                lms = np.log10(10**f['lms'][:,0] + f['Ms_bulge'][:,0]) + np.log10(const.h)
-                lssfr = f['lssfr'][:,0]
-                
-                Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
-                Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
-                Ha_flux = Ha_flux_sfr + Ha_flux_agn
+            lu = f['lu_sfr'][:,0]
+            lne = f['lne_sfr'][:,0]
             
-            data = np.append([lu], [lne], axis=0)
-            print(data.shape)
+            lus = [f['lu_sfr'][:,0],f['lu_sfr'][:,1],f['lu_agn'][:,0]]
+            lnes = [f['lne_sfr'][:,0],f['lne_sfr'][:,1]]
+            lms = np.log10(10**f['lms'][:,0] + 10**f['lms'][:,1])
             
-            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>4e-17))
+            Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
+            Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
+            Ha_flux = Ha_flux_sfr + Ha_flux_agn
+            
+            Hb_flux_sfr = np.sum(f['Hbeta_sfr_flux'],axis=0)
+            Hb_flux_agn = np.sum(f['Hbeta_agn_flux'],axis=0)
+            Hb_flux = Hb_flux_sfr + Hb_flux_agn
+            
+            NII6548_flux_sfr = np.sum(f['NII6584_sfr_flux'],axis=0)
+            NII6548_flux_agn = np.sum(f['NII6584_agn_flux'],axis=0)
+            NII6548_flux = NII6548_flux_sfr + NII6548_flux_agn
+            
+            OII3727_flux_sfr = np.sum(f['OII3727_sfr_flux'],axis=0)
+            OII3727_flux_agn = np.sum(f['OII3727_agn_flux'],axis=0)
+            OII3727_flux = OII3727_flux_sfr + OII3727_flux_agn
+            
+            OIII5007_flux_sfr = np.sum(f['OIII5007_sfr_flux'],axis=0)
+            OIII5007_flux_agn = np.sum(f['OIII5007_agn_flux'],axis=0)
+            OIII5007_flux = OIII5007_flux_sfr + OIII5007_flux_agn
+            
+            SII6731_flux_sfr = np.sum(f['SII6731_sfr_flux'],axis=0)
+            SII6731_flux_agn = np.sum(f['SII6731_agn_flux'],axis=0)
+            SII6731_flux = SII6731_flux_sfr + SII6731_flux_agn
+            
+            SII6717_flux_sfr = np.sum(f['SII6717_sfr_flux'],axis=0)
+            SII6717_flux_agn = np.sum(f['SII6717_agn_flux'],axis=0)
+            SII6731_flux = SII6731_flux + SII6717_flux_sfr + SII6717_flux_agn
+            
+            r = f['m_R'][0]
+            k = f['m_K'][0]
+            I = f['m_I'][0]
+            
+        for num in range(3):
+            
+            if iu==1 and num==2:
+                break
+            
+            if iu==0:
+                lu = lus[num]
+            else:
+                lu = lnes[num]
+            
+            cut = (np.where((lu!=const.notnum)&(lne!=const.notnum)&
+                             (Ha_flux>lines_cut)&(Hb_flux>lines_cut)&(OIII5007_flux>lines_cut)&
+                              (NII6548_flux>lines_cut)&(SII6731_flux>lines_cut)&
+                              (r<r_cut)&(I<i_cut)&(k<k_cut))[0])
             
             # MEDIANS:
-            median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
-
+            median = perc_2arrays(mbins, lms[cut], lu[cut], 0.5)
+        
             ind = np.where(median>const.notnum)
             
             median = median[ind]
-
+        
             # QUARTILES:
-            up_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.75)[ind]
-            #qup[ii] = up_qu
-            low_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.25)[ind]
-            #qlow[ii] = low_qu
-            
+            up_qu = perc_2arrays(mbins, lms[cut], lu[cut], 0.75)[ind]
+            low_qu = perc_2arrays(mbins, lms[cut], lu[cut], 0.25)[ind]    
             qu = np.append([median-low_qu],[up_qu-median],axis=0)
             
-            print(ind, len(mhist))
+            if iu==0:
+                if num==0:
+                    eb1=ax[0].errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, 
+                                 color='black')
+                    eb1[-1][0].set_linestyle('-')
+                elif num==1:
+                    eb2=ax[0].errorbar(mhist[ind],median,marker='o',ls='--',yerr=qu,elinewidth=0.5, capsize=5, 
+                                 color='black')
+                    eb2[-1][0].set_linestyle('--')
+                else:
+                    ax[1].errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, 
+                             color='black')
 
-            #plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
-            #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
-            #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
-            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, color=col)#, label='Calculated from the ' + SFR[ii] + '')
-        # plt.legend()
+                if num==0:
+                    ax[0].set_ylabel(ylabels[num],size=35)
+                elif num==2:
+                    ax[1].set_ylabel(ylabels[num],size=35)
+            else:
+                if num==0:
+                    eb1=plt.errorbar(mhist[ind],median,marker='o',ls='-',yerr=qu,elinewidth=0.5, capsize=5, 
+                             color='black')
+                    eb1[-1][0].set_linestyle('-')
+                else:
+                    eb2=plt.errorbar(mhist[ind],median,marker='o',ls='--',yerr=qu,elinewidth=0.5, capsize=5, 
+                             color='black')
+                    eb2[-1][0].set_linestyle('--')
         
-            with h5py.File('output_data/emlines_GP20_z1.5_Kashino_cor.hdf5','r') as file:
-                print(infile)
-                f = file['data']
-                lu = f['lu_sfr'][:,0]
-                lne = f['lne_sfr'][:,0]   
-                lms = np.log10(10**f['lms'][:,0] + f['Ms_bulge'][:,0]) + np.log10(const.h)
-                lssfr = f['lssfr'][:,0]
-                
-                Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
-                Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
-                Ha_flux = Ha_flux_sfr + Ha_flux_agn
-            
-            data = np.append([lu], [lne], axis=0)
-            print(data.shape)
-            
-            cut = np.where((lu!=const.notnum)&(lne!=const.notnum)&(Ha_flux>4e-17))
-            
-            # MEDIANS:
-            median = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.5) #data[iu]
-
-            ind = np.where(median>const.notnum)
-            
-            median = median[ind]
-
-            # QUARTILES:
-            up_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.75)[ind]
-            #qup[ii] = up_qu
-            low_qu = perc_2arrays(mbins, lms[cut], data[iu][cut], 0.25)[ind]
-            #qlow[ii] = low_qu
-            
-            qu = np.append([median-low_qu],[up_qu-median],axis=0)
-            
-            print(ind, len(mhist))
-
-            #plt.plot(mhist[ind],median[ind],'o', color=col, label='Calculated from the ' + SFR[ii] + '')
-            #plt.plot(mhist[ind],up_qu[ind],'o', color='r')
-            #plt.plot(mhist[ind],low_qu[ind],'o', color='r')
-            plt.errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, color='k')#, label='Calculated from the ' + SFR[ii] + '')
-        # plt.legend()
-        
-        plt.xlim((mmin,mmax))
-        plt.grid()
+        if iu==1:
+            plt.xlim((mmin,mmax))
+            plt.grid()
+        else:
+            fig.subplots_adjust(wspace=0,hspace=0)
         plt.savefig(plotf)
         # plt.close()
 
 
-
+### DEPRECATED
 def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=False, file_folder='output_data', verbose=False):
     '''
     Run a test of the interpolations done in eml_photio.

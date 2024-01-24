@@ -366,3 +366,5 @@ plt.yticks(fontsize=30)
 plt.xlim((xmin,xmax))
 plt.ylim((ymin,ymax))
 plt.grid()
+
+plt.savefig('BPT_test.png')
