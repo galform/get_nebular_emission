@@ -1,6 +1,5 @@
-numpy==1.22.0
-matplotlib==3.3.1
-pre-commit==2.13.0
-pytest-cov==2.7.1
-codecov==2.1.13
-h5py==2.2.1
+numpy==1.26.3
+scipy==1.11.4
+matplotlib==3.8.2
+h5py==3.10.0
+astropy==6.0.1
