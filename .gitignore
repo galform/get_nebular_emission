@@ -4,41 +4,7 @@ output/
 example_data/compare_vct.pdf
 __pycache__/
 */__pycache__/
-plots/*
-docs/*
-for_reference/*
-output_data/*
-temporal/*
-*.png
-*.py[cod]
-*$py.class
-*.pdf
-*.npy
-AGN_test*/
-BPT_tests.py
-Lagn_tests.py
-MbhVSMbulge.py
-Meet*/
-Prepare_inputfiles.py
-U_exploration.py
-ZvsMs.py
-*.hdf5
-cuts/
-find_cuts.py
-kappaAGN_fit.py
-mass_function.py
-nebular_model_exploration.py
-param*.py
-dust-master/
-example_data/
-get_nebular_emission/eml_photio_old.py
-gp20*/
-plot*.py
-prepare_sage.py
-sSFRvsMs.py
-fullsnap/
 
-get_nebular_emission/eml_ew.py
 
 # C extensions
 *.so

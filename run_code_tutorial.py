@@ -3,39 +3,21 @@
 """
 Created on Tue Sep 26 08:42:21 2023
 
-@author: expox7
+@author: expox7, viogp
 """
 
-import get_nebular_emission.eml as eml
-import get_nebular_emission.eml_const as const
-import glob
+import src.eml as eml
+import src.eml_const as const
 
-####################################################
-####################################################
 ####################################################
 
 # This is a modular python code to provide model spectral emission 
 # lines, both from star-forming regions and narrow-line regions of AGNs.
 # The input of the code are global galactic properties. 
 
-# Emission from star-forming region calculation uses the stellar mass, 
-# star formation rate and cold gas metallicity to generate a range of 
-# spectral emission lines. 
-# Emission from AGNs requires the bolometric 
-# luminosity of the AGN, the total mass of cold gas and the effective 
-# radius of the galaxy components. 
-
-# These parameters are passed through a nebular model to get the parameters 
-# defining the ionizing sources, and then those nebular properties are passed 
-# through a photoionization grid to get the intrinsic 
-# luminosities of the different emission lines available in the 
-# used model by interpolation in such grid. 
-
 # The intrinsic luminosities can be passed through an attenuation model 
 # to also get the predicted attenuated luminosities.
 
-####################################################
-####################################################
 ####################################################
 
 
@@ -44,7 +26,7 @@ import glob
 ####################################################
 
 
-### INPUT FILES
+### INPUT FILE(S)
 # It has to be a list with the path to the input files.
 # Each file correspond to a sub-volume of the simulation you want to pass
     # through get_nebular_emission.
@@ -55,16 +37,15 @@ import glob
         # Stellar mass (M*).
         # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
         # Mean metallicity of the cold gas (Z).
-infile = glob.glob(r"example_data/GP20_62.5kpc_z0_example.txt")
+infile = 'example_data/GP20_62.5kpc_z0_example.txt'
 
 
-# OUTPUT FILE
+# OUTPUT FILE that will be created (or overwrited)
 # The path to the output file. It will always create this file and fill it
     # with the results, overwriting it if it already exist.
-outfile = r"output_data/emlines_GP20_z0.0_Kashino_test.hdf5"
+outfile = r"output/data/emlines_GP20_z0.0_Kashino_test.hdf5"
 
-### REDSHIFT
-# Put here the redshift of your galaxy sample.
+### REDSHIFT of the galaxy sample
 redshift = 0.15
 
 
