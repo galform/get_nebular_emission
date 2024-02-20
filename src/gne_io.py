@@ -1,16 +1,13 @@
 """
 .. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
-import time
 import h5py
 import sys
 import os
 import numpy as np
-import get_nebular_emission.eml_const as const
+import src.gne_const as const
 import math
-from pathlib import Path
 
-homedir = Path.home()
 
 def stop_if_no_file(infile):
     '''
@@ -49,10 +46,54 @@ def check_file(infile,verbose=False):
     if (not os.path.isfile(infile)):
         file_fine = False
         if verbose:
-            print('WARNING (eml_io.check_file): file not found {}'.
+            print('WARNING (gne_io.check_file): file not found {}'.
                   format(infile))
 
     return file_fine
+
+
+def create_dir(outdir):
+    '''
+    Return True if directory already exists or it has been created
+    '''
+    if not os.path.exists(outdir):
+        try:
+            os.makedirs(outdir)
+        except:
+            print('WARNING (iotools.create_dir): problem creating directory ',outdir)
+            return False
+    return True
+
+
+def get_outnom(filenom,ftype='data',verbose=False):
+    '''
+    Get output from a given filename
+
+    Parameters
+    -------
+    filenom : string
+        Name of file
+    ftype : string
+        Type of the file, data or plots
+    verbose : boolean
+        If True print out messages
+
+    Returns
+    -------
+    outfile : string
+        Path to output file
+    '''
+
+    nom = os.path.splitext(filenom.split('/')[-1])[0]
+
+    dirf = 'output/' + ftype + '/'
+    create_dir(dirf)    
+
+    outfile = dirf + nom + '.hdf5'
+
+    if verbose:
+        print(f'* Output {ftype}: {outfile}')
+    return outfile
 
 
 def get_nheader(infile,firstchar=None):
@@ -125,11 +166,12 @@ def get_ncomponents(cols):
         ncomp = np.shape(cols)[0]
     except:
         ncomp = 1
-        print('STOP (eml_io.get_ncomponents): ',
+        print('STOP (gne_io.get_ncomponents): ',
               'Columns should be given as m_sfr_z=[[0,1,2]]')
         sys.exit()
         
     return ncomp
+
 
 def locate_interval(val, edges):
     '''
@@ -169,6 +211,8 @@ def locate_interval(val, edges):
                 ind = common[0]
 
     return ind
+
+
 
 def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
               inputformat='hdf5',testing=False, verbose=True):
@@ -220,7 +264,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
         
     if inputformat not in const.inputformats:
         if verbose:
-            print('STOP (eml_io): Unrecognised input format.',
+            print('STOP (gne_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
@@ -283,7 +327,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                 loh12 = np.append(loh12,[X[2]],axis=0)
     else:
         if verbose:
-            print('STOP (eml_io.read_data): ',
+            print('STOP (gne_io.read_data): ',
                   'Input file has not been found.')
         sys.exit()
         
@@ -293,7 +337,9 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
             
     return lms[cut], lssfr[cut], loh12[cut], cut
 
-def get_secondary_data(i, infile, cut, infile_z0=None, epsilon_params=None, 
+
+
+def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None, 
                        Lagn_params=None, att_params=None, extra_params=None,
                        inputformat='hdf5', attmod='cardelli89', verbose=True):    
     '''
@@ -342,7 +388,7 @@ def get_secondary_data(i, infile, cut, infile_z0=None, epsilon_params=None,
     
     if inputformat not in const.inputformats:
         if verbose:
-            print('STOP (eml_io): Unrecognised input format.',
+            print('STOP (gne_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
@@ -350,28 +396,30 @@ def get_secondary_data(i, infile, cut, infile_z0=None, epsilon_params=None,
             print('HDF5 not implemented yet for secondary params.')
         sys.exit()
     elif inputformat=='txt':
-        ih = get_nheader(infile[i])
+        ih = get_nheader(infile)
         
         if epsilon_params:
-            epsilon_param = np.loadtxt(infile[i],skiprows=ih,usecols=epsilon_params)[cut].T
+            epsilon_param = np.loadtxt(infile,skiprows=ih,usecols=epsilon_params)[cut].T
             
         if infile_z0[0]:
-            epsilon_param_z0 = np.loadtxt(infile_z0[i],skiprows=ih,usecols=epsilon_params)[cut].T
+            epsilon_param_z0 = np.loadtxt(infile_z0,skiprows=ih,usecols=epsilon_params)[cut].T
 
         if Lagn_params:
-            Lagn_param = np.loadtxt(infile[i],skiprows=ih,usecols=Lagn_params)[cut].T
+            Lagn_param = np.loadtxt(infile,skiprows=ih,usecols=Lagn_params)[cut].T
             
         if extra_params:
-            extra_param = np.loadtxt(infile[i],skiprows=ih,usecols=extra_params)[cut].T
+            extra_param = np.loadtxt(infile,skiprows=ih,usecols=extra_params)[cut].T
             if len(extra_params)==1:
                 extra_param = np.array([extra_param])
         
         if att_params:
-                att_param = np.loadtxt(infile[i],skiprows=ih,usecols=att_params)[cut].T
+                att_param = np.loadtxt(infile,skiprows=ih,usecols=att_params)[cut].T
                 
     return epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param
 
-def get_data(i, infile, cols, h0=None, inputformat='hdf5', 
+
+
+def get_data(infile, cols, h0=None, inputformat='hdf5', 
              IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM', LC2sfr=False, mtot2mdisk=True, 
@@ -381,8 +429,6 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
 
     Parameters
     ----------
-    i : integer
-     Index of the file from the infile list.
     infile : strings
      List with the name of the input files. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
@@ -427,9 +473,10 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
     cut : integers
     '''
     
-    lms,lssfr,loh12,cut = read_data(infile[i], cols=cols, cutcols=cutcols,
-                                maxcuts=maxcuts, mincuts=mincuts, inputformat=inputformat, 
-                                testing=testing, verbose=verbose)
+    lms,lssfr,loh12,cut = read_data(infile, cols=cols, cutcols=cutcols,
+                                    maxcuts=maxcuts, mincuts=mincuts,
+                                    inputformat=inputformat, 
+                                    testing=testing, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
 
@@ -458,7 +505,7 @@ def get_data(i, infile, cols, h0=None, inputformat='hdf5',
     if mtot2mdisk:
         if ncomp!=2:
             if verbose:
-                print('STOP (eml_io.get_data): ',
+                print('STOP (gne_io.get_data): ',
                       'mtot2mdisk can only be True with two components.')
             sys.exit()
                 

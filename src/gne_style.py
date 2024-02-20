@@ -72,3 +72,5 @@ style1 = {
     'savefig.bbox': 'tight',
     'savefig.format': 'pdf',
 }
+
+# https://matplotlib.org/users/customizing.html

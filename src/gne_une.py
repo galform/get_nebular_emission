@@ -2,10 +2,10 @@ import sys
 
 import numpy as np
 import h5py
-import get_nebular_emission.eml_const as const
+import src.gne_const as const
 from scipy.stats import gaussian_kde
-from get_nebular_emission.stats import perc_2arrays
-from get_nebular_emission.eml_io import get_nheader
+from src.gne_stats import perc_2arrays
+from src.gne_io import get_nheader
 
 
 def bursttobulge(lms,Lagn_param):
@@ -403,7 +403,7 @@ def surface_density(x,M,reff,profile='exponential',verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (eml_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_une): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -439,7 +439,7 @@ def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (eml_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_une): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -481,7 +481,7 @@ def enclosed_mass_sphere(x,M,reff,profile='exponential',verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (eml_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_une): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -543,7 +543,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (eml_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_une): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -1297,7 +1297,7 @@ def get_une(lms_o, lssfr_o, loh12_o,
     
     if unemod not in const.unemods:
         if verbose:
-            print('STOP (eml_une): Unrecognised model to get U and ne.')
+            print('STOP (gne_une): Unrecognised model to get U and ne.')
             print('                Possible unemod= {}'.format(const.unemods))
         sys.exit()
     elif (unemod == 'kashino20'):

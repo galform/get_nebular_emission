@@ -3,17 +3,17 @@
 """
 Created on Wed Apr 12 14:36:13 2023
 
-@author: expox7
+@author: expox7, vgp
 """
 
 import h5py
 import numpy as np
-from get_nebular_emission.eml_io import get_nheader, homedir, locate_interval
-import get_nebular_emission.eml_const as const
-from get_nebular_emission.eml_io import check_file
+import src.gne_io as io
+import src.gne_const as const
+from src.gne_io import check_file
 import sys
 import warnings
-from cosmology import emission_line_flux
+from src.gne_cosmology import emission_line_flux
 
 #------------------------------------------------------------------------------------
 #   Cardelli et al. 1989 extinction laws in FIR and IR/OPT:
@@ -37,7 +37,7 @@ def cardelli(waveA):
     x=1./wave
     
     if (x < 0.3) or (x > 10):
-        print('STOP (eml_photio.cardelli): ',
+        print('STOP (gne_photio.cardelli): ',
               'Wavelength out of range.')
         sys.exit()
         return
@@ -129,7 +129,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
      Array with the parameter values of the attenuation model.
     att_ratio_lines : strings
      Names of the lines corresponding to the values in att_params when attmod=ratios.
-     They should be written as they are in the selected model (see eml_const).
+     They should be written as they are in the selected model (see gne_const).
     redshift : float
      Redshift of the input data.
     attmod : string
@@ -156,7 +156,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     if att_param[0][0] != None:
         if attmod not in const.attmods:
             if verbose:
-                print('STOP (eml_photio.attenuation): Unrecognised model for attenuation.')
+                print('STOP (gne_photio.attenuation): Unrecognised model for attenuation.')
                 print('                Possible attmod= {}'.format(const.attmods))
             sys.exit()
         elif attmod=='ratios':
@@ -258,7 +258,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 #                     coef_att[comp,cols_photmod[i]][ind] = hf[cols_att[comp,i]][ind]/hf[cols_notatt[comp,i]][ind]
 #                     coef_att[comp,cols_photmod[i]][ind2] = 1
 #     elif inputformat=='textfile':
-#         ih = get_nheader(infile)        
+#         ih = io.nheader(infile)        
 #         X = np.loadtxt(infile,skiprows=ih).T
         
 #         coef_att = np.empty((ncomp,numlines,len(X[0])))

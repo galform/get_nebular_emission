@@ -9,8 +9,8 @@ Created on Wed Dec 20 10:02:26 2023
 import numpy as np
 import h5py
 from matplotlib import pyplot as plt
-import get_nebular_emission.eml_const as const
-from get_nebular_emission.eml_photio import get_limits
+import src.gne_const as const
+from src.gne_photio import get_limits
 import sys
 from cosmology import set_cosmology
 import mpl_style
@@ -65,7 +65,7 @@ def lines_BPT(x, BPT, line):
     '''
     
     if BPT not in const.BPT_lines:
-        print('STOP (eml_plots.lines_BPT): ',
+        print('STOP (gne_plots.lines_BPT): ',
               'BPT plot not recognized.')
         sys.exit()
         return
