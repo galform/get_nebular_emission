@@ -1,3 +1,5 @@
+import src.gne_io as io
+
 #import numpy as np
 #import matplotlib
 #import os.path
@@ -883,9 +885,9 @@
 #                        plt.close()
 #
 
-def make_testplots(fnom,zz):    
-    # Get output file from input
-    outfile = io.get_outnom(infile,ftype='plots',verbose=verbose)
+def make_testplots(fnom,zz,verbose=True):    
+    # Get output file for BPT plot
+    outfile = io.get_outnom(fnom,ftype='plots',ptype='bpt',verbose=verbose)
 
     
-    return outfile
+    return ' '

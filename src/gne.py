@@ -145,11 +145,14 @@ def gne(infile, m_sfr_z,
 
     '''
 
-    # Get output file from input
-    outfile = io.get_outnom(infile,ftype='data',verbose=verbose)
+    # Generate header in the output file from input
+    outfile = io.generate_header(infile, redshift, h0=h0,
+                                 unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
+                                 photmod_sfr=photmod_sfr, photmod_agn=photmod_agn,
+                                 attmod=attmod,verbose=verbose)
 
+    # Time and passes variables
     first = True
-    
     start_total_time = time.perf_counter()
     start_time = time.perf_counter()
 
@@ -168,6 +171,8 @@ def gne(infile, m_sfr_z,
         att_params=att_params,inputformat=inputformat,
         attmod=attmod,verbose=verbose)
 
+    # Modification of the stellar mass-metallicity relation
+    # 0 for no correction
     if flag==1:
         loh12 = Z_tremonti(lms,loh12,Lagn_param)[1]
     elif flag==2:
@@ -219,6 +224,18 @@ def gne(infile, m_sfr_z,
         fluxes_sfr = np.array(None)
         fluxes_sfr_att = np.array(None)
 
+    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lne_o_sfr,loh12_o_sfr,
+                      nebline_sfr,nebline_sfr_att,
+                      fluxes_sfr,fluxes_sfr_att,
+                      extra_param=extra_param,
+                      extra_params_names=extra_params_names,
+                      extra_params_labels=extra_params_labels,
+                      first=first,verbose=verbose)
+    
+    del lu_sfr, lne_sfr, loh12_sfr
+    del lu_o_sfr, lne_o_sfr, loh12_o_sfr
+    del nebline_sfr, nebline_sfr_att
+        
     if AGN:
         bursttobulge(lms, Lagn_param)
         
@@ -268,32 +285,17 @@ def gne(infile, m_sfr_z,
             fluxes_agn = np.array(None)
             fluxes_agn_att = np.array(None)
 
-        io.write_data_AGN(lms,lssfr,lu_o_sfr,lne_o_sfr,loh12_o_sfr,lu_o_agn,lne_o_agn,loh12_o_agn,
-                   nebline_sfr,nebline_agn,nebline_sfr_att,nebline_agn_att,
-                   fluxes_sfr,fluxes_agn,fluxes_sfr_att,fluxes_agn_att,
-                   epsilon_sfr,epsilon_agn,
-                   extra_param=extra_param, extra_params_names=extra_params_names,
-                   extra_params_labels=extra_params_labels,
-                   outfile=outfile,attmod=attmod,unemod_agn=unemod_agn,unemod_sfr=unemod_sfr,
-                   photmod_agn=photmod_agn,photmod_sfr=photmod_sfr,first=first)             
-        del lms, lssfr
-        del lu_sfr, lne_sfr, loh12_sfr, lu_agn, lne_agn, loh12_agn 
-        del lu_o_sfr, lne_o_sfr, loh12_o_sfr,  lu_o_agn, lne_o_agn, loh12_o_agn
-        del nebline_sfr, nebline_sfr_att, nebline_agn, nebline_agn_att, cut
-    else:
-        io.write_data(lms,lssfr,lu_o_sfr,lne_o_sfr,loh12_o_sfr,
-                   nebline_sfr,nebline_sfr_att,
-                   fluxes_sfr,fluxes_sfr_att,
-                   extra_param=extra_param, extra_params_names=extra_params_names,
-                   extra_params_labels=extra_params_labels,
-                   outfile=outfile,attmod=attmod,unemod_sfr=unemod_sfr,
-                   photmod_sfr=photmod_sfr,first=first)             
-        del lms, lssfr
-        del lu_sfr, lne_sfr, loh12_sfr
-        del lu_o_sfr, lne_o_sfr, loh12_o_sfr
-        del nebline_sfr, nebline_sfr_att, cut
-    
-    
+        io.write_agn_data(outfile,lu_o_agn,lne_o_agn,loh12_o_agn,
+                          nebline_agn,nebline_agn_att,
+                          fluxes_agn,fluxes_agn_att,
+                          epsilon_agn,
+                          first=first,verbose=verbose)             
+        del lu_agn, lne_agn, loh12_agn 
+        del lu_o_agn, lne_o_agn, loh12_o_agn
+        del nebline_agn, nebline_agn_att
+
+
+    del lms, lssfr, cut
     if first:
         first = False
     

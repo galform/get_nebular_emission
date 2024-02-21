@@ -241,12 +241,12 @@ maxcuts = [None]
 
 
 ### RUN the code with the given parameters or make plots ###
-get_lines = False
+run_code = False
 make_plots = True
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
 
-    if get_lines:
+    if run_code:
         gne(infile, m_sfr_z=cols, infile_z0=infile_z0, 
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             att=att,
