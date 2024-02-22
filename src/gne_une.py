@@ -22,6 +22,7 @@ def bursttobulge(lms,Lagn_param):
     lms[:,1] = const.notnum
     lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
 
+    
 def Z_blanc(logM_or):
     logZ = np.zeros(logM_or.shape)
     logM = logM_or - 9.35
@@ -39,6 +40,7 @@ def Z_blanc(logM_or):
     logZ = logZ - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
     
     return logZ
+
 
 def Z_tremonti(logM,logZ,Lagn_param=[[None],[None]]): # Ms and Z scale relation from Tremonti et. al. 2004
     
@@ -149,6 +151,7 @@ def acc_rate_edd(Mbh): # Eddington mass accretion rate
     acc_rate = Ledd(Mbh)/(0.1*const.c**2) * (const.kg_to_Msun/1000) # Msun/s
     return acc_rate
 
+
 def t_bulge(r_bulge, v_bulge): # Dynamical timescale of the bulge
     '''
     Given the bulge's half-mass radius and circular velocity at the half-mass radius,
@@ -168,6 +171,7 @@ def t_bulge(r_bulge, v_bulge): # Dynamical timescale of the bulge
     
     dyn_time = r_bulge/v_bulge * 1e-5*const.Mpc_to_cm # s
     return dyn_time
+
 
 def acc_rate_quasar(M_bulge, r_bulge, v_bulge):
     '''
@@ -211,6 +215,7 @@ def acc_rate_radio(Mhot, Mbh):
     acc_rate = const.kappa_agn*(Mhot*Mbh*1e-19)**const.kappa_agn_exp * (1/3.154e7) # Msun/s
     return acc_rate
 
+
 def r_iso(spin):
     Z1 = 1 + (1 - np.abs(spin)**2)**(1/3) * ((1+np.abs(spin))**(1/3) + (1-np.abs(spin))**(1/3))
     Z2 = np.sqrt(3*np.abs(spin)**2 + Z1**2)
@@ -225,115 +230,7 @@ def epsilon_td(spin):
     return epsilon_td
 
 # AGNinputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
-def L_agn(Lagn_params_vals,AGNinputs='complete',verbose=True):
-    '''
-    It reads parameters from the input file from which it can calculate or get the 
-    AGN luminosities and returns those values.
 
-    Parameters
-    ----------
-    Lagn_params : floats
-     Parameters to calculate the AGN emission. 
-    AGNinputs : string
-     Type of inputs for AGN's bolometric luminosity calculations.
-    verbose : boolean
-      If True print out messages.
-
-    Returns
-    -------
-    Lagn : floats
-    '''
-    
-    if AGNinputs=='Lagn':
-        return Lagn_params_vals[0] # erg s^-1
-    elif AGNinputs=='acc_rate':
-        Mdot = Lagn_params_vals[0]*(1/const.yr_to_s)
-        Mbh = Lagn_params_vals[1]
-        if len(Lagn_params_vals) > 2:
-            spin = Lagn_params_vals[2]
-        else:
-            spin = np.full(Mbh.shape,const.spin_bh)
-    elif AGNinputs=='acc_rates':
-        Mdot = (Lagn_params_vals[0] + Lagn_params_vals[1])*(1/const.yr_to_s)   
-        Mbh = Lagn_params_vals[2]
-        if len(Lagn_params_vals) > 3:
-            spin = Lagn_params_vals[3]
-        else:
-            spin = np.full(Mbh.shape,const.spin_bh)
-    elif AGNinputs=='radio_mode':
-        Mdot = np.zeros(Lagn_params_vals[0].shape)
-        ind_radio = np.where((Lagn_params_vals[0]!=0)&(Lagn_params_vals[1]!=0))[0]
-        Mdot[ind_radio] = acc_rate_radio(Lagn_params_vals[0][ind_radio], 
-                                               Lagn_params_vals[1][ind_radio])
-        Mbh = Lagn_params_vals[1]
-        if len(Lagn_params_vals) > 2:
-            spin = Lagn_params_vals[2]
-        else:
-            spin = np.full(Mbh.shape,const.spin_bh)
-    elif AGNinputs=='quasar_mode':
-        Mdot = np.zeros(Lagn_params_vals[0].shape)
-        ind_quasar = np.where(Lagn_params_vals[0]!=0)[0]
-        Mdot[ind_quasar] = acc_rate_quasar(Lagn_params_vals[0][ind_quasar], 
-                                Lagn_params_vals[1][ind_quasar], Lagn_params_vals[2][ind_quasar])
-        Mbh = Lagn_params_vals[3]
-        if len(Lagn_params_vals) > 4:
-            spin = Lagn_params_vals[4]
-        else:
-            spin = np.full(Mbh.shape,const.spin_bh)
-    elif AGNinputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
-        Mdot_quasar = np.zeros(Lagn_params_vals[0].shape)
-        Mdot_radio = np.zeros(Lagn_params_vals[0].shape)
-        
-        ind_quasar = np.where(Lagn_params_vals[0]!=0)[0]
-        Mdot_quasar[ind_quasar] = acc_rate_quasar(Lagn_params_vals[0][ind_quasar], 
-                                Lagn_params_vals[1][ind_quasar], Lagn_params_vals[2][ind_quasar])
-        
-        ind_radio = np.where((Lagn_params_vals[3]!=0)&(Lagn_params_vals[4]!=0))[0]
-        Mdot_radio[ind_radio] = acc_rate_radio(Lagn_params_vals[3][ind_radio], 
-                                               Lagn_params_vals[4][ind_radio])
-        
-        Mdot = Mdot_radio + Mdot_quasar
-        
-        Mbh = Lagn_params_vals[4]
-        
-        if len(Lagn_params_vals) > 5:
-            spin = Lagn_params_vals[5]
-        else:
-            spin = np.full(Mbh.shape,const.spin_bh)
-    
-    Mdot_edd = acc_rate_edd(Mbh)
-    
-    mdot = np.zeros(Mdot.shape)
-    bh = np.where(Mdot_edd!=0)[0]
-    mdot[bh] = Mdot[bh]/Mdot_edd[bh]
-    
-    Lagn = np.zeros(np.shape(mdot))
-    # n1, n2, n3, n4, n0 = [],[],[],[],[]
-    for i in range(len(Lagn)):
-        if mdot[i] == 0:
-            # n0.append(i)
-            continue
-        
-        # Lagn[i] = epsilon_td(const.spin_bh)*Mdot[i]*const.c**2 * (1000/const.kg_to_Msun)
-        
-        if mdot[i] < const.acc_rate_crit_visc:
-            # n1.append(i)
-            Lagn[i] = 0.2*epsilon_td(spin[i])*Mdot[i]*const.c**2*(mdot[i]/const.alpha_adaf**2)*((1-const.beta)/0.5)*(6/r_iso(spin[i])) * (1000/const.kg_to_Msun)
-        elif mdot[i] < const.acc_rate_crit_adaf:
-            # n2.append(i)
-            Lagn[i] = 0.2*epsilon_td(spin[i])*Mdot[i]*const.c**2*(mdot[i]/const.alpha_adaf**2)*(const.beta/0.5)*(6/r_iso(spin[i])) * (1000/const.kg_to_Msun)
-        elif mdot[i] < const.eta_edd:
-            # n3.append(i)
-            Lagn[i] = epsilon_td(spin[i])*Mdot[i]*const.c**2 * (1000/const.kg_to_Msun)
-        else:
-            # n4.append(i)
-            Lagn[i] = const.eta_edd*Ledd(Mbh[i])*(1 + np.log(mdot[i]/const.eta_edd))
-            
-    # logLagn = np.log10(Lagn)
-    # print(len(n1),len(n2),len(n3),len(n4))
-    # print(np.mean(logLagn[n1]),np.mean(logLagn[n2]),np.mean(logLagn[n3]))
-        
-    return Lagn # erg s^-1
 
 ########################
 
@@ -359,22 +256,6 @@ def alpha_B(T):
     
     return alphaB
 
-def Rsch(Mbh):
-    '''
-    Given the mass of the black hole, it calculates the Schwarzschild radius.
-
-    Parameters
-    ----------
-    Mbh : floats
-     Mass of the black hole (Msun)
-     
-    Returns
-    -------
-    Rs : floats
-    '''
-    
-    Rs = 2*const.G*Mbh/(const.c**2) * 1e10 * 3.086e19 #km
-    return Rs
 
 def surface_density(x,M,reff,profile='exponential',verbose=True):
     '''
@@ -411,6 +292,7 @@ def surface_density(x,M,reff,profile='exponential',verbose=True):
         
         surf_den = central*np.exp(-x/reff)
         return surf_den
+
     
 def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
     '''
@@ -493,6 +375,7 @@ def enclosed_mass_sphere(x,M,reff,profile='exponential',verbose=True):
             mass_enclosed[ind] = (M[ind]/(2*reff[ind]**3))*(2*reff[ind]**3 - np.exp(-x[0]/reff[ind])*reff[ind]*(2**reff[ind]**2 + 2*reff[ind]*x[0] + x[0]**2))
         
         return mass_enclosed
+
     
 def vol_sphere(r):
     '''
@@ -508,8 +391,9 @@ def vol_sphere(r):
     V : float
     '''
     
-    V = (4/3)*np.pi*r**3
+    V = (4./3.)*np.pi*r**3
     return V
+
 
 def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     '''
@@ -564,6 +448,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
             n[ind] = M_enclosed[ind]/vol_sphere(x[0]) / (const.mp*const.kg_to_Msun*const.Mpc_to_cm**3)
         
         return n
+
     
 def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     '''
@@ -609,6 +494,7 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     
     return n
 
+
 def gamma_gas_func():
     '''
     Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
@@ -620,6 +506,7 @@ def gamma_gas_func():
     gamma_gas = 10 #km s^-1, Lagos et al. 2011
     
     return gamma_gas
+
 
 def gamma_star_func(h_star,den_star):
     '''
@@ -677,6 +564,7 @@ def mean_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     else:
         return n # cm^-3
 
+    
 def calculate_ng_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     '''
     Given the mass of the desired component of the galaxy, the disk effective radius
@@ -747,6 +635,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     epsilon = n/nH
     
     return n, epsilon
+
 
 def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponential',verbose=True):
     '''
@@ -819,6 +708,7 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
     
     epsilon[epsilon>1] = 1
     return epsilon
+
 
 def n_ratio(n,n_z0):
     '''
@@ -931,6 +821,7 @@ def phot_rate(lssfr=None, lms=None, IMF_f=None, Lagn=None, origin='sfr'):
             
     return Q
 
+
 def get_une_kashino20(Q, lms, lssfr, loh12, T, ng_ratio, IMF_f):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z) and the assumed IMF,
@@ -1010,6 +901,7 @@ def get_une_kashino20(Q, lms, lssfr, loh12, T, ng_ratio, IMF_f):
     lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
     return lu, lne, loh12
+
 
 def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, ng_ratio):
     '''
@@ -1114,6 +1006,7 @@ def get_une_orsi14(Q, lms, lssfr, loh12, T, q0, z0, gamma, ng_ratio):
 
 #     return lu, lne, loh12
 
+
 def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f):
     '''
     Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
@@ -1213,7 +1106,8 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
     
 
     return lu, lne, loh12
-    
+
+
 def get_une(lms_o, lssfr_o, loh12_o,
             q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=None,
             Z_central_cor=False,

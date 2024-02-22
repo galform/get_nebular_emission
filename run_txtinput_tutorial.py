@@ -26,7 +26,7 @@ from src.gne_plots import make_testplots
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
 infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
-redshifts = [0.]
+redshifts = [0.15]
 
 ### INPUT FORMAT
 # If your input files are text files (.txt, .dat, .csv...): inputformat = 'txt'
@@ -48,6 +48,10 @@ inputformat = 'txt'
 #cols = [[0,2,4]]
 cols = [[0,2,4],[1,3,5]]
 
+
+# oh12 True if the gas metallicity input is directly log(O/H)+12
+#      False if Zgas = MZcold/Mcold
+oh12 = False
 
 # LC2sfr is True when Lyman Continuum photons are given  instead of the SFR
     # First option: LC2sfr = True; cols = [[M,m_LC,Z]]
@@ -114,7 +118,7 @@ AGN = True
 epsilon_params=[6,11,19,12]
     
 # Second, the AGNs bolometric luminosity is needed. This value can be in the
-    # input file or can be estimated from other paremeters. To indicate
+    # input file or it can be estimated from other paremeters. To indicate
     # how are you going to get it you use AGNinputs and then put the location
     # of the corresponding parameters in Lagn_params:
         # Lagn: Put the luminosity value directly.
@@ -236,21 +240,20 @@ maxcuts = [None]
 
 
 ### RUN the code with the given parameters or make plots ###
-run_code = False
+run_code = True
 make_plots = True
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
 
     if run_code:
-        gne(infile, m_sfr_z=cols, infile_z0=infile_z0, 
+        gne(infile, zz, m_sfr_z=cols, infile_z0=infile_z0, 
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             att=att,
             att_params=att_params, att_ratio_lines=att_ratio_lines,
             flux=flux,
             h0=const.h,
             IMF_i=IMF_i, IMF_f=IMF_f, inputformat=inputformat,
-            mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
-            redshift=zz,
+            oh12= oh12, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             AGN=AGN,AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
             epsilon_params=epsilon_params,

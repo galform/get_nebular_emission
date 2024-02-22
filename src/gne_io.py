@@ -461,7 +461,8 @@ def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None,
 def get_data(infile, cols, h0=None, inputformat='hdf5', 
              IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
              cutcols=None, mincuts=[None], maxcuts=[None],
-             attmod='GALFORM', LC2sfr=False, mtot2mdisk=True, 
+             attmod='GALFORM',
+             oh12 = False, LC2sfr=False, mtot2mdisk=True, 
              verbose=False, testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
@@ -635,9 +636,15 @@ def get_data(infile, cols, h0=None, inputformat='hdf5',
     else:
         lsfr = lssfr + lms
 
-    # Obtain 12+log10(O/H) from Z=MZcold/Mcold
-    ind = np.where(loh12>0)
-    loh12[ind] = np.log10(loh12[ind]) #+ const.ohsun - np.log10(const.zsun)
+    if oh12: ####here
+        # Obtain 12+log10(O/H) from Z=MZcold/Mcold
+        zgas = np.copy(loh12)
+        loh12 = np.zeros(len(zgas))
+        ind = np.where(zgas>0)
+        loh12[ind] = np.log10(zgas[ind]) + const.ohsun - np.log10(const.zsun)
+    else: #Julen's version to be checked ####here
+        ind = np.where(loh12>0)
+        loh12[ind] = np.log10(loh12[ind])
 
     if ncomp!=1:
         oh12 = np.zeros(loh12.shape)

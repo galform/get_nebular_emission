@@ -20,11 +20,10 @@ G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
 nH_gal = 100 # cm^-3
 
 zsun = 0.0134 # Asplund 2009
-# zsum = 0.014 #CMB constant ref ?
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 vol_pm = 542.16**3. # Volume of the P-Millenium simulation
-vol_sage = 1000**3 # Volume of the UNITSIM1
+vol_sage = 1000**3  # Volume of the UNITSIM1
 
 #------------------------------------------------------------------------------------
 #   Orsi et. al. 2014

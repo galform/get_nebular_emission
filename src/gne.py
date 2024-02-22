@@ -1,5 +1,6 @@
 import src.gne_io as io
-from src.gne_une import get_une, bursttobulge, L_agn, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
+from src.gne_une import get_une, bursttobulge, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
+from src.gne_agn import L_agn
 import src.gne_const as const
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
 from src.gne_att import attenuation
@@ -7,8 +8,8 @@ import time
 import numpy as np
 from src.gne_plots import make_testplots
 
-def gne(infile, m_sfr_z, 
-        inputformat='HDF5',infile_z0=[None], h0=None, redshift=0,
+def gne(infile, redshift, m_sfr_z, 
+        inputformat='HDF5',infile_z0=[None], h0=None, 
         cutcols=[None], mincuts=[None], maxcuts=[None], 
         att=False, att_params=None, att_ratio_lines=None,
         flux=False,
@@ -22,7 +23,8 @@ def gne(infile, m_sfr_z,
         attmod='cardelli89',
         unemod_sfr='kashino19', unemod_agn='panuzzo03',
         photmod_sfr='gutkin16', photmod_agn='feltre16',
-        LC2sfr=False, cutlimits=False, mtot2mdisk=True,
+        oh12=False, LC2sfr=False,
+        cutlimits=False, mtot2mdisk=True,
         verbose=True, testing=False,
         xid_feltre=0.5,alpha_feltre=-1.7,
         xid_gutkin=0.3,co_gutkin=1,imf_cut_gutkin=100):
@@ -161,6 +163,7 @@ def gne(infile, m_sfr_z,
                                          cutcols=cutcols, mincuts=mincuts,
                                          maxcuts=maxcuts,
                                          inputformat=inputformat,
+                                         oh12 = oh12,
                                          LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
                                          IMF_i=IMF_i, IMF_f=IMF_f,
                                          verbose=verbose,testing=testing)
