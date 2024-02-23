@@ -60,6 +60,9 @@ style1 = {
     'legend.numpoints': 1,
     'legend.loc': 'best',
 
+    # Default colormap
+    'image.cmap': 'turbo_r', 
+
     # Figure
     'figure.figsize': [6.5, 7],
     'figure.titlesize': 'large',
@@ -71,6 +74,7 @@ style1 = {
     # Saving
     'savefig.bbox': 'tight',
     'savefig.format': 'pdf',
+
 }
 
 # https://matplotlib.org/users/customizing.html

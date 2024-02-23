@@ -4,6 +4,7 @@ import numpy as np
 import h5py
 ## matplotlib.use("Agg")
 from matplotlib import pyplot as plt
+from matplotlib.cm import ScalarMappable
 #import matplotlib.gridspec as gridspec
 #import src.gne_style as style
 #from src.gne_stats import perc_2arrays
@@ -921,9 +922,18 @@ def test_bpts(infile, zz, verbose=True):
         ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
         ax.set_xlim(xmins[ii], xmaxs[ii])
         ax.set_ylim(ymins[ii], ymaxs[ii])
-        cbar = plt.colorbar()
-        #collabel = '$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, SF}}$'
-        #cbar.set_label(collabel,rotation=270,labelpad=60)
+
+        x = np.arange(-3,3,1)
+        y = np.arange(-3,3,1)
+        cha = np.arange(-3,3,1)
+        sc = ax.scatter(x, y, c=cha)
+
+        # Add colorbar
+        sm = ScalarMappable() # Create ScalarMappable
+        sm.set_array(cha)
+        cbar = plt.colorbar(sm, ax=ax)
+        collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, SF}$'
+        cbar.set_label(collabel,rotation=270,labelpad=60)
         
         # Add obs. data if adequate
         if redshift <= 0.2:
