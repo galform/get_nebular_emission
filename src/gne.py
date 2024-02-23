@@ -1,5 +1,5 @@
 import src.gne_io as io
-from src.gne_une import get_une, bursttobulge, calculate_epsilon, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
+from src.gne_une import get_une, bursttobulge, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
 from src.gne_agn import L_agn
 import src.gne_const as const
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
@@ -8,8 +8,9 @@ import time
 import numpy as np
 from src.gne_plots import make_testplots
 
-def gne(infile, redshift, m_sfr_z, 
-        inputformat='HDF5',infile_z0=[None], h0=None, 
+def gne(infile, redshift, m_sfr_z,
+        h0,omega0,omegab,lambda0,vol,
+        inputformat='HDF5',infile_z0=[None], h0units=True, 
         cutcols=[None], mincuts=[None], maxcuts=[None], 
         att=False, att_params=None, att_ratio_lines=None,
         flux=False,
@@ -148,7 +149,8 @@ def gne(infile, redshift, m_sfr_z,
     '''
 
     # Generate header in the output file from input
-    outfile = io.generate_header(infile, redshift, h0=h0,
+    outfile = io.generate_header(infile, redshift,
+                                 h0,omega0,omegab,lambda0,vol,
                                  unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
                                  photmod_sfr=photmod_sfr, photmod_agn=photmod_agn,
                                  attmod=attmod,verbose=verbose)
@@ -159,7 +161,8 @@ def gne(infile, redshift, m_sfr_z,
     start_time = time.perf_counter()
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, loh12, cut = io.get_data(infile, m_sfr_z, h0=h0,
+    lms, lssfr, loh12, cut = io.get_data(infile, outfile,
+                                         m_sfr_z, h0units=h0units,
                                          cutcols=cutcols, mincuts=mincuts,
                                          maxcuts=maxcuts,
                                          inputformat=inputformat,
@@ -182,10 +185,13 @@ def gne(infile, redshift, m_sfr_z,
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
         loh12 = Z_tremonti2(lms,loh12,minZ,maxZ,Lagn_param)
             
-    Q_sfr, lu_sfr, lne_sfr, loh12_sfr, epsilon_sfr, ng_ratio = get_une(
-        lms, lssfr, loh12, q0, z0, T=T, IMF_f=IMF_f, h0=h0, redshift=redshift,
-        epsilon_param=epsilon_param, epsilon_param_z0=epsilon_param_z0,
-        origin='sfr', unemod=unemod_sfr, gamma=gamma, verbose=verbose)
+    Q_sfr, lu_sfr, lne_sfr, loh12_sfr, epsilon_sfr, ng_ratio = \
+        get_une(lms, lssfr, loh12, outfile,
+                q0=q0, z0=z0, T=T, IMF_f=IMF_f, h0units=h0units,
+                epsilon_param=epsilon_param,
+                epsilon_param_z0=epsilon_param_z0,
+                origin='sfr', unemod=unemod_sfr,
+                gamma=gamma, verbose=verbose)
 
     if verbose:
         print('SF:')
@@ -219,8 +225,10 @@ def gne(infile, redshift, m_sfr_z,
         nebline_sfr_att = np.array(None)
 
     if flux:
-        fluxes_sfr = calculate_flux(nebline_sfr,redshift,h0=const.h,origin='sfr')
-        fluxes_sfr_att = calculate_flux(nebline_sfr_att,redshift,h0=const.h,origin='sfr')
+        fluxes_sfr = calculate_flux(nebline_sfr,outfile,
+                                    h0units=h0units,origin='sfr')
+        fluxes_sfr_att = calculate_flux(nebline_sfr_att,outfile,
+                                        h0units=h0units,origin='sfr')
         if verbose:
             print(' Flux calculated.')
     else:
@@ -245,12 +253,12 @@ def gne(infile, redshift, m_sfr_z,
         Lagn = L_agn(Lagn_param,AGNinputs=AGNinputs,
                      verbose=verbose)
         
-        Q_agn, lu_agn, lne_agn, loh12_agn, epsilon_agn, ng_ratio = get_une(lms, 
-                            lssfr, loh12, q0, z0,
-                            Z_central_cor=Z_central_cor,
-                            Lagn=Lagn, T=T, epsilon_param=epsilon_param, 
-                            h0=h0, IMF_f=IMF_f, origin='agn',
-                            unemod=unemod_agn, gamma=gamma, verbose=verbose)
+        Q_agn, lu_agn, lne_agn, loh12_agn, epsilon_agn, ng_ratio = \
+            get_une(lms,lssfr, loh12, outfile, q0=q0, z0=z0,
+                    Z_central_cor=Z_central_cor,Lagn=Lagn, T=T,
+                    epsilon_param=epsilon_param,h0units=h0units,
+                    IMF_f=IMF_f, origin='agn',
+                    unemod=unemod_agn, gamma=gamma, verbose=verbose)
         
         if verbose:
             print('AGN:')
@@ -280,8 +288,10 @@ def gne(infile, redshift, m_sfr_z,
             nebline_agn_att = np.array(None)
             
         if flux:
-            fluxes_agn = calculate_flux(nebline_agn,redshift,h0=const.h,origin='sfr')
-            fluxes_agn_att = calculate_flux(nebline_agn_att,redshift,h0=const.h,origin='sfr')
+            fluxes_agn = calculate_flux(nebline_agn,outfile,
+                                        h0units=h0units,origin='agn')
+            fluxes_agn_att = calculate_flux(nebline_agn_att,outfile,
+                                            h0units=h0units,origin='agn')
             if verbose:
                 print(' Flux calculated.')
         else:

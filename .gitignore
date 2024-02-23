@@ -4,7 +4,7 @@ output/
 example_data/compare_vct.pdf
 __pycache__/
 */__pycache__/
-
+*.pyc
 
 # C extensions
 *.so

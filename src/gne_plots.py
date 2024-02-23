@@ -1,75 +1,74 @@
 import src.gne_io as io
-
-#import numpy as np
-#import matplotlib
+import numpy as np
 #import os.path
-#import h5py
+import h5py
 ## matplotlib.use("Agg")
-#from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 #import matplotlib.gridspec as gridspec
 #import src.gne_style as style
 #from src.gne_stats import perc_2arrays
-#import src.gne_const as const
+import src.gne_const as const
 #from src.gne_io import get_nheader, check_file
 #from src.gne_photio import get_lines_Gutkin, get_limits
 #from numpy import random
 #from scipy.stats import gaussian_kde
 #import sys
 #from cosmology import logL2flux, set_cosmology
-#
-#plt.style.use(style.style1)
-#
-#def lines_BPT(x, BPT, line):
-#    
-#    '''
-#    
-#    Boundary lines for the distinction of ELG types in BPT diagrams.
-#    It assummes OIII/Hb on the y axis.
-# 
-#    Parameters
-#    ----------
-#    
-#    x : floats
-#       Array of points on the x axis to define the lines. 
-#       It should correspond to the wanted BPT.
-#    BPT : string
-#       Key corresponding to the wanted x axis for the BPT.
-#    line : string
-#       Key corresponding to the wanted boundary line for the BPT.
-#    
-#    Returns
-#    -------
-#    boundary : floats
-#    Values of the boundary line in the desired range.
-#    '''
-#    
-#    if BPT not in const.BPT_lines:
-#        print('STOP (gne_plots.lines_BPT): ',
-#              'BPT plot not recognized.')
-#        sys.exit()
-#        return
-#    elif BPT=='NII':
-#        if line=='SFR_Composite':
-#            boundary = 0.61/(x-0.05) + 1.3 # Kauffmann 2003
-#        elif line=='Composite_AGN':
-#            boundary = 0.61/(x-0.47) + 1.19 # Kewley 2001
-#        elif line=='LINER_NIIlim':
-#            boundary = np.log10(0.6) # Kauffmann 2003
-#        elif line=='LINER_OIIIlim':
-#            boundary = np.log10(3) # Kauffmann 2003
-#    elif BPT=='SII':
-#        if line=='SFR_AGN':
-#            boundary = 0.72/(x-0.32) + 1.3 # Kewley 2001
-#        elif line=='Seyfert_LINER':
-#            boundary = 1.89*x + 0.76 # Kewley 2006
-#    elif BPT=='SII':
-#        if line=='SFR_AGN':
-#            boundary = 0.73/(x-0.59) + 1.33 # Kewley 2001
-#        elif line=='Seyfert_LINER':
-#            boundary = 1.18*x + 1.3 # Kewley 2006
-#            
-#    return boundary
-#
+import src.gne_style
+plt.style.use(src.gne_style.style1)
+
+def lines_BPT(x, BPT, line):
+    
+    '''
+    
+    Boundary lines for the distinction of ELG types in BPT diagrams.
+    It assummes OIII/Hb on the y axis.
+ 
+    Parameters
+    ----------
+    
+    x : floats
+       Array of points on the x axis to define the lines. 
+       It should correspond to the wanted BPT.
+    BPT : string
+       Key corresponding to the wanted x axis for the BPT.
+    line : string
+       Key corresponding to the wanted boundary line for the BPT.
+    
+    Returns
+    -------
+    boundary : floats
+    Values of the boundary line in the desired range.
+    '''
+
+    boundary = np.zeros(len(x)); boundary.fill(-999.)
+    
+    if BPT=='NII':
+        if line=='Kauffmann2003':
+            x0 = 0.05
+            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.3
+        elif line=='Kewley2001':
+            x0 = 0.47
+            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.19
+        elif line=='LINER_NIIlim':
+            boundary = np.log10(0.6) # Kauffmann 2003
+        elif line=='LINER_OIIIlim':
+            boundary = np.log10(3) # Kauffmann 2003
+    elif BPT=='SII':
+        if line=='Kewley2001':
+            x0 = 0.05
+            boundary[x<x0] = 0.72/(x[x<x0] - x0) + 1.3
+        elif line=='Kewley2006':
+            boundary = 1.89*x + 0.76
+    else:
+        print('STOP (gne_plots.lines_BPT): ',
+              'BPT plot not recognized.')
+        return None
+            
+    return boundary
+
+
+
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
 #              colsGSM=[0,1,2,3], labelObs=None, specific=False, h0=const.h, volume=const.vol_pm, verbose=False):
 #
@@ -550,8 +549,8 @@ import src.gne_io as io
 #        # plt.close()
 #
 #
-#### DEPRECATED
-#def test_bpt(infile, outplot, photmod='gutkin16', plot_phot=False, create_file=False, file_folder='output_data', verbose=False):
+
+#def test_interpolation(infile, zz, verbose=True):
 #    '''
 #    Run a test of the interpolations done in gne_photio.
 #    Two plots, one to verify the U interpolation and the other one to verify the Z interpolation
@@ -886,10 +885,104 @@ import src.gne_io as io
 #
 
 
+def test_bpts(infile, zz, verbose=True):
+    '''
+    Make the 2 BPT diagrams without attenuation
+    
+    Parameters
+    ----------
+    infile : string
+       Name of the input file. 
+    zz : float
+       Redshift
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    bptnoms = ['','']
+    xmins = [-1.9,-1.9]
+    xmaxs = [0.8,0.9]
+    ymins = [-1.5,-2.1]
+    ymaxs = [1.5,1.6]
+
+
+    # Read readshift
+    filenom = io.get_outnom(infile,ftype='line_data')
+    print(filenom)
+    f = h5py.File(filenom, 'r') 
+    header = f['header']
+    redshift = header.attrs['redshift']
+    f.close()
+
+    for ii, bpt in enumerate(['NII','SII']):
+        # Set figure
+        plt.figure(figsize=(15,15))
+        ax = plt.subplot()
+        ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
+        ax.set_xlim(xmins[ii], xmaxs[ii])
+        ax.set_ylim(ymins[ii], ymaxs[ii])
+        cbar = plt.colorbar()
+        #collabel = '$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, SF}}$'
+        #cbar.set_label(collabel,rotation=270,labelpad=60)
+        
+        # Add obs. data if adequate
+        if redshift <= 0.2:
+            obsplot = True
+            obsfile = 'src/observational_data/favole2024.txt'
+            data = np.loadtxt(obsfile,skiprows=1,usecols=(15,9))
+            yobs = np.log10(data[:,0]/data[:,1]) #O3/Hb
+            if bpt=='NII':
+                data = np.loadtxt(obsfile,skiprows=1,usecols=(18,6))
+                xobs = np.log10(data[:,0]/data[:,1]) #N2/Ha
+            elif bpt=='SII':
+                data = np.loadtxt(obsfile,skiprows=1,usecols=(21,6))
+                xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
+        elif 1.45 <= redshift <= 1.75:
+            obsplot = True
+            if bpt=='NII':
+                obsfile = 'src/observational_data/NII_Kashino.txt'
+                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
+                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+            elif bpt=='SII':
+                obsfile = 'src/observational_data/SII_Kashino.txt'
+                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
+                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+        if obsplot:
+            ax.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
+
+        # Model lines
+        
+            
+        # Lines
+        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
+        if bpt=='NII':
+            xtit = 'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)'
+
+            yline = lines_BPT(xline,bpt,'Kauffmann2003')
+            ax.plot(xline,yline,'k.')
+
+            yline = lines_BPT(xline,bpt,'Kewley2001')
+            ax.plot(xline,yline,'k-')
+        elif bpt=='SII':
+            xtit = 'log$_{10}$([SII]$\\lambda$6584/H$\\alpha$)'
+
+            yline = lines_BPT(xline,bpt,'Kewley2001')
+            ax.plot(xline,yline,'k-')
+
+            ylinel = lines_BPT(xline,bpt,'Kewley2006')
+            ax.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k--')
+
+        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+        
+        # Output files
+        bptnoms[ii] = io.get_outnom(infile,ftype='plots',ptype=bpt+'bpt',verbose=verbose)
+        plt.savefig(bptnoms[ii])
+        
+    return bptnoms
+
 
 def make_testplots(fnom,zz,verbose=True):    
     # Get output file for BPT plot
-    outfile = io.get_outnom(fnom,ftype='plots',ptype='bpt',verbose=verbose)
-
+    nbpt, sbpt = test_bpts(fnom,zz,verbose=verbose)
     
     return ' '

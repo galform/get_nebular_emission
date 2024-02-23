@@ -458,7 +458,7 @@ def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None,
 
 
 
-def get_data(infile, cols, h0=None, inputformat='hdf5', 
+def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5', 
              IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM',
@@ -496,8 +496,7 @@ def get_data(infile, cols, h0=None, inputformat='hdf5',
     IMF_f : strings
      Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
      - [[component1_IMF],[component2_IMF],...]
-    h0 : float
-      If not None: value of h, H0=100h km/s/Mpc.
+    h0units : bool
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
     mtot2mdisk : boolean
@@ -624,7 +623,13 @@ def get_data(infile, cols, h0=None, inputformat='hdf5',
             ind = np.where(ins>0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-    if h0:
+    if h0units:
+        # Read h0
+        f = h5py.File(outfile, 'r')
+        header = f['header']
+        h0 = header.attrs['h0']
+        f.close()
+
         # Correct the units of the stellar mass
         ind = np.where(lms > 0.)
         lms[ind] = lms[ind] - np.log10(h0)
@@ -686,7 +691,8 @@ def get_data(infile, cols, h0=None, inputformat='hdf5',
     return lms,lssfr,loh12,cut
 
 
-def generate_header(infile, redshift, h0=None,
+def generate_header(infile, redshift,
+                    h0,omega0,omegab,lambda0,vol,
                     unemod_sfr=None, unemod_agn=None,
                     photmod_sfr=None, photmod_agn=None,
                     attmod=None,verbose=True):
@@ -697,8 +703,18 @@ def generate_header(infile, redshift, h0=None,
     -----------
     infile : string
         Path to input
+    zz: float
+        Redshift of the simulation snapshot
     h0 : float
         Hubble constant divided by 100
+    omega0 : float
+        Matter density at z=0
+    omegab : float
+        Baryonic density at z=0
+    lambda0 : float
+        Cosmological constant z=0
+    vol : float
+        Simulation volume in Mpc/h
     unemod_sfr : string
         Model to go from galaxy properties to U and ne.
     unemod_agn : string
@@ -728,8 +744,12 @@ def generate_header(infile, redshift, h0=None,
     headnom = 'header'
     head = hf.create_dataset(headnom,(100,))
     head.attrs[u'redshift'] = redshift
-    
-    if h0 is not None: head.attrs[u'h0'] = h0
+    head.attrs[u'h0'] = h0
+    head.attrs[u'omega0'] = omega0
+    head.attrs[u'omegab'] = omegab
+    head.attrs[u'lambda0'] = lambda0
+    head.attrs[u'vol_Mpch'] = vol
+
     if unemod_sfr is not None: head.attrs[u'unemod_sfr'] = unemod_sfr
     if unemod_agn is not None: head.attrs[u'unemod_agn'] = unemod_agn
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr

@@ -637,25 +637,21 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponential',verbose=True):
+def calculate_epsilon(epsilon_param,max_r,filenom,h0units=True,
+                      nH=const.nH_AGN,profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
     the volume filling-factor within that distance.
 
     Parameters
     ----------
-    infile : string
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    max_r : floats
-     Distance to the center within the surface density is going to be calculated (Mpc).
-    epsilon_param : floats
-     Parameters for epsilon calculation.
-    cut : integers
-     Indeces of the galaxies which have survived the specified cut in the main program. 
-    h0 : float
-     If not None: value of h, H0=100h km/s/Mpc.
+    epsilon_param : array of floats
+       Parameters for epsilon calculation.
+    max_r : array of floats
+       Distance to the center within the surface density is going to be calculated (Mpc).
+    filenom : string
+       File with output
+    h0units : bool
     nH : float
      Assumed hydrogen density in the ionizing regions.
     profile : string
@@ -665,8 +661,15 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
      
     Returns
     -------
-    epsilon : floats
+    epsilon : array of floats
     '''
+
+    if h0units:
+        # Read h0
+        f = h5py.File(filenom, 'r')
+        header = f['header']
+        h0 = header.attrs['h0']
+        f.close()
     
     if epsilon_param.shape[0] == 2: #2
         Mg, r = epsilon_param
@@ -676,9 +679,9 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
         ng = np.zeros(Mg.shape)
         if len(max_r) > 1:
             max_r = max_r[ind_epsilon]
-        if h0:
+        if h0units:
             ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(max_r,
-                    Mg[ind_epsilon]/const.h,r[ind_epsilon]/const.h,nH=nH,verbose=verbose)
+                    Mg[ind_epsilon]/h0,r[ind_epsilon]/h0,nH=nH,verbose=verbose)
         else:
             ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(max_r,
                     Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
@@ -689,11 +692,11 @@ def calculate_epsilon(epsilon_param,max_r,h0=const.h,nH=1000,profile='exponentia
         ng = np.zeros(Mg.shape)
         if len(max_r) > 1:
             max_r = max_r[ind_epsilon]
-        if h0:
+        if h0units:
             ng_disk, ep_disk = epsilon_simplemodel(max_r,
-                    Mg[ind_epsilon]/const.h,r[ind_epsilon]/const.h,nH=nH,verbose=verbose)
+                    Mg[ind_epsilon]/h0,r[ind_epsilon]/h0,nH=nH,verbose=verbose)
             ng_bulge, ep_bulge = epsilon_simplemodel(max_r,
-                        Mg_bulge[ind_epsilon]/const.h,r_bulge[ind_epsilon]/const.h,nH=nH,
+                        Mg_bulge[ind_epsilon]/h0,r_bulge[ind_epsilon]/h0,nH=nH,
                         bulge=True,verbose=verbose)
             epsilon[ind_epsilon]= ep_disk + ep_bulge
             ng[ind_epsilon]= ng_disk + ng_bulge
@@ -1108,12 +1111,11 @@ def get_une_panuzzo03(Q, lms, lssfr, loh12, T, epsilon0, ng_ratio, origin, IMF_f
     return lu, lne, loh12
 
 
-def get_une(lms_o, lssfr_o, loh12_o,
+def get_une(lms_o, lssfr_o, loh12_o,filenom,
             q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=None,
             Z_central_cor=False,
             gamma=1.3, T=10000, epsilon_param=[[None]], epsilon_param_z0=[[None]],
-            epsilon=0.01, h0=None, IMF_f=['Kroupa','Kroupa'],
-            redshift=0.1,
+            epsilon=0.01, h0units=True, IMF_f=['Kroupa','Kroupa'],
             unemod='kashino20', origin='sfr', verbose=True):
     '''
     Given log10(Mstar), log10(sSFR) and 12+log(O/H),
@@ -1147,8 +1149,6 @@ def get_une(lms_o, lssfr_o, loh12_o,
      If not None: value of h, H0=100h km/s/Mpc.
     IMF_f : string
      Assumed IMF.
-    redshift : float
-     Redshift of the input data. 
     unemod : string
      Model to go from galaxy properties to U and ne.
     origin : string
@@ -1161,14 +1161,22 @@ def get_une(lms_o, lssfr_o, loh12_o,
     Q, lu, lne, loh12 : floats
     '''
 
+    # Read redshift
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    redshift = header.attrs['redshift']
+    f.close()
+    
     # ncomp = len(lms[0])
     Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF_f=IMF_f,Lagn=Lagn,origin=origin)
     
     epsilon = None
     if epsilon_param[0][0] != None:
         if origin=='agn':
-            epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],h0=h0,
-                              nH=const.nH_AGN,profile='exponential',verbose=verbose)
+            epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],
+                                        filenom,
+                                        h0units=True,nH=const.nH_AGN,
+                                        profile='exponential',verbose=verbose)
         if origin=='sfr':
             # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
             # epsilon = ng/const.nH_gal

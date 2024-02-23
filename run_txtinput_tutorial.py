@@ -28,6 +28,13 @@ from src.gne_plots import make_testplots
 infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
 redshifts = [0.15]
 
+# Cosmology and volume of the simulation
+h0     = 0.704
+omega0 = 0.307
+omegab = 0.0482
+lambda0= 0.693
+vol    = pow(62.5,3) #Mpc/h
+
 ### INPUT FORMAT
 # If your input files are text files (.txt, .dat, .csv...): inputformat = 'txt'
 # If your input files are HDF5 files: inputformat = 'hdf5'
@@ -38,15 +45,15 @@ inputformat = 'txt'
     # M*, SFR/m_LC and Z. 
     # It is a list of lists with the location of the parameters. Each list
     # correspond to a different component: 
-    # cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]
+    # m_sfr_z = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]
     # In the case of a single component: cols = [[M,SFR,Z]] 
 # Example:
     # For two component galaxies and a HDF5 file as input file:
-    # cols = [['Ms_disk','SFR_disk','Z_disk'],['Ms_bulge','SFR_bulge','Z_bulge']]
+    # m_sfr_z = [['Ms_disk','SFR_disk','Z_disk'],['Ms_bulge','SFR_bulge','Z_bulge']]
     # Supposing that, for example, 'Ms_disk' is the name of the HDF5 file's 
     # dataset where the values of the stellar mass of the disk are stored.
-#cols = [[0,2,4]]
-cols = [[0,2,4],[1,3,5]]
+#m_sfr_z = [[0,2,4]]
+m_sfr_z = [[0,2,4],[1,3,5]]
 
 
 # oh12 True if the gas metallicity input is directly log(O/H)+12
@@ -240,18 +247,19 @@ maxcuts = [None]
 
 
 ### RUN the code with the given parameters or make plots ###
-run_code = True
+run_code = False
 make_plots = True
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
 
     if run_code:
-        gne(infile, zz, m_sfr_z=cols, infile_z0=infile_z0, 
+        gne(infile, zz, m_sfr_z,
+            h0,omega0,omegab,lambda0,vol,
+            infile_z0=infile_z0, 
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             att=att,
             att_params=att_params, att_ratio_lines=att_ratio_lines,
             flux=flux,
-            h0=const.h,
             IMF_i=IMF_i, IMF_f=IMF_f, inputformat=inputformat,
             oh12= oh12, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             AGN=AGN,AGNinputs=AGNinputs, Lagn_params=Lagn_params,

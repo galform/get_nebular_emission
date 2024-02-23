@@ -145,27 +145,41 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         lower_limit = np.loadtxt(infile, skiprows=ind+ih, max_rows=1, usecols=(1),unpack=True)
         upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
         return lower_limit,upper_limit
+
     
-def calculate_flux(nebline,redshift,h0=const.h,origin='sfr'):
+def calculate_flux(nebline,filenom,h0units=True,origin='sfr'):
     '''
     Get the fluxes for the emission lines given the luminosity and redshift.
-    nebline : floats
-     Array with the luminosities of the lines per component. (Lsun for L_AGN = 10^45 erg/s)
-    h0 : float
-      If not None: value of h, H0=100h km/s/Mpc.
-    redshift : float
-     Redshift of the input data.
+
+    Params
+    -------
+    nebline : array of floats
+        Luminosities of the lines per component.
+        Lsun for L_AGN = 10^45 erg/s
+    filenom : string
+        Name of file with output
+    h0units : bool
     origin : string
-     Emission source (star-forming region or AGN).
+        Emission source (star-forming region or AGN).
       
     Returns
     -------
     fluxes : floats
-     Array with the fluxes of the lines per component.
+        Array with the fluxes of the lines per component.
     '''
     
     if nebline.any():
-        set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=h0)
+        # Read redshift and cosmo
+        f = h5py.File(filenom, 'r')
+        header = f['header']
+        redshift = header.attrs['redshift']
+        h0 = header.attrs['h0']
+        omega0 = header.attrs['omega0']
+        omegab = header.attrs['omegab']
+        lambda0 = header.attrs['lambda0']
+        f.close()
+        
+        set_cosmology(omega0=omega0, omegab=omegab,lambda0=lambda0,h0=h0)
         
         luminosities = np.zeros(nebline.shape)
         luminosities[nebline>0] = np.log10(nebline[nebline>0]*h0**2)
@@ -184,7 +198,8 @@ def calculate_flux(nebline,redshift,h0=const.h,origin='sfr'):
         fluxes = np.copy(nebline)
             
     return fluxes
-            
+
+
 def get_lines_Feltre(lu, lne, loh12, verbose=True, 
                      xid_feltre=0.5,alpha_feltre=-1.7):
     '''

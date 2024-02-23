@@ -17,13 +17,10 @@ c = 2.998e10 # Light velocity, cm/s
 planck = 4.135e-15*1.6e-12 # Planck constant, erg*s
 boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
 G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
-nH_gal = 100 # cm^-3
+nH_gal = 100  # cm^-3
 
 zsun = 0.0134 # Asplund 2009
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
-
-vol_pm = 542.16**3. # Volume of the P-Millenium simulation
-vol_sage = 1000**3  # Volume of the UNITSIM1
 
 #------------------------------------------------------------------------------------
 #   Orsi et. al. 2014
@@ -285,7 +282,13 @@ def coef_att_line_model_func(z=0):
 #------------------------------------------------------------------------------------
 #   GALFORM:
 #------------------------------------------------------------------------------------
+#vol_pm = 542.16**3. # Volume of the P-Millenium simulation
+#vol_sage = 1000**3  # Volume of the UNITSIM1
+
 # GALFORM tables have [0,1,3,5,6,7,8] of the gutkin16 model.
+
+reff_to_scale_high = 0.0875
+halfmass_to_reff = 1/1.67
 
 line_headers = ['L_tot_', 'L_disk_', 'L_bulge_']
 att_ext = '_ext'
@@ -304,20 +307,3 @@ gal_headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold',
            'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
            'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
 # Comentar en la documentación el tema de añadir líneas aquí.
-
-reff_to_scale_high = 0.0875
-halfmass_to_reff = 1/1.67
-
-#------------------------------------------------------------------------------------
-#   Plots:
-#------------------------------------------------------------------------------------
-BPT_lines = {'NII': ['SFR_Composite', 'Composite_AGN', 'LINER_NIIlim', 'LINER_OIIIlim'], 
-             'SII': ['SFR_AGN', 'Seyfert_LINER'], 'OI': ['SFR_AGN', 'Seyfert_LINER']}
-
-#------------------------------------------------------------------------------------
-#   Cosmology:
-#------------------------------------------------------------------------------------
-h = 0.704#0.6777 # Hubble constant H = 100 h km s**-1 Mpc**-1
-omega0=0.307
-omegab = 0.0482
-lambda0=0.693
