@@ -8,13 +8,13 @@ style1 = {
     'lines.antialiased': True,
 
     # Font
-    'font.size': 16.0,
+    'font.size': 22.0,
     'font.family': 'sans-serif',
 
     # Axes
     'axes.linewidth': 1.5,
-    'axes.titlesize': 'small',
-    'axes.labelsize': 'medium',
+    'axes.titlesize': 'medium',
+    'axes.labelsize': 'large',
     'axes.prop_cycle': cycler('color', [
         '#1f77b4',  # blue
         '#ff7f0e',  # orange
@@ -35,7 +35,7 @@ style1 = {
     'xtick.minor.width': 1.5,
     'xtick.major.pad': 6,
     'xtick.minor.pad': 3,
-    'xtick.labelsize': 'medium',
+    'xtick.labelsize': 'large',
     'xtick.direction': 'in',
     'xtick.top': True,
     'xtick.bottom': True,
@@ -47,7 +47,7 @@ style1 = {
     'ytick.minor.width': 1.5,
     'ytick.major.pad': 6,
     'ytick.minor.pad': 3,
-    'ytick.labelsize': 'medium',
+    'ytick.labelsize': 'large',
     'ytick.direction': 'in',
     'ytick.right': True,
     'ytick.left': True,
@@ -55,10 +55,13 @@ style1 = {
 
     # Legend
     'legend.fancybox': False,
-    'legend.fontsize': 'small',
+    'legend.fontsize': 'medium',
     'legend.scatterpoints': 1,
     'legend.numpoints': 1,
     'legend.loc': 'best',
+
+    # Default colormap
+    #'image.cmap': 'jet', 
 
     # Figure
     'figure.figsize': [6.5, 7],
@@ -71,4 +74,7 @@ style1 = {
     # Saving
     'savefig.bbox': 'tight',
     'savefig.format': 'pdf',
+
 }
+
+# https://matplotlib.org/users/customizing.html

@@ -11,7 +11,7 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
-import get_nebular_emission.eml_const as const
+import src.gne_const as const
 
 
 def percentiles(val, data, weights=None):

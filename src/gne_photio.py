@@ -1,13 +1,11 @@
 import h5py
 import numpy as np
-from get_nebular_emission.eml_io import get_nheader, homedir, locate_interval
-import get_nebular_emission.eml_const as const
-from get_nebular_emission.eml_io import check_file
+import src.gne_io as io
+import src.gne_const as const
+from src.gne_io import check_file
 import sys
 import warnings
-from cosmology import emission_line_flux
-
-from cosmology import logL2flux, set_cosmology
+from src.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
 
 def get_zfile(zmet_str, photmod='gutkin16'):
 
@@ -27,7 +25,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
         Name of the model file with data for the given metallicity.
     '''
 
-    root = 'nebular_data/' + photmod + '_tables/nebular_emission_Z'
+    root = 'src/nebular_data/' + photmod + '_tables/nebular_emission_Z'
     if len(zmet_str)<3:
         zmet_str = zmet_str+'0'
     zfile = root + zmet_str + '.txt'
@@ -69,7 +67,7 @@ def clean_photarray(lms, lssfr, lu, lne, loh12, photmod='gutkin16', verbose=True
     minU, maxU = get_limits(propname='U', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    
+
     limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(loh12[:,0]>np.log10(minZ))&(loh12[:,0]<np.log10(maxZ))&
                       (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=const.notnum))[0]
     
@@ -84,6 +82,7 @@ def clean_photarray(lms, lssfr, lu, lne, loh12, photmod='gutkin16', verbose=True
         loh12[:,i][(loh12[:,i] < np.log10(minZ))&(loh12[:,i] != const.notnum)] = np.log10(minZ)
                 
     return lms, lssfr, lu, lne, loh12
+
 
 def get_limits(propname, photmod='gutkin16',verbose=True):
     '''
@@ -125,7 +124,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
     try:
         infile = const.mod_lim[photmod]
     except KeyError:
-        print('STOP (eml_photio): the {}'.format(photmod) + ' model is an unrecognised model in the dictionary mod_lim')
+        print('STOP (gne_photio): the {}'.format(photmod) + ' model is an unrecognised model in the dictionary mod_lim')
         print('                  Possible photmod= {}'.format(const.mod_lim.keys()))
         exit()
 
@@ -136,37 +135,51 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
     if propname not in prop:
-        print('STOP (eml_photio): property {} '.format(propname)+'not found in the limits file {}'.format(infile))
+        print('STOP (gne_photio): property {} '.format(propname)+'not found in the limits file {}'.format(infile))
         print('                   In the limits file we must find the properties written as: U, Z and nH')
         exit()
     else:
         ind = prop.index(propname)
 
-        ih = get_nheader(infile,firstchar='#')
+        ih = io.get_nheader(infile,firstchar='#')
         lower_limit = np.loadtxt(infile, skiprows=ind+ih, max_rows=1, usecols=(1),unpack=True)
         upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
         return lower_limit,upper_limit
+
     
-def calculate_flux(nebline,redshift,h0=const.h,origin='sfr'):
+def calculate_flux(nebline,filenom,h0units=True,origin='sfr'):
     '''
     Get the fluxes for the emission lines given the luminosity and redshift.
-    nebline : floats
-     Array with the luminosities of the lines per component. (Lsun for L_AGN = 10^45 erg/s)
-    h0 : float
-      If not None: value of h, H0=100h km/s/Mpc.
-    redshift : float
-     Redshift of the input data.
+
+    Params
+    -------
+    nebline : array of floats
+        Luminosities of the lines per component.
+        Lsun for L_AGN = 10^45 erg/s
+    filenom : string
+        Name of file with output
+    h0units : bool
     origin : string
-     Emission source (star-forming region or AGN).
+        Emission source (star-forming region or AGN).
       
     Returns
     -------
     fluxes : floats
-     Array with the fluxes of the lines per component.
+        Array with the fluxes of the lines per component.
     '''
     
     if nebline.any():
-        set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=h0)
+        # Read redshift and cosmo
+        f = h5py.File(filenom, 'r')
+        header = f['header']
+        redshift = header.attrs['redshift']
+        h0 = header.attrs['h0']
+        omega0 = header.attrs['omega0']
+        omegab = header.attrs['omegab']
+        lambda0 = header.attrs['lambda0']
+        f.close()
+        
+        set_cosmology(omega0=omega0, omegab=omegab,lambda0=lambda0,h0=h0)
         
         luminosities = np.zeros(nebline.shape)
         luminosities[nebline>0] = np.log10(nebline[nebline>0]*h0**2)
@@ -185,7 +198,8 @@ def calculate_flux(nebline,redshift,h0=const.h,origin='sfr'):
         fluxes = np.copy(nebline)
             
     return fluxes
-            
+
+
 def get_lines_Feltre(lu, lne, loh12, verbose=True, 
                      xid_feltre=0.5,alpha_feltre=-1.7):
     '''
@@ -236,7 +250,7 @@ def get_lines_Feltre(lu, lne, loh12, verbose=True,
         infile = get_zfile(zmet_str[k],photmod='feltre16')
         check_file(infile,verbose=True)
         #print(k,infile)
-        ih = get_nheader(infile)
+        ih = io.get_nheader(infile)
 
         with open(infile,'r') as ff:
             iline = -1.
@@ -305,7 +319,7 @@ def get_lines_Feltre(lu, lne, loh12, verbose=True,
         du = []
         j = []
         for logu in lu[:,comp]:
-            j1 = locate_interval(logu,logubins)
+            j1 = io.locate_interval(logu,logubins)
             if logu<minU:
                 du.append(0.0)
                 j.append(0)
@@ -325,7 +339,7 @@ def get_lines_Feltre(lu, lne, loh12, verbose=True,
         i = []
     
         for logz in loh12[:,comp]:
-            i1 = locate_interval(logz, lzmets)
+            i1 = io.locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0
@@ -447,7 +461,7 @@ def get_lines_Gutkin(lu, lne, loh12, verbose=True,
         infile = get_zfile(zmet_str[k],photmod='gutkin16')
         check_file(infile,verbose=True)
         #print(k,infile)
-        ih = get_nheader(infile)
+        ih = io.get_nheader(infile)
 
         with open(infile,'r') as ff:
             iline = -1.
@@ -532,7 +546,7 @@ def get_lines_Gutkin(lu, lne, loh12, verbose=True,
         du = []
         j = []
         for logu in lu[:,comp]:
-            j1 = locate_interval(logu,logubins)
+            j1 = io.locate_interval(logu,logubins)
             if logu<minU:
                 du.append(0.0)
                 j.append(0)
@@ -552,7 +566,7 @@ def get_lines_Gutkin(lu, lne, loh12, verbose=True,
         dz = []
         i = []
         for logz in loh12[:,comp]:
-            i1 = locate_interval(logz,lzmets_reduced)
+            i1 = io.locate_interval(logz,lzmets_reduced)
     
             if logz<minZ:
                 dz.append(0.0)
@@ -591,7 +605,7 @@ def get_lines_Gutkin(lu, lne, loh12, verbose=True,
         i = []
     
         for logz in loh12[:,comp]:
-            i1 = locate_interval(logz, lzmets)
+            i1 = io.locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0
@@ -690,7 +704,7 @@ def get_lines(lu, lne, loh12, photmod='gutkin16', verbose=True,
     
     if photmod not in const.photmods:
         if verbose:
-            print('STOP (eml_photio.get_lines): Unrecognised model to get emission lines.')
+            print('STOP (gne_photio.get_lines): Unrecognised model to get emission lines.')
             print('                Possible photmod= {}'.format(const.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
