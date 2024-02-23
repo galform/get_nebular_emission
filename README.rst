@@ -34,12 +34,13 @@ The code can be run following the **run_txtinput_tutorial.py** or **run_hdf5inpu
 Tutorials and testing
 -----------------------------
 
-Brief tutorial going through all the main options of the code are available for a input text file, **run_txtinput_tutorial.py**, and an hdf5 file, **run_hdf5input_tutorial.py**. A more in-depth review of all the options in the code can be found at Expósito-Márquez et. al. 2024 in prep. The tutorials run over model galaxies stored in the *example_data* directory. These are either produced at z = 0 by the semi-analytical model described in [Gonzalez-Perez et al. 2020](https://academic.oup.com/mnras/article/498/2/1852/5894931), or [IllustrisTNG](https://www.tng-project.org/data/).
+Brief tutorial going through all the main options of the code are available for a input text file, **run_txtinput_tutorial.py**. A more in-depth review of all the options in the code can be found at Expósito-Márquez et. al. 2024 in prep. The tutorials run over model galaxies stored in the *example_data* directory. These are produced at z = 0 by the semi-analytical model described in [Gonzalez-Perez et al. 2020](https://academic.oup.com/mnras/article/498/2/1852/5894931).
 
 The example code make selections within the data, calculate emission line luminosities and make test plots. A line ratio diagram with the results from the example text file, without considering dust attenuation, can be seen below together with the local data from [Favole et al. 2023](https://arxiv.org/abs/2303.11031).
 
 
 |NII|
+|SII|
 
 
 Citing
@@ -77,8 +78,10 @@ archivePrefix = {arXiv},
    :target: https://get-nebular-emission.readthedocs.io/en/latest/
    :alt: Documentation Status
    
-.. |NII| image:: https://i.ibb.co/xSxQr58/NII-test.png
+.. |NII| image:: src/example_data/NIIbpt_GP20_62.5kpc_z0_example.pdf
 
+.. |SII| image:: src/example_data/SIIbpt_GP20_62.5kpc_z0_example.pdf
+		 
 .. |flowchart| image:: https://i.ibb.co/CsdZjgm/flow-chart.png
 
 

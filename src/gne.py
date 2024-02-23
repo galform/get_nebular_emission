@@ -155,6 +155,9 @@ def gne(infile, redshift, m_sfr_z,
                                  photmod_sfr=photmod_sfr, photmod_agn=photmod_agn,
                                  attmod=attmod,verbose=verbose)
 
+    # Number of components
+    ncomp = io.get_ncomponents(m_sfr_z)
+    
     # Time and passes variables
     first = True
     start_total_time = time.perf_counter()
@@ -248,7 +251,8 @@ def gne(infile, redshift, m_sfr_z,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
-        bursttobulge(lms, Lagn_param)
+        if ncomp>1:
+            bursttobulge(lms, Lagn_param)
         
         Lagn = L_agn(Lagn_param,AGNinputs=AGNinputs,
                      verbose=verbose)

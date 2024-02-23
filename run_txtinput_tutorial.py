@@ -55,23 +55,6 @@ inputformat = 'txt'
 #m_sfr_z = [[0,2,4]]
 m_sfr_z = [[0,2,4],[1,3,5]]
 
-
-# oh12 True if the gas metallicity input is directly log(O/H)+12
-#      False if Zgas = MZcold/Mcold
-oh12 = False
-
-# LC2sfr is True when Lyman Continuum photons are given  instead of the SFR
-    # First option: LC2sfr = True; cols = [[M,m_LC,Z]]
-    # Second option: LC2sfr = False;  cols = [[M,SFR,Z]]      
-LC2sfr = False
-
-# mtot2mdisk is True if the stellar mass of discs is calculated 
-# from the total and buldge values
-    # First option: mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
-    # Second option: mtot2mdisk = False;
-    #               cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
-mtot2mdisk = False
-
 ### NEBULAR AND PHOTOIONIZATION MODELS
 # sfr correspond to calculation of emission lines from star-forming galaxies
     # and agn to calculation of emission lines from the narrow-line region 
@@ -166,7 +149,22 @@ Lagn_params=[17,21]
 # If Z_central_cor is False, it is assumed that the metallicity is 
     # approximatelly uniform in the galaxy.
 Z_central_cor=True
-####################################################
+
+# oh12 True if the gas metallicity input is directly log(O/H)+12
+#      False if Zgas = MZcold/Mcold
+oh12 = False
+
+# LC2sfr is True when Lyman Continuum photons are given  instead of the SFR
+    # First option: LC2sfr = True; cols = [[M,m_LC,Z]]
+    # Second option: LC2sfr = False;  cols = [[M,SFR,Z]]      
+LC2sfr = False
+
+# mtot2mdisk is True if the stellar mass of discs is calculated 
+# from the total and buldge values
+    # First option: mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
+    # Second option: mtot2mdisk = False;
+    #               cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
+mtot2mdisk = False
 
 ####################################################
 ### ATTENUATION ###
@@ -247,7 +245,7 @@ maxcuts = [None]
 
 
 ### RUN the code with the given parameters or make plots ###
-run_code = False
+run_code = True
 make_plots = True
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]

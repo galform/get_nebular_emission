@@ -10,13 +10,15 @@ from matplotlib.cm import ScalarMappable
 #from src.gne_stats import perc_2arrays
 import src.gne_const as const
 #from src.gne_io import get_nheader, check_file
-#from src.gne_photio import get_lines_Gutkin, get_limits
+from src.gne_photio import get_limits #,get_lines_Gutkin
 #from numpy import random
 #from scipy.stats import gaussian_kde
 #import sys
 #from cosmology import logL2flux, set_cosmology
 import src.gne_style
 plt.style.use(src.gne_style.style1)
+
+cmap = 'jet'
 
 def lines_BPT(x, BPT, line):
     
@@ -57,7 +59,7 @@ def lines_BPT(x, BPT, line):
             boundary = np.log10(3) # Kauffmann 2003
     elif BPT=='SII':
         if line=='Kewley2001':
-            x0 = 0.05
+            x0 = 0.32
             boundary[x<x0] = 0.72/(x[x<x0] - x0) + 1.3
         elif line=='Kewley2006':
             boundary = 1.89*x + 0.76
@@ -907,14 +909,84 @@ def test_bpts(infile, zz, verbose=True):
     ymaxs = [1.5,1.6]
 
 
-    # Read readshift
+    # Read information from file
     filenom = io.get_outnom(infile,ftype='line_data')
-    print(filenom)
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
+    photmod_sfr = header.attrs['photmod_sfr']
+    photmod_agn = header.attrs['photmod_agn']
+
+    lu_sfr = f['sfr_data/lu_sfr'][:,0]
+    lz_sfr = f['sfr_data/lz_sfr'][:,0]
+    lu_agn = f['agn_data/lu_agn'][:,0]
+    lz_agn = f['agn_data/lz_agn'][:,0]
+    
+    Ha_flux_sfr = np.sum(f['sfr_data/Halpha_sfr_flux'],axis=0)
+    Ha_flux_agn = np.sum(f['agn_data/Halpha_agn_flux'],axis=0)
+    
+    Hb_flux_sfr = np.sum(f['sfr_data/Hbeta_sfr_flux'],axis=0)
+    Hb_flux_agn = np.sum(f['agn_data/Hbeta_agn_flux'],axis=0)
+    
+    NII6548_flux_sfr = np.sum(f['sfr_data/NII6584_sfr_flux'],axis=0)
+    NII6548_flux_agn = np.sum(f['agn_data/NII6584_agn_flux'],axis=0)
+    
+    OII3727_flux_sfr = np.sum(f['sfr_data/OII3727_sfr_flux'],axis=0)
+    OII3727_flux_agn = np.sum(f['agn_data/OII3727_agn_flux'],axis=0)
+    
+    OIII5007_flux_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
+    OIII5007_flux_agn = np.sum(f['agn_data/OIII5007_agn_flux'],axis=0)
+    
+    SII6731_flux_sfr = np.sum(f['sfr_data/SII6731_sfr_flux'],axis=0)
+    SII6731_flux_agn = np.sum(f['agn_data/SII6731_agn_flux'],axis=0)
+
+    SII6717_flux_sfr = np.sum(f['sfr_data/SII6717_sfr_flux'],axis=0)
+    SII6717_flux_agn = np.sum(f['agn_data/SII6717_agn_flux'],axis=0)
+
+    r = f['data/m_R'][:,0] # Magnitudes for cuts
+    k = f['data/m_K'][:,0]
     f.close()
 
+    # Line information
+    Ha_flux = Ha_flux_sfr + Ha_flux_agn
+    Hb_flux = Hb_flux_sfr + Hb_flux_agn
+    NII_flux = NII6548_flux_sfr + NII6548_flux_agn
+    OII_flux = OII3727_flux_sfr + OII3727_flux_agn
+    OIII_flux = OIII5007_flux_sfr + OIII5007_flux_agn
+    SII_flux = SII6731_flux_sfr + SII6731_flux_agn +\
+        SII6717_flux_sfr + SII6717_flux_agn
+
+    minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
+    minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
+
+    minU, maxU = float(minU), float(maxU)
+    minZ, maxZ = float(minZ), float(maxZ)
+
+    ind = np.where((Ha_flux>0)   & (Hb_flux>0)  & 
+                    (NII_flux>0)  & (OII_flux>0) &
+                    (OIII_flux>0) & (SII_flux>0) &
+                    (lu_sfr>minU)&(lu_sfr<maxU)&
+                    (lz_sfr>np.log10(minZ))&(lz_sfr<np.log10(maxZ)))
+    if (np.shape(ind)[1] < 1):
+        print('STOP BPT plots: not enough adequate data')
+        return None, None
+    
+    Halpha_ratio = Ha_flux_agn[ind]/Ha_flux[ind]
+    Ha_flux = Ha_flux[ind]
+    Hb_flux = Hb_flux[ind]
+    NII_flux = NII_flux[ind]
+    OII_flux = OII_flux[ind]
+    OIII_flux = OIII_flux[ind]
+    SII_flux = SII_flux[ind]
+
+    O3Hb =np.log10(OIII_flux) - np.log10(Hb_flux)
+    N2Ha =np.log10(NII_flux) - np.log10(Ha_flux)
+    S2Ha =np.log10(SII_flux) - np.log10(Ha_flux)
+
+    mag_r = r[ind]; mag_k = k[ind]
+
+    sel = np.copy(ind)
+    
     for ii, bpt in enumerate(['NII','SII']):
         # Set figure
         plt.figure(figsize=(15,15))
@@ -922,20 +994,8 @@ def test_bpts(infile, zz, verbose=True):
         ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
         ax.set_xlim(xmins[ii], xmaxs[ii])
         ax.set_ylim(ymins[ii], ymaxs[ii])
-
-        x = np.arange(-3,3,1)
-        y = np.arange(-3,3,1)
-        cha = np.arange(-3,3,1)
-        sc = ax.scatter(x, y, c=cha)
-
-        # Add colorbar
-        sm = ScalarMappable() # Create ScalarMappable
-        sm.set_array(cha)
-        cbar = plt.colorbar(sm, ax=ax)
-        collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, SF}$'
-        cbar.set_label(collabel,rotation=270,labelpad=60)
         
-        # Add obs. data if adequate
+        # Add obs. data and further cuts if adequate
         if redshift <= 0.2:
             obsplot = True
             obsfile = 'src/observational_data/favole2024.txt'
@@ -947,6 +1007,16 @@ def test_bpts(infile, zz, verbose=True):
             elif bpt=='SII':
                 data = np.loadtxt(obsfile,skiprows=1,usecols=(21,6))
                 xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
+
+            flux = 2e-16
+            sel = np.where((Ha_flux>flux) & (Hb_flux>flux) &
+                           (OIII_flux>flux) & (NII_flux>flux) &
+                           (SII_flux>flux)&(mag_r<17.77))
+
+        elif 0.7 <= redshift <= 0.9:            
+            flux = 1e-16
+            sel = np.where((Ha_flux>flux) & (mag_r<124.1))
+
         elif 1.45 <= redshift <= 1.75:
             obsplot = True
             if bpt=='NII':
@@ -957,11 +1027,31 @@ def test_bpts(infile, zz, verbose=True):
                 obsfile = 'src/observational_data/SII_Kashino.txt'
                 yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
                 xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+
+            flux = 5e-17
+            sel = np.where((Ha_flux>flux) & (mag_k<23.5))
+
         if obsplot:
             ax.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
-
+            if (np.shape(sel)[1]<1):
+                sel = np.copy(ind)
+            
         # Model lines
+        yobs = O3Hb[sel] #O3/Hb
+        cha = Halpha_ratio[sel]
         
+        if bpt=='NII':
+            xobs = N2Ha[sel] #N2/Ha
+        elif bpt=='SII':
+            xobs = S2Ha[sel] #S2/Ha
+        ax.scatter(xobs,yobs, c=cha,s=50, marker='o', cmap=cmap)
+        
+        # Add colorbar
+        sm = ScalarMappable(cmap=cmap) # Create ScalarMappable
+        sm.set_array(cha)
+        cbar = plt.colorbar(sm, ax=ax, cmap=cmap)
+        collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, tot}$'
+        cbar.set_label(collabel,rotation=270,labelpad=60)        
             
         # Lines
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)

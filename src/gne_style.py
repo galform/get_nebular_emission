@@ -61,7 +61,7 @@ style1 = {
     'legend.loc': 'best',
 
     # Default colormap
-    'image.cmap': 'turbo_r', 
+    #'image.cmap': 'jet', 
 
     # Figure
     'figure.figsize': [6.5, 7],

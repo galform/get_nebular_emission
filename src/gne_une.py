@@ -19,6 +19,7 @@ def bursttobulge(lms,Lagn_param):
      The last one is always the stellar mass of the bulge.
     '''
     ind = np.where(Lagn_param[-1]>0)
+
     lms[:,1] = const.notnum
     lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
 
