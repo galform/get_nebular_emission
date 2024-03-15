@@ -929,9 +929,10 @@ def write_agn_data(filenom,lu_agn,lne_agn,loh12_agn,
      ne of the galaxies per component (cm^-3).
     loh12_agn : floats
      Metallicity of the galaxies per component (12+log(O/H))
-    nebline_agn : floats
-      Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
-    nebline_agn_att : floats
+    nebline_agn : array of floats
+       Luminosities (erg/s)
+    nebline_agn_att : array of floats
+       Dust attenuated luminosities (erg/s)
     first : boolean
       If True it creates the HDF5 file (first subvolume). If false, it adds elements to the existing one.
     '''

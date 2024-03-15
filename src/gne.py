@@ -27,8 +27,8 @@ def gne(infile, redshift, m_sfr_z,
         oh12=False, LC2sfr=False,
         cutlimits=False, mtot2mdisk=True,
         verbose=True, testing=False,
-        xid_feltre=0.5,alpha_feltre=-1.7,
-        xid_gutkin=0.3,co_gutkin=1,imf_cut_gutkin=100):
+        xid_agn=0.5,alpha_agn=-1.7,
+        xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100):
     '''
     Calculate emission lines given the properties of model galaxies
 
@@ -130,16 +130,16 @@ def gne(infile, redshift, m_sfr_z,
      If True print out messages.
     testing : boolean
      If True only run over few entries for testing purposes.
-    xid_feltre : float
-     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
-    alpha_feltre : float
-     Alpha value for the Feltre et. al. photoionisation model.
-    xid_gutkin : float
-     Dust-to-metal ratio for the Gutkin et. al. photoionisation model.
-    co_gutkin : float
-     C/O ratio for the Gutkin et. al. photoionisation model.
-    imf_cut_gutkin : float
-     Solar mass high limit for the IMF for the Gutkin et. al. photoionisation model.
+    xid_agn : float
+     Dust-to-metal ratio for the AGN photoionisation model.
+    alpha_agn : float
+     Alpha value for the AGN photoionisation model.
+    xid_sfr : float
+     Dust-to-metal ratio for the SF photoionisation model.
+    co_sfr : float
+     C/O ratio for the SF photoionisation model.
+    imf_cut_sfr : float
+     Solar mass high limit for the IMF for the SF photoionisation model.
     
     Notes
     -------
@@ -207,12 +207,17 @@ def gne(infile, redshift, m_sfr_z,
     clean_photarray(lms, lssfr, lu_sfr, lne_sfr, loh12_sfr, photmod=photmod_sfr)
 
     nebline_sfr = get_lines(lu_sfr,lne_sfr,loh12_sfr,photmod=photmod_sfr,
-                            verbose=verbose,
-                            xid_gutkin=xid_gutkin,co_gutkin=co_gutkin,imf_cut_gutkin=imf_cut_gutkin)
+                            xid_phot=xid_sfr, co_phot=co_sfr,
+                            imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
-    for comp in range(len(m_sfr_z)):
-        nebline_sfr[comp] = nebline_sfr[comp]*3.826e33*10**(lms[:,comp]+lssfr[:,comp])
-        
+    # Change units into erg/s
+    if (photmod_sfr == 'gutkin16'):
+        # Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
+        sfr = np.zeros(shape=np.shape(lssfr))
+        for comp in range(ncomp):
+            sfr[:,comp] = 10**(lms[:,comp]+lssfr[:,comp])
+            nebline_sfr[comp] = nebline_sfr[comp]*const.Lbolsun*sfr[:,comp]
+
     if verbose:
         print(' Emission calculated.')
             
@@ -274,10 +279,15 @@ def gne(infile, redshift, m_sfr_z,
             
         clean_photarray(lms, lssfr, lu_agn, lne_agn, loh12_agn, photmod=photmod_agn)
             
-        nebline_agn = get_lines(lu_agn,lne_agn,loh12_agn,photmod=photmod_agn,verbose=verbose,
-                            xid_feltre=xid_feltre,alpha_feltre=alpha_feltre)
-        nebline_agn[0] = nebline_agn[0]*Lagn/1e45
+        nebline_agn = get_lines(lu_agn,lne_agn,loh12_agn,photmod=photmod_agn,
+                                xid_phot=xid_agn,alpha_phot=alpha_agn,
+                                verbose=verbose)
         
+        # Change units into erg/s
+        if (photmod_agn == 'feltre16'):
+            # Units: erg/s for a central Lacc=10^45 erg/s
+            nebline_agn[0] = nebline_agn[0]*Lagn/1e45
+       
         if verbose:
             print(' Emission calculated.')
 
