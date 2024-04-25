@@ -15,11 +15,6 @@ import src.gne_const as const
 from src.gne import gne
 from src.gne_plots import make_testplots
 
-####################################################
-################       BASICS       ################
-####################################################
-
-
 ### INPUT FILE(S) and redshift
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
@@ -40,64 +35,61 @@ vol    = pow(62.5,3) #Mpc/h
 # If your input files are HDF5 files: inputformat = 'hdf5'
 inputformat = 'txt'
 
-### PARAMETERS FOR THE CALCULATION OF THE INTRINSIC EMISSION FROM STAR-FORMING REGIONS
-# cols has the location in the input files of the three mandatory parameters:
-    # M*, SFR/m_LC and Z. 
-    # It is a list of lists with the location of the parameters. Each list
-    # correspond to a different component: 
-    # m_sfr_z = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]
-    # In the case of a single component: cols = [[M,SFR,Z]] 
-# Example:
-    # For two component galaxies and a HDF5 file as input file:
-    # m_sfr_z = [['Ms_disk','SFR_disk','Z_disk'],['Ms_bulge','SFR_bulge','Z_bulge']]
-    # Supposing that, for example, 'Ms_disk' is the name of the HDF5 file's 
-    # dataset where the values of the stellar mass of the disk are stored.
+####################################################
+############  Emission from SF regions #############
+####################################################
+
+### NEBULAR AND PHOTOIONIZATION MODELS for SF regions
+# All available models can be seen in gne_const module.
+# Model that connects global galactic properties with nebular parameters.
+unemod_sfr='kashino20'
+# Photoionization model to get line luminosities from nebular parameters.
+photmod_sfr='gutkin16'
+
+### INPUT PARAMETERS
+# m_sfr_z has the location in the input files of the three mandatory parameters:
+# M*(units), SFR or m_LC and Zgas. 
+# m_sfr_z is a list of lists with either the column number
+# for each parameters or the name of the HDF5 variable.
+# Each list correspond to a different component: 
+# m_sfr_z = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]
+# For a single component: m_sfr_z = [[M*,SFR,Zgas]]
+# For a HDF5 input file: m_sfr_z = [['Mstellar','SFR','Zgas']]
+
 #m_sfr_z = [[0,2,4]]
 m_sfr_z = [[0,2,4],[1,3,5]]
 
+# mtot2mdisk is True if the stellar mass of discs is calculated 
+# from the total and buldge values (False by default)
+# mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
+# mtot2mdisk = False; cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
+mtot2mdisk = False
+
+# LC2sfr is True when Lyman Continuum photons are given  instead of the SFR
+# LC2sfr = True; cols = [[M,m_LC,Z]]
+# LC2sfr = False; cols = [[M,SFR,Z]] (Default option)      
+LC2sfr = False
+
+# inoh True if the gas metallicity input as log(O/H)+12
+#      False if Zgas = MZcold/Mcold (Default option)
+inoh = False
+
+### INITIAL MASS FUNCTIONs ###
+# Specify the assumed IMFs for each galaxy component in the input data.
+# Example for two components: IMF = ['Kennicut','Kennicut']
+IMF = ['Kennicut','Kennicut']
+
+####################################################
+#####  Emission from AGN narrow line regions #######
+####################################################
+
 ### NEBULAR AND PHOTOIONIZATION MODELS
-# sfr correspond to calculation of emission lines from star-forming galaxies
-    # and agn to calculation of emission lines from the narrow-line region 
-    # of AGNs.
 # All available models can be seen in gne_const module.
-
 # Model that connects global galactic properties with nebular parameters.
-unemod_sfr='kashino20'
 unemod_agn='panuzzo03'
-
 # Photoionization model to get line luminosities from nebular parameters.
-photmod_sfr='gutkin16'
 photmod_agn='feltre16'
 
-
-####################################################
-###############       OPTIONAL       ###############
-####################################################
-
-### HIGH REDSHIFT CORRECTION ###
-# Empirical relationships to connect global galaxy properties and nebular
-    # properties are often derived from local galaxies. get_emission_lines has
-    # a way of evolving the filling factor with redshift. If this correction is to be used,
-    # a fixed number of files is needed equal to that at z=0.
-    # If local relations are to be used: infile_z0 = [None]
-infile_z0 = [None]
-
-### INITIAL MASS FUNCTION CORRECTION ###
-# IMF correction following Lacey et 2016 and Lagos et. al. 2011.
-# Empirical relationships for nebular models assume a certain IMF!
-# IMF_i are the assumed IMFs for each galaxy component in the input data.
-# IMF_f are the IMFs to which you want to transform each component.
-# Example for two components:
-        # IMF_i = ['Kennicut','Kennicut']
-        # IMF_f = ['Kroupa','Top-heavy'] 
-        # This does the same for disk and bulge separately. Note that for the
-        # emission line calculations this supposes a Kroupa IMF for the disk
-        # and a Top-heavy IMF for the bulge.
-IMF_i = ['Kennicut','Kennicut']
-IMF_f = ['Kroupa','Top-heavy']
-
-
-### CALCULATION OF THE INTRINSIC EMISSION FROM THE NARROW-LINE REGION OF AGNS ###
 # Calculate emission from AGNs: AGN = True
 AGN = True
 
@@ -150,24 +142,22 @@ Lagn_params=[17,21]
     # approximatelly uniform in the galaxy.
 Z_central_cor=True
 
-# oh12 True if the gas metallicity input is directly log(O/H)+12
-#      False if Zgas = MZcold/Mcold
-oh12 = False
+####################################################
+########  Redshift evolution parameters  ###########
+####################################################
 
-# LC2sfr is True when Lyman Continuum photons are given  instead of the SFR
-    # First option: LC2sfr = True; cols = [[M,m_LC,Z]]
-    # Second option: LC2sfr = False;  cols = [[M,SFR,Z]]      
-LC2sfr = False
+### HIGH REDSHIFT CORRECTION ###
+# Empirical relationships to connect global galaxy properties and nebular
+    # properties are often derived from local galaxies. get_emission_lines has
+    # a way of evolving the filling factor with redshift. If this correction is to be used,
+    # a fixed number of files is needed equal to that at z=0.
+    # If local relations are to be used: infile_z0 = [None]
+infile_z0 = [None]
 
-# mtot2mdisk is True if the stellar mass of discs is calculated 
-# from the total and buldge values
-    # First option: mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
-    # Second option: mtot2mdisk = False;
-    #               cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
-mtot2mdisk = False
 
 ####################################################
-### ATTENUATION ###
+##########       Dust attenuation      #############
+####################################################
 
 # Continuum and line attenuation calculation. If this option is selected 
     # the output file will have intrinsic AND attenuated values of
@@ -209,13 +199,15 @@ att=True
 attmod='ratios'
 att_params=[31,32,33,34,35,36,36] # It would be [11,6,4] if you want to use Cardelli.
 att_ratio_lines=['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731']
+
+####################################################
+##########      Other calculations     #############
 ####################################################
 
 # Flux calculation.
 flux=True
 
-####################################################
-
+# Include other parameters in the output files
 extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','m_K','m_R','m_R_SDSS','m_I',
                       'Mdot_stb','Mdot_hh','Mhot','Lagn']
 extra_params_labels = ['Type of halo (central = 0)',
@@ -244,7 +236,11 @@ mincuts = [20*9.35e8]
 maxcuts = [None]
 
 
-### RUN the code with the given parameters or make plots ###
+####################################################
+#############      Run the code     ################
+####################################################
+
+### RUN the code with the given parameters and/or make plots
 run_code = True
 make_plots = True
 for ii, infile in enumerate(infiles):
@@ -253,13 +249,13 @@ for ii, infile in enumerate(infiles):
     if run_code:
         gne(infile, zz, m_sfr_z,
             h0,omega0,omegab,lambda0,vol,
-            infile_z0=infile_z0, 
+            infile_z0=infile_z0, inputformat=inputformat,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             att=att,
             att_params=att_params, att_ratio_lines=att_ratio_lines,
             flux=flux,
-            IMF_i=IMF_i, IMF_f=IMF_f, inputformat=inputformat,
-            oh12= oh12, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            IMF = IMF,
+            inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             AGN=AGN,AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
             epsilon_params=epsilon_params,
