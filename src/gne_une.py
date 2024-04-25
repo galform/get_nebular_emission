@@ -748,50 +748,49 @@ def n_ratio(n,n_z0):
     return ratio
     
 
-def get_Zagn(logM,logz):
+def get_Zagn(logMin,logz):
     '''
     Estimates the metallicity of the AGN from the global metallicity.
 
     Parameters
     ----------
-    logM : array of floats
+    logMin : array of floats
        Stellar mass of the galaxy or its components (log10(M*/Msun ???? )).
     logz : array of floats
        Cold gas metallicity (log10(Z)).
      
     Returns
     -------
-    lzagn : array of floats
+    lzout : array of floats
         Metallicity of the AGN
     '''
 
-    lzagn = np.zeros(shape=np.shape(logz))
+    rows = logMin.shape[0]
+    logM = np.zeros(shape=rows)
+    lzagn = np.zeros(shape=rows)
     
     if logz.shape[1] >= 2:
         ind = np.where(logz[:,1]>const.notnum)
-        lzagn[ind,0] = np.copy(logz[ind,1])
-        lzagn[:,1] = const.notnum
+        lzagn[ind] = np.copy(logz[ind,1])
     
-    Ms = 10**logM
-    Ms = np.sum(Ms,axis=1)
-    
-    ind = np.where(Ms>0)
-    Ms[ind] = np.log10(Ms[ind])
-    
+        Ms = 10**logMin
+        Ms = np.sum(Ms,axis=1)
+        ind = np.where(Ms>0)
+        logM[ind] = np.log10(Ms[ind])
+
+    else:
+        logM = logMin
+
     ###here where is this justified?
-    for i in range(len(Ms)):
-        if Ms[i]<9.5:
-            continue
-        elif Ms[i]<10:
-            lzagn[i] = lzagn[i] + 0.1
-        elif Ms[i]<10.5:
-            lzagn[i] = lzagn[i] + 0.3
-        elif Ms[i]<11:
-            lzagn[i] = lzagn[i] + 0.1
-        else:
-            continue
-    
-    return lzagn
+    lzagn[(logM>9.5) & (logM<=10)] = lzagn[(logM>9.5) & (logM<=10)] + 0.1
+    lzagn[(logM>10)  & (logM<=10.5)] = lzagn[(logM>10)  & (logM<=10.5)] + 0.3
+    lzagn[(logM>10.5)& (logM<=11)] = lzagn[(logM>10.5)& (logM<=11)] + 0.1
+
+    ###here input should directly be zbuldge and M* total
+    lzout = np.zeros(shape=(np.shape(logz))); lzout.fill(const.notnum)
+    lzout[:,0] = lzagn
+
+    return lzout
 
 ######################
 
