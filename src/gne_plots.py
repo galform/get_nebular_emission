@@ -1,3 +1,8 @@
+"""
+.. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. contributions:: Olivia Vidal <ovive.pro@gmail.com>
+.. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
+"""
 import src.gne_io as io
 import numpy as np
 #import os.path
@@ -590,7 +595,7 @@ def lines_BPT(x, BPT, line):
 #    
 #        lu_disk = data['lu'][:,0]
 #        lne_disk = data['lne'][:,0]
-#        loh12_disk = data['lz'][:,0]
+#        lzgas_disk = data['lz'][:,0]
 #        
 #        minU, maxU = get_limits(propname='U', photmod=photmod)
 #        minnH, maxnH = get_limits(propname='nH', photmod=photmod)
@@ -598,7 +603,7 @@ def lines_BPT(x, BPT, line):
 #        
 #        ignore = True
 #        if ignore:
-#            ind = np.where((lu_disk!=minU)&(lu_disk!=maxU)&(loh12_disk!=np.log10(minZ))&(loh12_disk!=np.log10(maxZ))&
+#            ind = np.where((lu_disk!=minU)&(lu_disk!=maxU)&(lzgas_disk!=np.log10(minZ))&(lzgas_disk!=np.log10(maxZ))&
 #                       (lne_disk!=np.log10(minnH))&(lne_disk!=np.log10(maxnH)))[0]
 #        else:
 #            ind = np.arange(len(lu_disk))
@@ -868,7 +873,7 @@ def lines_BPT(x, BPT, line):
 #                            plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
 #                
 #                        labelsZ = []
-#                        for elem in loh12_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
+#                        for elem in lzgas_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
 #                        
 #                        plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
 #                        
