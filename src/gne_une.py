@@ -754,20 +754,23 @@ def get_Zagn(logM,logz):
 
     Parameters
     ----------
-    logM : string
-     Stellar mass of the galaxy (log10(Msun)).
-    logz : floats
-     Cold gas metallicity (log10(Z)).
+    logM : array of floats
+       Stellar mass of the galaxy or its components (log10(M*/Msun ???? )).
+    logz : array of floats
+       Cold gas metallicity (log10(Z)).
      
     Returns
     -------
-    logz : floats
+    lzagn : array of floats
+        Metallicity of the AGN
     '''
+
+    lzagn = np.zeros(shape=np.shape(logz))
     
     if logz.shape[1] >= 2:
         ind = np.where(logz[:,1]>const.notnum)
-        logz[ind,0] = np.copy(logz[ind,1])
-        logz[:,1] = const.notnum
+        lzagn[ind,0] = np.copy(logz[ind,1])
+        lzagn[:,1] = const.notnum
     
     Ms = 10**logM
     Ms = np.sum(Ms,axis=1)
@@ -775,21 +778,20 @@ def get_Zagn(logM,logz):
     ind = np.where(Ms>0)
     Ms[ind] = np.log10(Ms[ind])
     
-    # logz = logz + 0.1
-    
+    ###here where is this justified?
     for i in range(len(Ms)):
         if Ms[i]<9.5:
             continue
         elif Ms[i]<10:
-            logz[i] = logz[i] + 0.1
+            lzagn[i] = lzagn[i] + 0.1
         elif Ms[i]<10.5:
-            logz[i] = logz[i] + 0.3
+            lzagn[i] = lzagn[i] + 0.3
         elif Ms[i]<11:
-            logz[i] = logz[i] + 0.1
+            lzagn[i] = lzagn[i] + 0.1
         else:
             continue
     
-    return logz
+    return lzagn
 
 ######################
 
