@@ -461,7 +461,7 @@ def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None,
 
 
 def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5', 
-             IMF_i=['Chabrier', 'Chabrier'], IMF=['Kroupa', 'Kroupa'], 
+             IMF=['Kennicut','Kennicut'],
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM',
              inoh = False, LC2sfr=False, mtot2mdisk=True, 
@@ -583,7 +583,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
             ind = np.where(lssfr[:, comp] != const.notnum)
             ###here this conversion does depend of the IMF and needs refs
             ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,comp]-4.))
-            ins[ind] = ins[ind]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF[comp]]/const.IMF_SFR[IMF[comp]])
+            #ins[ind] = ins[ind]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF[comp]]/const.IMF_SFR[IMF[comp]])
             ind = np.where(ins > 0)
             lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
             ind = np.where(ins < 0)
@@ -608,7 +608,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         for comp in range(ncomp):
             # Take the log of the ssfr:
             ind = np.where(lssfr[:,comp] > 0.)[0]
-            lssfr[ind,comp] = lssfr[ind,comp]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF[comp]]/const.IMF_SFR[IMF[comp]])
+            #lssfr[ind,comp] = lssfr[ind,comp]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF[comp]]/const.IMF_SFR[IMF[comp]])
             lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
 
         if ncomp!=1:

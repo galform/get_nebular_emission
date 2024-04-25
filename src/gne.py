@@ -20,7 +20,7 @@ def gne(infile, redshift, m_sfr_z,
         att=False, att_params=None, att_ratio_lines=None,
         flux=False,
         flag=0,
-        IMF_i=['Kroupa', 'Kroupa'], IMF=['Kroupa', 'Kroupa'],
+        IMF=['Kennicut','Kennicut'],
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,
         AGN=False, AGNinputs='Lagn', Lagn_params=None, Z_central_cor=False,
@@ -80,7 +80,6 @@ def gne(infile, redshift, m_sfr_z,
      If True calculates flux of the emission lines based on the given redshift.
     IMF : array of strings
        Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]
-
     q0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     z0 : float
@@ -175,7 +174,7 @@ def gne(infile, redshift, m_sfr_z,
                                          inputformat=inputformat,
                                          inoh = inoh,
                                          LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
-                                         IMF_i=IMF_i, IMF=IMF,
+                                         IMF=IMF,
                                          verbose=verbose,testing=testing)
 
     epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param = io.get_secondary_data(
