@@ -79,7 +79,7 @@ inoh = False
 # Example for two components: IMF = ['Kennicut','Kennicut']
 #IMF = ['Kennicut','Kennicut']
 IMF_i = ['Kennicut','Kennicut']
-IMF_f = ['Kroupa','Top-heavy'] ###here out
+IMF = ['Kroupa','Top-heavy'] ###here out
 
 ####################################################
 #####  Emission from AGN narrow line regions #######
@@ -257,8 +257,8 @@ for ii, infile in enumerate(infiles):
             att_params=att_params, att_ratio_lines=att_ratio_lines,
             flux=flux,
             #IMF = IMF,
-            IMF_i=IMF_i,IMF_f=IMF_f,
-            oh12=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            IMF_i=IMF_i,IMF=IMF,
+            inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             AGN=AGN,AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
             epsilon_params=epsilon_params,

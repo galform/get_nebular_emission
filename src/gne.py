@@ -1,5 +1,10 @@
+"""
+.. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. contributions:: Olivia Vidal <ovive.pro@gmail.com>
+.. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
+"""
 import src.gne_io as io
-from src.gne_une import get_une, bursttobulge, calculate_ng_hydro_eq, Z_blanc, Z_tremonti, Z_tremonti2, n_ratio
+from src.gne_une import get_une, bursttobulge, calculate_ng_hydro_eq, Z_blanc, get_Ztremonti, get_Ztremonti2, n_ratio
 from src.gne_agn import L_agn
 import src.gne_const as const
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
@@ -15,7 +20,7 @@ def gne(infile, redshift, m_sfr_z,
         att=False, att_params=None, att_ratio_lines=None,
         flux=False,
         flag=0,
-        IMF_i=['Kroupa', 'Kroupa'], IMF_f=['Kroupa', 'Kroupa'], 
+        IMF_i=['Kroupa', 'Kroupa'], IMF=['Kroupa', 'Kroupa'],
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,
         AGN=False, AGNinputs='Lagn', Lagn_params=None, Z_central_cor=False,
@@ -24,7 +29,7 @@ def gne(infile, redshift, m_sfr_z,
         attmod='cardelli89',
         unemod_sfr='kashino19', unemod_agn='panuzzo03',
         photmod_sfr='gutkin16', photmod_agn='feltre16',
-        oh12=False, LC2sfr=False,
+        inoh=False, LC2sfr=False,
         cutlimits=False, mtot2mdisk=True,
         verbose=True, testing=False,
         xid_agn=0.5,alpha_agn=-1.7,
@@ -73,12 +78,9 @@ def gne(infile, redshift, m_sfr_z,
      They should be written as they are in the selected model (see gne_const).
     flux : boolean
      If True calculates flux of the emission lines based on the given redshift.
-    IMF_i : strings
-     Assumed IMF in the input data.
-     - [[component1_IMF],[component2_IMF],...]
-    IMF_f : strings
-     Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
-     - [[component1_IMF],[component2_IMF],...]
+    IMF : array of strings
+       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]
+
     q0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     z0 : float
@@ -120,6 +122,8 @@ def gne(infile, redshift, m_sfr_z,
      Photoionisation model to be used for look up tables.
     photmod_agn : string
      Photoionisation model to be used for look up tables.
+    inoh : boolean
+       If true, the input is assumed to be 12+log10(O/H), otherwise Zgas
     LC2sfr : boolean
      If True magnitude of Lyman Continuum photons expected as input for SFR.
     cutlimits : boolean
@@ -164,14 +168,14 @@ def gne(infile, redshift, m_sfr_z,
     start_time = time.perf_counter()
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, loh12, cut = io.get_data(infile, outfile,
+    lms, lssfr, lzgas, cut = io.get_data(infile, outfile,
                                          m_sfr_z, h0units=h0units,
                                          cutcols=cutcols, mincuts=mincuts,
                                          maxcuts=maxcuts,
                                          inputformat=inputformat,
-                                         oh12 = oh12,
+                                         inoh = inoh,
                                          LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
-                                         IMF_i=IMF_i, IMF_f=IMF_f,
+                                         IMF_i=IMF_i, IMF=IMF,
                                          verbose=verbose,testing=testing)
 
     epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param = io.get_secondary_data(
@@ -183,14 +187,16 @@ def gne(infile, redshift, m_sfr_z,
     # Modification of the stellar mass-metallicity relation
     # 0 for no correction
     if flag==1:
-        loh12 = Z_tremonti(lms,loh12,Lagn_param)[1]
+        lzgas = get_Ztremonti(lms,lzgas,Lagn_param)[1]
     elif flag==2:
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
-        loh12 = Z_tremonti2(lms,loh12,minZ,maxZ,Lagn_param)
+        lzgas = get_Ztremonti2(lms,lzgas,minZ,maxZ,Lagn_param)
             
-    Q_sfr, lu_sfr, lne_sfr, loh12_sfr, epsilon_sfr, ng_ratio = \
-        get_une(lms, lssfr, loh12, outfile,
-                q0=q0, z0=z0, T=T, IMF_f=IMF_f, h0units=h0units,
+    Q_sfr, lu_sfr, lne_sfr, lzgas_sfr, epsilon_sfr, ng_ratio = \
+        get_une(lms, lssfr, lzgas, outfile,
+                q0=q0, z0=z0, T=T,
+                IMF=IMF,
+                h0units=h0units,
                 epsilon_param=epsilon_param,
                 epsilon_param_z0=epsilon_param_z0,
                 origin='sfr', unemod=unemod_sfr,
@@ -202,11 +208,11 @@ def gne(infile, redshift, m_sfr_z,
             
     lu_o_sfr = np.copy(lu_sfr)
     lne_o_sfr = np.copy(lne_sfr)
-    loh12_o_sfr = np.copy(loh12_sfr)
+    lzgas_o_sfr = np.copy(lzgas_sfr)
+    ###here it doesn't make sense that nebline_agn has several components 
+    clean_photarray(lms, lssfr, lu_sfr, lne_sfr, lzgas_sfr, photmod=photmod_sfr)
 
-    clean_photarray(lms, lssfr, lu_sfr, lne_sfr, loh12_sfr, photmod=photmod_sfr)
-
-    nebline_sfr = get_lines(lu_sfr,lne_sfr,loh12_sfr,photmod=photmod_sfr,
+    nebline_sfr = get_lines(lu_sfr,lne_sfr,lzgas_sfr,photmod=photmod_sfr,
                             xid_phot=xid_sfr, co_phot=co_sfr,
                             imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
@@ -243,7 +249,7 @@ def gne(infile, redshift, m_sfr_z,
         fluxes_sfr = np.array(None)
         fluxes_sfr_att = np.array(None)
 
-    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lne_o_sfr,loh12_o_sfr,
+    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lne_o_sfr,lzgas_o_sfr,
                       nebline_sfr,nebline_sfr_att,
                       fluxes_sfr,fluxes_sfr_att,
                       extra_param=extra_param,
@@ -251,8 +257,8 @@ def gne(infile, redshift, m_sfr_z,
                       extra_params_labels=extra_params_labels,
                       first=first,verbose=verbose)
     
-    del lu_sfr, lne_sfr, loh12_sfr
-    del lu_o_sfr, lne_o_sfr, loh12_o_sfr
+    del lu_sfr, lne_sfr, lzgas_sfr
+    del lu_o_sfr, lne_o_sfr, lzgas_o_sfr
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
@@ -262,24 +268,25 @@ def gne(infile, redshift, m_sfr_z,
         Lagn = L_agn(Lagn_param,AGNinputs=AGNinputs,
                      verbose=verbose)
         
-        Q_agn, lu_agn, lne_agn, loh12_agn, epsilon_agn, ng_ratio = \
-            get_une(lms,lssfr, loh12, outfile, q0=q0, z0=z0,
+        Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
+            get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
                     Z_central_cor=Z_central_cor,Lagn=Lagn, T=T,
                     epsilon_param=epsilon_param,h0units=h0units,
-                    IMF_f=IMF_f, origin='agn',
+                    IMF=IMF,
+                    origin='agn',
                     unemod=unemod_agn, gamma=gamma, verbose=verbose)
-        
+
         if verbose:
             print('AGN:')
             print(' U and ne calculated.')
         
         lu_o_agn = np.copy(lu_agn)
         lne_o_agn = np.copy(lne_agn)
-        loh12_o_agn = np.copy(loh12_agn) 
+        lzgas_o_agn = np.copy(lzgas_agn) 
             
-        clean_photarray(lms, lssfr, lu_agn, lne_agn, loh12_agn, photmod=photmod_agn)
+        clean_photarray(lms, lssfr, lu_agn, lne_agn, lzgas_agn, photmod=photmod_agn)
             
-        nebline_agn = get_lines(lu_agn,lne_agn,loh12_agn,photmod=photmod_agn,
+        nebline_agn = get_lines(lu_agn,lne_agn,lzgas_agn,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
         
@@ -312,13 +319,13 @@ def gne(infile, redshift, m_sfr_z,
             fluxes_agn = np.array(None)
             fluxes_agn_att = np.array(None)
 
-        io.write_agn_data(outfile,lu_o_agn,lne_o_agn,loh12_o_agn,
+        io.write_agn_data(outfile,lu_o_agn,lne_o_agn,lzgas_o_agn,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn,
                           first=first,verbose=verbose)             
-        del lu_agn, lne_agn, loh12_agn 
-        del lu_o_agn, lne_o_agn, loh12_o_agn
+        del lu_agn, lne_agn, lzgas_agn 
+        del lu_o_agn, lne_o_agn, lzgas_o_agn
         del nebline_agn, nebline_agn_att
 
 

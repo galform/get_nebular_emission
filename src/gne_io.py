@@ -1,5 +1,7 @@
 """
 .. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. contributions:: Olivia Vidal <ovive.pro@gmail.com>
+.. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
 import h5py
 import sys
@@ -288,7 +290,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
 
     Returns
     -------
-    lms, lssfr, loh12 : floats
+    lms, lssfr, lzgas : floats
     cut : integers
     '''
     
@@ -328,11 +330,11 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                 if i==0:
                     lms = np.array([hf[cols[i][0]][:limit]])
                     lssfr = np.array([hf[cols[i][1]][:limit]])
-                    loh12 = np.array([hf[cols[i][2]][:limit]])
+                    lzgas = np.array([hf[cols[i][2]][:limit]])
                 else:
                     lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
                     lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
-                    loh12 = np.append(loh12,[hf[cols[i][2]][:limit]],axis=0)
+                    lzgas = np.append(lzgas,[hf[cols[i][2]][:limit]],axis=0)
     elif inputformat=='txt':
         ih = get_nheader(infile)
         
@@ -359,11 +361,11 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
             if i==0:
                 lms = np.array([X[0]])
                 lssfr = np.array([X[1]])
-                loh12 = np.array([X[2]])
+                lzgas = np.array([X[2]])
             else:
                 lms = np.append(lms,[X[0]],axis=0)
                 lssfr = np.append(lssfr,[X[1]],axis=0)
-                loh12 = np.append(loh12,[X[2]],axis=0)
+                lzgas = np.append(lzgas,[X[2]],axis=0)
     else:
         if verbose:
             print('STOP (gne_io.read_data): ',
@@ -372,9 +374,9 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
         
     lms = lms.T
     lssfr = lssfr.T
-    loh12 = loh12.T
+    lzgas = lzgas.T
             
-    return lms[cut], lssfr[cut], loh12[cut], cut
+    return lms[cut], lssfr[cut], lzgas[cut], cut
 
 
 
@@ -459,10 +461,10 @@ def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None,
 
 
 def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5', 
-             IMF_i=['Chabrier', 'Chabrier'], IMF_f=['Kroupa', 'Kroupa'], 
+             IMF_i=['Chabrier', 'Chabrier'], IMF=['Kroupa', 'Kroupa'], 
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM',
-             oh12 = False, LC2sfr=False, mtot2mdisk=True, 
+             inoh = False, LC2sfr=False, mtot2mdisk=True, 
              verbose=False, testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
@@ -490,12 +492,10 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
     attmod : string
      Attenuation model.
-    IMF_i : strings
-     Assumed IMF in the input data.
-     - [[component1_IMF],[component2_IMF],...]
-    IMF_f : strings
-     Assumed IMF for the luminosity calculation. Please check the assumed IMF of the selected model for calculating U and ne.
-     - [[component1_IMF],[component2_IMF],...]
+    inoh : boolean
+       If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
+    IMF : array of strings
+       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
     h0units : bool
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
@@ -508,11 +508,11 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
 
     Returns
     -------
-    lms, lssfr, loh12 : floats
+    lms, lssfr, lzgas : floats
     cut : integers
     '''
     
-    lms,lssfr,loh12,cut = read_data(infile, cols=cols, cutcols=cutcols,
+    lms,lssfr,lzgas,cut = read_data(infile, cols=cols, cutcols=cutcols,
                                     maxcuts=maxcuts, mincuts=mincuts,
                                     inputformat=inputformat, 
                                     testing=testing, verbose=verbose)
@@ -523,21 +523,21 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
     ind = np.where(lms<=1.)
     lms[ind] = const.notnum
     lssfr[ind] = const.notnum
-    loh12[ind] = const.notnum
+    lzgas[ind] = const.notnum
 
     if LC2sfr: # Avoid positives magnitudes of LC photons
         ind = np.where(lssfr>0)
-        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
+        lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
 
 
     else: # Avoid other negative SFR
         ind = np.where(lssfr<=0)
-        lssfr[ind] = const.notnum ; loh12[ind] = const.notnum
+        lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
 
 
 
-    ind = np.where(loh12<=0) # Avoid other negative Z
-    loh12[ind] = const.notnum
+    ind = np.where(lzgas<=0) # Avoid other negative Z
+    lzgas[ind] = const.notnum
 
     # Calculate the disk mass if we have only the total and bulge mass
 
@@ -581,8 +581,9 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         for comp in range(ncomp):
             ins = np.zeros(len(lssfr))
             ind = np.where(lssfr[:, comp] != const.notnum)
+            ###here this conversion does depend of the IMF and needs refs
             ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,comp]-4.))
-            ins[ind] = ins[ind]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF_f[comp]]/const.IMF_SFR[IMF_f[comp]])
+            ins[ind] = ins[ind]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF[comp]]/const.IMF_SFR[IMF[comp]])
             ind = np.where(ins > 0)
             lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
             ind = np.where(ins < 0)
@@ -603,13 +604,11 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
             ind = np.where(ins > 0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-    # If instantaneous SFR as input:
-    else:
-        # Take the log of the ssfr:
-        # ind = [np.where(lssfr[:,0] > 0.)[0], np.where(lssfr[:,1] > 0.)[0]]
+    else: # If SFR as input
         for comp in range(ncomp):
+            # Take the log of the ssfr:
             ind = np.where(lssfr[:,comp] > 0.)[0]
-            lssfr[ind,comp] = lssfr[ind,comp]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF_f[comp]]/const.IMF_SFR[IMF_f[comp]])
+            lssfr[ind,comp] = lssfr[ind,comp]*(const.IMF_SFR[IMF_i[comp]]/const.IMF_M[IMF_i[comp]])*(const.IMF_M[IMF[comp]]/const.IMF_SFR[IMF[comp]])
             lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
 
         if ncomp!=1:
@@ -641,27 +640,27 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
     else:
         lsfr = lssfr + lms
 
-    if oh12: ####here
-        # Obtain 12+log10(O/H) from Z=MZcold/Mcold
-        zgas = np.copy(loh12)
-        loh12 = np.zeros(len(zgas))
+    if inoh: ####here
+        # Obtain Z=MZcold/Mcold from 12+log10(O/H)
+        zgas = np.copy(lzgas)
+        lzgas = np.zeros(len(zgas))
         ind = np.where(zgas>0)
-        loh12[ind] = np.log10(zgas[ind]) + const.ohsun - np.log10(const.zsun)
+        lzgas[ind] = np.log10(zgas[ind]) + const.ohsun - np.log10(const.zsun)
     else: #Julen's version to be checked ####here
-        ind = np.where(loh12>0)
-        loh12[ind] = np.log10(loh12[ind])
+        ind = np.where(lzgas>0)
+        lzgas[ind] = np.log10(lzgas[ind])
 
     if ncomp!=1:
-        oh12 = np.zeros(loh12.shape)
-        loh12_tot = np.zeros(len(loh12))
+        oh12 = np.zeros(lzgas.shape)
+        lzgas_tot = np.zeros(len(lzgas))
 
         for comp in range(ncomp):
-            ind = np.where(loh12[:,comp] != const.notnum)
-            oh12[ind,comp] = 10. ** (loh12[ind,comp])
+            ind = np.where(lzgas[:,comp] != const.notnum)
+            oh12[ind,comp] = 10. ** (lzgas[ind,comp])
     
         ins = np.sum(oh12,axis=1)
         ind = np.where(ins>0)
-        loh12_tot[ind] = np.log10(ins[ind])
+        lzgas_tot[ind] = np.log10(ins[ind])
 
 
 
@@ -670,12 +669,12 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
                       ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
                       'log(Z)_tot, log(Z)_disk, log(Z)_bulge'
-            datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,loh12_tot,loh12))
+            datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,lzgas_tot,lzgas))
         elif ncomp==1:
             header1 = 'log(mstars), ' \
                       'log(SFR), log(sSFR) ' \
                       'log(Z)'
-            datatofile=np.column_stack((lms,lsfr,lssfr,loh12))
+            datatofile=np.column_stack((lms,lsfr,lssfr,lzgas))
 
         if LC2sfr:
             outfil = r"example_data/tmp_LC.dat"
@@ -688,7 +687,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
 
 
                     
-    return lms,lssfr,loh12,cut
+    return lms,lssfr,lzgas,cut
 
 
 def generate_header(infile, redshift,
@@ -760,7 +759,7 @@ def generate_header(infile, redshift,
     return filenom
     
 
-def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
+def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
                nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
                extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
                first=True,verbose=True):
@@ -779,7 +778,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
      U of the galaxies per component.
     lne_sfr : floats
      ne of the galaxies per component (cm^-3).
-    loh12_sfr : floats
+    lzgas_sfr : floats
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_sfr : floats
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
@@ -835,7 +834,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
             hfdat.create_dataset('lne_sfr',data=lne_sfr, maxshape=(None,None))
             hfdat['lne_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
     
-            hfdat.create_dataset('lz_sfr', data=loh12_sfr, maxshape=(None,None))
+            hfdat.create_dataset('lz_sfr', data=lzgas_sfr, maxshape=(None,None))
             hfdat['lz_sfr'].dims[0].label = 'log10(Z)'
 
             for i in range(len(const.lines_model[photmod_sfr])):           
@@ -888,8 +887,8 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
             hfdat['lne_sfr'].resize((hfdat['lne_sfr'].shape[0] + lne_sfr.shape[0]),axis=0)
             hfdat['lne_sfr'][-lne_sfr.shape[0]:] = lne_sfr
             
-            hfdat['lz_sfr'].resize((hfdat['lz_sfr'].shape[0] + loh12_sfr.shape[0]),axis=0)
-            hfdat['lz_sfr'][-loh12_sfr.shape[0]:] = loh12_sfr
+            hfdat['lz_sfr'].resize((hfdat['lz_sfr'].shape[0] + lzgas_sfr.shape[0]),axis=0)
+            hfdat['lz_sfr'][-lzgas_sfr.shape[0]:] = lzgas_sfr
             
             
             for i in range(len(const.lines_model[photmod_sfr])): 
@@ -911,7 +910,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,loh12_sfr,
         
 
 
-def write_agn_data(filenom,lu_agn,lne_agn,loh12_agn,
+def write_agn_data(filenom,lu_agn,lne_agn,lzgas_agn,
                    nebline_agn,nebline_agn_att=None,fluxes_agn=None,fluxes_agn_att=None,
                    epsilon_agn=None,
                    ew_notatt=None,ew_att=None,
@@ -927,7 +926,7 @@ def write_agn_data(filenom,lu_agn,lne_agn,loh12_agn,
      U of the galaxies per component.
     lne_agn : floats
      ne of the galaxies per component (cm^-3).
-    loh12_agn : floats
+    lzgas_agn : floats
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_agn : array of floats
        Luminosities (erg/s)
@@ -954,7 +953,7 @@ def write_agn_data(filenom,lu_agn,lne_agn,loh12_agn,
             hfdat.create_dataset('lne_agn',data=lne_agn, maxshape=(None,None))
             hfdat['lne_agn'].dims[0].label = 'log10(nH) (cm**-3)'
     
-            hfdat.create_dataset('lz_agn', data=loh12_agn, maxshape=(None,None))
+            hfdat.create_dataset('lz_agn', data=lzgas_agn, maxshape=(None,None))
             hfdat['lz_agn'].dims[0].label = 'log10(Z)'
             
             hfdat.create_dataset('epsilon_agn', data=epsilon_agn[None,:], maxshape=(None,None))
@@ -991,8 +990,8 @@ def write_agn_data(filenom,lu_agn,lne_agn,loh12_agn,
             hfdat['lne_agn'].resize((hfdat['lne_agn'].shape[0] + lne_agn.shape[0]),axis=0)
             hfdat['lne_agn'][-lne_agn.shape[0]:] = lne_agn
             
-            hfdat['lz_agn'].resize((hfdat['lz_agn'].shape[0] + loh12_agn.shape[0]),axis=0)
-            hfdat['lz_agn'][-loh12_agn.shape[0]:] = loh12_agn
+            hfdat['lz_agn'].resize((hfdat['lz_agn'].shape[0] + lzgas_agn.shape[0]),axis=0)
+            hfdat['lz_agn'][-lzgas_agn.shape[0]:] = lzgas_agn
             
             hfdat['epsilon_agn'].resize((hfdat['epsilon_agn'].shape[1] + epsilon_agn[None,:].shape[1]),axis=1)
             hfdat['epsilon_agn'][0,-epsilon_agn[None,:].shape[1]:] = epsilon_agn[None,:]

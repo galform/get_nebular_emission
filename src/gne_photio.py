@@ -1,3 +1,8 @@
+"""
+.. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. contributions:: Olivia Vidal <ovive.pro@gmail.com>
+.. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
+"""
 import h5py
 import numpy as np
 import src.gne_io as io
@@ -37,7 +42,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
     return zfile
 
 
-def clean_photarray(lms, lssfr, lu, lne, loh12, photmod='gutkin16', verbose=True):
+def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True):
 
     '''
     Given the model, take the values outside the limits and give them the apropriate
@@ -53,7 +58,7 @@ def clean_photarray(lms, lssfr, lu, lne, loh12, photmod='gutkin16', verbose=True
      U of the galaxies per component.
     lne : floats
      ne of the galaxies per component (cm^-3).
-    loh12 : floats
+    lzgas : floats
      Metallicity of the galaxies per component (log10(Z)).
     photomod : string
      Name of the considered photoionisation model.
@@ -62,14 +67,14 @@ def clean_photarray(lms, lssfr, lu, lne, loh12, photmod='gutkin16', verbose=True
 
     Returns
     -------
-    lms,lssfr,lu,lne,loh12 : floats
+    lms,lssfr,lu,lne,lzgas : floats
     '''
 
     minU, maxU = get_limits(propname='U', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
 
-    limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(loh12[:,0]>np.log10(minZ))&(loh12[:,0]<np.log10(maxZ))&
+    limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(lzgas[:,0]>np.log10(minZ))&(lzgas[:,0]<np.log10(maxZ))&
                       (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=const.notnum))[0]
     
     for i in range(lu.shape[1]):        
@@ -79,10 +84,10 @@ def clean_photarray(lms, lssfr, lu, lne, loh12, photmod='gutkin16', verbose=True
         lne[:,i][(lne[:,i] > np.log10(maxnH))&(lne[:,i] != const.notnum)] = np.log10(maxnH)
         lne[:,i][(lne[:,i] < np.log10(minnH))&(lne[:,i] != const.notnum)] = np.log10(minnH)
         
-        loh12[:,i][(loh12[:,i] > np.log10(maxZ))&(loh12[:,i] != const.notnum)] = np.log10(maxZ)
-        loh12[:,i][(loh12[:,i] < np.log10(minZ))&(loh12[:,i] != const.notnum)] = np.log10(minZ)
+        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != const.notnum)] = np.log10(maxZ)
+        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != const.notnum)] = np.log10(minZ)
                 
-    return lms, lssfr, lu, lne, loh12
+    return lms, lssfr, lu, lne, lzgas
 
 
 def get_limits(propname, photmod='gutkin16',verbose=True):
@@ -194,7 +199,7 @@ def calculate_flux(nebline,filenom,h0units=True,origin='sfr'):
     return fluxes
 
 
-def get_lines_Feltre(lu, lne, loh12, xid_phot=0.5,
+def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
                      alpha_phot=-1.7,verbose=True):
     '''
     Get the interpolations for the emission lines,
@@ -202,7 +207,7 @@ def get_lines_Feltre(lu, lne, loh12, xid_phot=0.5,
     from Feltre et al. (2016) (https://arxiv.org/pdf/1511.08217utkingalaxies per component.
     lne : floats
      ne of the galaxies per component (cm^-3).
-    loh12 : floats
+    lzgas : floats
      Metallicity of the galaxies per component (log10(Z))
     xid_phot : float
      Dust-to-metal ratio for the Feltre et. al. photoionisation model.
@@ -334,7 +339,7 @@ def get_lines_Feltre(lu, lne, loh12, xid_phot=0.5,
         dz = []
         i = []
     
-        for logz in loh12[:,comp]:
+        for logz in lzgas[:,comp]:
             i1 = io.locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
@@ -395,7 +400,7 @@ def get_lines_Feltre(lu, lne, loh12, xid_phot=0.5,
     return nebline
 
 
-def get_lines_Gutkin(lu, lne, loh12, xid_phot=0.3,
+def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
                      co_phot=1,imf_cut_phot=100,verbose=True):
     '''
     Get the interpolations for the emission lines,
@@ -408,7 +413,7 @@ def get_lines_Gutkin(lu, lne, loh12, xid_phot=0.3,
      U of the galaxies per component.
     lne : floats
      ne of the galaxies per component (cm^-3).
-    loh12 : floats
+    lzgas : floats
      Metallicity of the galaxies per component (log10(Z))
     xid_phot : float
        Dust-to-metal ratio
@@ -560,10 +565,10 @@ def get_lines_Gutkin(lu, lne, loh12, xid_phot=0.3,
                 du.append(d)
                 j.append(j1)
 
-        # Interpolate over disk gas metallicity loh12[comp]
+        # Interpolate over disk gas metallicity lzgas[comp]
         dz = []
         i = []
-        for logz in loh12[:,comp]:
+        for logz in lzgas[:,comp]:
             i1 = io.locate_interval(logz,lzmets_reduced)
     
             if logz<minZ:
@@ -602,7 +607,7 @@ def get_lines_Gutkin(lu, lne, loh12, xid_phot=0.3,
         dz = []
         i = []
     
-        for logz in loh12[:,comp]:
+        for logz in lzgas[:,comp]:
             i1 = io.locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
@@ -663,7 +668,7 @@ def get_lines_Gutkin(lu, lne, loh12, xid_phot=0.3,
     return nebline
 
 
-def get_lines(lu, lne, loh12, photmod='gutkin16',xid_phot=0.3,
+def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
               co_phot=1,imf_cut_phot=100,alpha_phot=-1.7, verbose=True):
     '''
     Get the emission lines
@@ -674,7 +679,7 @@ def get_lines(lu, lne, loh12, photmod='gutkin16',xid_phot=0.3,
        U of the galaxies per component.
     lne : floats
        ne of the galaxies per component (cm^-3).
-    loh12 : floats
+    lzgas : floats
        Metallicity of the galaxies per component (log10(Z))
     photomod : string
        Name of the considered photoionisation model.
@@ -702,10 +707,10 @@ def get_lines(lu, lne, loh12, photmod='gutkin16',xid_phot=0.3,
             print('                Possible photmod= {}'.format(const.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_Gutkin(lu,lne,loh12,xid_phot=xid_phot,co_phot=co_phot,
+        nebline = get_lines_Gutkin(lu,lne,lzgas,xid_phot=xid_phot,co_phot=co_phot,
                                    imf_cut_phot=imf_cut_phot,verbose=verbose)
     elif (photmod == 'feltre16'):
-        nebline = get_lines_Feltre(lu,lne,loh12,xid_phot=xid_phot,
+        nebline = get_lines_Feltre(lu,lne,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 
     return nebline
