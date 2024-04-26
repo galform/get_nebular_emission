@@ -145,6 +145,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
         return lower_limit,upper_limit
 
+
     
 def calculate_flux(nebline,filenom,h0units=True,origin='sfr'):
     '''
@@ -197,6 +198,7 @@ def calculate_flux(nebline,filenom,h0units=True,origin='sfr'):
         fluxes = np.copy(nebline)
             
     return fluxes
+
 
 
 def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,

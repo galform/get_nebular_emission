@@ -914,53 +914,60 @@ def test_bpts(infile, zz, verbose=True):
     ymaxs = [1.5,1.6]
 
 
-    # Read information from file
+    # Read header and SF information from file
     filenom = io.get_outnom(infile,ftype='line_data')
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
     photmod_sfr = header.attrs['photmod_sfr']
-    photmod_agn = header.attrs['photmod_agn']
 
     lu_sfr = f['sfr_data/lu_sfr'][:,0]
     lz_sfr = f['sfr_data/lz_sfr'][:,0]
-    lu_agn = f['agn_data/lu_agn'][:,0]
-    lz_agn = f['agn_data/lz_agn'][:,0]
-    
     Ha_flux_sfr = np.sum(f['sfr_data/Halpha_sfr_flux'],axis=0)
-    Ha_flux_agn = np.sum(f['agn_data/Halpha_agn_flux'],axis=0)
-    
     Hb_flux_sfr = np.sum(f['sfr_data/Hbeta_sfr_flux'],axis=0)
-    Hb_flux_agn = np.sum(f['agn_data/Hbeta_agn_flux'],axis=0)
-    
     NII6548_flux_sfr = np.sum(f['sfr_data/NII6584_sfr_flux'],axis=0)
-    NII6548_flux_agn = np.sum(f['agn_data/NII6584_agn_flux'],axis=0)
-    
     OII3727_flux_sfr = np.sum(f['sfr_data/OII3727_sfr_flux'],axis=0)
-    OII3727_flux_agn = np.sum(f['agn_data/OII3727_agn_flux'],axis=0)
-    
     OIII5007_flux_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
-    OIII5007_flux_agn = np.sum(f['agn_data/OIII5007_agn_flux'],axis=0)
-    
     SII6731_flux_sfr = np.sum(f['sfr_data/SII6731_sfr_flux'],axis=0)
-    SII6731_flux_agn = np.sum(f['agn_data/SII6731_agn_flux'],axis=0)
-
     SII6717_flux_sfr = np.sum(f['sfr_data/SII6717_sfr_flux'],axis=0)
-    SII6717_flux_agn = np.sum(f['agn_data/SII6717_agn_flux'],axis=0)
+    photmod_agn = header.attrs['photmod_agn']
+    
+    # Read AGN information if it exists
+    AGN = True
+    if "agn_data" not in filenom: AGN = False
 
+    if AGN:
+        lu_agn = f['agn_data/lu_agn'][:,0]
+        lz_agn = f['agn_data/lz_agn'][:,0]
+        Ha_flux_agn = np.sum(f['agn_data/Halpha_agn_flux'],axis=0)
+        Hb_flux_agn = np.sum(f['agn_data/Hbeta_agn_flux'],axis=0)
+        NII6548_flux_agn = np.sum(f['agn_data/NII6584_agn_flux'],axis=0)
+        OII3727_flux_agn = np.sum(f['agn_data/OII3727_agn_flux'],axis=0)
+        OIII5007_flux_agn = np.sum(f['agn_data/OIII5007_agn_flux'],axis=0)
+        SII6731_flux_agn = np.sum(f['agn_data/SII6731_agn_flux'],axis=0)
+        SII6717_flux_agn = np.sum(f['agn_data/SII6717_agn_flux'],axis=0)
+        
     r = f['data/m_R'][:,0] # Magnitudes for cuts
     k = f['data/m_K'][:,0]
     f.close()
 
     # Line information
-    Ha_flux = Ha_flux_sfr + Ha_flux_agn
-    Hb_flux = Hb_flux_sfr + Hb_flux_agn
-    NII_flux = NII6548_flux_sfr + NII6548_flux_agn
-    OII_flux = OII3727_flux_sfr + OII3727_flux_agn
-    OIII_flux = OIII5007_flux_sfr + OIII5007_flux_agn
-    SII_flux = SII6731_flux_sfr + SII6731_flux_agn +\
-        SII6717_flux_sfr + SII6717_flux_agn
-
+    if AGN:
+        Ha_flux = Ha_flux_sfr + Ha_flux_agn
+        Hb_flux = Hb_flux_sfr + Hb_flux_agn
+        NII_flux = NII6548_flux_sfr + NII6548_flux_agn
+        OII_flux = OII3727_flux_sfr + OII3727_flux_agn
+        OIII_flux = OIII5007_flux_sfr + OIII5007_flux_agn
+        SII_flux = SII6731_flux_sfr + SII6731_flux_agn +\
+            SII6717_flux_sfr + SII6717_flux_agn
+    else:
+        Ha_flux = Ha_flux_sfr
+        Hb_flux = Hb_flux_sfr
+        NII_flux = NII6548_flux_sfr
+        OII_flux = OII3727_flux_sfr
+        OIII_flux = OIII5007_flux_sfr
+        SII_flux = SII6731_flux_sfr + SII6717_flux_sfr
+        
     minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
@@ -975,8 +982,13 @@ def test_bpts(infile, zz, verbose=True):
     if (np.shape(ind)[1] < 1):
         print('STOP BPT plots: not enough adequate data')
         return None, None
-    
-    Halpha_ratio = Ha_flux_agn[ind]/Ha_flux[ind]
+
+    # For colourbar
+    if AGN:
+        Halpha_ratio = Ha_flux_agn[ind]/Ha_flux[ind]
+    else:
+        Halpha_ratio = Ha_flux[ind]
+        
     Ha_flux = Ha_flux[ind]
     Hb_flux = Hb_flux[ind]
     NII_flux = NII_flux[ind]
@@ -1055,7 +1067,10 @@ def test_bpts(infile, zz, verbose=True):
         sm = ScalarMappable(cmap=cmap) # Create ScalarMappable
         sm.set_array(cha)
         cbar = plt.colorbar(sm, ax=ax, cmap=cmap)
-        collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, tot}$'
+        if AGN:
+            collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, tot}$'
+        else:
+            collabel = r'$F_{\rm H_{\alpha}}$'
         cbar.set_label(collabel,rotation=270,labelpad=60)        
             
         # Lines

@@ -822,8 +822,10 @@ def phot_rate(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
     if origin=='sfr':
         Q = np.zeros(np.shape(lssfr))
         for comp in range(Q.shape[1]):
+            ###here ref. missing
             Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * const.IMF_SFR[IMF[comp]] * const.phot_to_sfr_kenn
             # lssfr[:,comp] = np.log10(Q[:,comp]/(const.IMF_SFR[IMF[comp]] * const.phot_to_sfr_kenn)) - lms[:,comp]
+            
     if origin=='agn':
         Q = np.zeros(np.shape(lssfr))
         ind = np.where(Lagn>0)[0]
@@ -862,7 +864,8 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     -------
     lu, lne, lzgas : floats
     '''
-    
+
+    ###here missing transformation to the IMF assumed by Kashino
     lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
     
     lssfr_new = np.full(np.shape(lssfr),const.notnum)
@@ -871,6 +874,7 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
             if Q[i,comp] == 0:
                 continue
             else:
+                ###here why do we need this?
                 lssfr_new[i,comp] = np.log10(Q[i,comp]/(const.IMF_SFR[IMF[comp]] * const.phot_to_sfr_kenn)) - lms[i,comp]
 
     ind = np.where((lssfr_new > const.notnum) &

@@ -91,7 +91,7 @@ unemod_agn='panuzzo03'
 photmod_agn='feltre16'
 
 # Calculate emission from AGNs: AGN = True
-AGN = True
+AGN = False
 
 # Parameters for calculating emission from AGN NLR:
 # Cold gas mass (Mg).
@@ -241,7 +241,7 @@ maxcuts = [None]
 ####################################################
 
 ### RUN the code with the given parameters and/or make plots
-run_code = True
+run_code = False
 make_plots = True
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
