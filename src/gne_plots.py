@@ -920,6 +920,7 @@ def test_bpts(infile, zz, verbose=True):
     header = f['header']
     redshift = header.attrs['redshift']
     photmod_sfr = header.attrs['photmod_sfr']
+    photmod_agn = header.attrs['photmod_agn']
 
     lu_sfr = f['sfr_data/lu_sfr'][:,0]
     lz_sfr = f['sfr_data/lz_sfr'][:,0]
@@ -930,12 +931,11 @@ def test_bpts(infile, zz, verbose=True):
     OIII5007_flux_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
     SII6731_flux_sfr = np.sum(f['sfr_data/SII6731_sfr_flux'],axis=0)
     SII6717_flux_sfr = np.sum(f['sfr_data/SII6717_sfr_flux'],axis=0)
-    photmod_agn = header.attrs['photmod_agn']
     
     # Read AGN information if it exists
     AGN = True
-    if "agn_data" not in filenom: AGN = False
-
+    if 'agn_data' not in f.keys(): AGN = False
+    
     if AGN:
         lu_agn = f['agn_data/lu_agn'][:,0]
         lz_agn = f['agn_data/lz_agn'][:,0]
@@ -947,7 +947,8 @@ def test_bpts(infile, zz, verbose=True):
         SII6731_flux_agn = np.sum(f['agn_data/SII6731_agn_flux'],axis=0)
         SII6717_flux_agn = np.sum(f['agn_data/SII6717_agn_flux'],axis=0)
         
-    r = f['data/m_R'][:,0] # Magnitudes for cuts
+    # Magnitudes for cuts
+    r = f['data/m_R'][:,0] 
     k = f['data/m_K'][:,0]
     f.close()
 
@@ -967,7 +968,7 @@ def test_bpts(infile, zz, verbose=True):
         OII_flux = OII3727_flux_sfr
         OIII_flux = OIII5007_flux_sfr
         SII_flux = SII6731_flux_sfr + SII6717_flux_sfr
-        
+
     minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
@@ -988,7 +989,7 @@ def test_bpts(infile, zz, verbose=True):
         Halpha_ratio = Ha_flux_agn[ind]/Ha_flux[ind]
     else:
         Halpha_ratio = Ha_flux[ind]
-        
+    
     Ha_flux = Ha_flux[ind]
     Hb_flux = Hb_flux[ind]
     NII_flux = NII_flux[ind]

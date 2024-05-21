@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 This is a modular python code to provide model spectral emission 
 lines, both from star-forming regions and narrow-line regions of AGNs.
@@ -8,13 +6,21 @@ The input of the code are global galactic properties.
 The intrinsic luminosities can be passed through an attenuation model 
 to also get the predicted attenuated luminosities.
 
-@author: expox7, viogp
+@authors: expox7, viogp
 """
 
 import src.gne_const as const
 from src.gne import gne
 from src.gne_plots import make_testplots
 
+### RUN the code with the given parameters and/or make plots
+run_code = True
+make_plots = True
+
+# Calculate emission from AGNs: AGN = True
+AGN = True
+
+###############################################################
 ### INPUT FILE(S) and redshift
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
@@ -89,9 +95,6 @@ IMF = ['Kennicut','Kennicut']
 unemod_agn='panuzzo03'
 # Photoionization model to get line luminosities from nebular parameters.
 photmod_agn='feltre16'
-
-# Calculate emission from AGNs: AGN = True
-AGN = False
 
 # Parameters for calculating emission from AGN NLR:
 # Cold gas mass (Mg).
@@ -236,13 +239,10 @@ mincuts = [20*9.35e8]
 maxcuts = [None]
 
 
-####################################################
-#############      Run the code     ################
-####################################################
+##################################################################
+#############    Run the code and or make plots   ################
+##################################################################
 
-### RUN the code with the given parameters and/or make plots
-run_code = False
-make_plots = True
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
 

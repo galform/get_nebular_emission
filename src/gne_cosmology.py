@@ -59,7 +59,6 @@ import numpy as np
 import scipy as sp
 from scipy.constants import c,constants
 from scipy.integrate import romberg
-from astropy.constants import M_sun
 
 WM = None
 WV = None
