@@ -58,7 +58,7 @@ photmod_sfr='gutkin16'
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
 # Each list correspond to a different component: 
-# m_sfr_z = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]
+# m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_bulge,SFR_bulge,Zgas_bulge]]
 # For a single component: m_sfr_z = [[M*,SFR,Zgas]]
 # For a HDF5 input file: m_sfr_z = [['Mstellar','SFR','Zgas']]
 
