@@ -28,7 +28,12 @@ To install this code, clone the GitHub repository:
 git clone git@github.com:galform/get_nebular_emission.git
 ```
 
+Running the code
+-----------------------------
 The code can be run following the **run_txtinput_tutorial.py** or **run_hdf5input_tutorial.py** as a normal python3 programs.  
+```
+python3 run_txtinput_tutorial.py
+```
 
 
 Tutorials and testing

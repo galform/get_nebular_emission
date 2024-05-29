@@ -41,30 +41,19 @@ attmods = ['ratios', 'cardelli89']
 
 inputformats = ['txt','hdf5']
 
-# For Kennicut IMF -> M(Kenn) = corr * M(IMF)
-# ------------------------------------------
-# Salpeter 0.47
-# Kroupa 0.74
-# Chabrier 0.81
-# Baldry & Glazebrook 0.85
 
-# SFR(Kenn) = corr * SFR(IMF)
-# ---------------------------
-# Salpeter 0.94
-# Kroupa 1.49
-# Chabrier 1.57
-# Baldry & Glazebrook 2.26
-# Top-heavy IMF (x=1) 3.13
+######### IMF transformations (Lacey et al. 2016) 
 
-######### Lacey et. al. 2016
-
+# M1 = (IMF_M2/IMF_M1) * M2 
 IMF_M = {'Kennicut': 1, 'Salpeter': 0.47, 'Kroupa': 0.74, 'Chabrier': 0.81, 
             'Baldry&Glazebrook': 0.85, 'Top-heavy': 1.11}
 
+# SFR1 = (IMF_SFR2/IMF_SFR1) * SFR2 
 IMF_SFR = {'Kennicut': 1, 'Salpeter': 0.94, 'Kroupa': 1.49, 'Chabrier': 1.57, 
             'Baldry&Glazebrook': 2.26, 'Top-heavy': 3.13}
 
 phot_to_sfr_kenn = 9.85e52 # phot/s
+
 
 # FOR CONVERSION FROM LYMANN CONTINUUM PHOTONS TO SFR
 # It is assumed that a SFR of 1 Msun/yr produces 9.85 · 10^52 photons/s for Kennicut IMF.
