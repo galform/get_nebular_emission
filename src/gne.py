@@ -156,7 +156,8 @@ def gne(infile, redshift, m_sfr_z,
     outfile = io.generate_header(infile, redshift,
                                  h0,omega0,omegab,lambda0,vol,
                                  unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
-                                 photmod_sfr=photmod_sfr, photmod_agn=photmod_agn,
+                                 photmod_sfr=photmod_sfr,
+                                 photmod_agn=photmod_agn,
                                  attmod=attmod,verbose=verbose)
 
     # Number of components
@@ -170,13 +171,12 @@ def gne(infile, redshift, m_sfr_z,
     # Read the input data and correct it to the adequate units, etc.
     lms, lssfr, lzgas, cut = io.get_data(infile, outfile,
                                          m_sfr_z, h0units=h0units,
-                                         cutcols=cutcols, mincuts=mincuts,
-                                         maxcuts=maxcuts,
                                          inputformat=inputformat,
-                                         inoh = inoh,
+                                         IMF=IMF,cutcols=cutcols,
+                                         mincuts=mincuts,maxcuts=maxcuts,
+                                         attmod=attmod,inoh = inoh,
                                          LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
-                                         IMF=IMF,
-                                         testing=testing,verbose=verbose)
+                                         verbose=verbose,testing=testing)
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:

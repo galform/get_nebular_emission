@@ -411,8 +411,8 @@ def get_secondary_data(infile, cut, inputformat='hdf5',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-#        with h5py.File(infile, 'r') as hf:
-#            print('in hdf5'); exit()
+        with h5py.File(infile, 'r') as hf:
+            print('in hdf5'); exit()
 #            second_params = hf[]####here how to generate a matrix?
 #            for i in range(ncomp):
 #                if i==0:
@@ -426,12 +426,7 @@ def get_secondary_data(infile, cut, inputformat='hdf5',
 #                
 #            if infile_z0[0]:
 #            epsilon_param_z0 = np.loadtxt(infile_z0,skiprows=ih,usecols=epsilon_params)[cut].T
-#
-#%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        if verbose:
-            print('HDF5 not implemented yet for secondary params.')
-        sys.exit()
     elif inputformat=='txt': ###need to adapt to the generatisation and test
         ih = get_nheader(infile)
         outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
@@ -496,28 +491,18 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
                                     maxcuts=maxcuts, mincuts=mincuts,
                                     inputformat=inputformat, 
                                     testing=testing, verbose=verbose)
-
     ncomp = get_ncomponents(cols)
 
     # Set to a default value if negative stellar masses
-    ind = np.where(lms<=1.)
+    ind = np.where((lms<=1.) | (lssfr<0) | (lzgas<=0))
     lms[ind] = const.notnum
     lssfr[ind] = const.notnum
     lzgas[ind] = const.notnum
-
-    if LC2sfr: # Avoid positives magnitudes of LC photons
-        ind = np.where(lssfr>0)
-        lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
-
-
-    else: # Avoid other negative SFR
-        ind = np.where(lssfr<=0)
-        lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
-
-
-
-    ind = np.where(lzgas<=0) # Avoid other negative Z
-    lzgas[ind] = const.notnum
+    #print('get_data',np.shape(lms)); exit()###here
+    ####here is this correct? does not seem to make sense
+    #if LC2sfr: # Avoid positive magnitudes of LC photons
+    #    ind = np.where(lssfr>0)
+    #    lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
 
     # Calculate the disk mass if we have only the total and bulge mass
 
