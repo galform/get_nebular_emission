@@ -293,7 +293,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     lms, lssfr, lzgas : floats
     cut : integers
     '''
-    
+
     check_file(infile, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
@@ -309,11 +309,9 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        with h5py.File(infile, 'r') as f:
-            hf = f['data']
-            
+        with h5py.File(infile, 'r') as hf:            
             cut = np.arange(len(hf[cols[0][0]][:limit]))
-            
+
             for i in range(len(cutcols)):
                 if cutcols[i]:
                     param = hf[cutcols[i]][:limit]
@@ -380,52 +378,32 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
 
 
 
-def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None, 
-                       Lagn_params=None, att_params=None, extra_params=None,
-                       inputformat='hdf5', attmod='cardelli89', verbose=True):    
+def get_secondary_data(infile, cut, inputformat='hdf5',
+                       params=[None], verbose=True):    
     '''
     Get data for epsilon calculation in the adecuate units.
     
     Parameters
     ----------
     infile : string
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    infile_z0 : string
-     Name of the files with the galaxies at redshift 0. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    cut : strings
-     List of indexes of the selected galaxies from the samples.
+       Name of the input file. 
+    cut : array of integers
+       List of indexes of the selected galaxies from the samples.
     inputformat : string
-     Format of the input file.
-    epsilon_params : list
-     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    Lagn_params : list
-     Inputs for AGN's bolometric luminosity calculations.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    attmod : string
-     Attenuation model.
+       Format of the input file.
+    params : list of either integers or strings
+       Inputs columns for text files or dataset name for hdf5 files.
     verbose : boolean
      If True print out messages.
-    extra_params : list
-     Parameters from the input files which will be saved in the output file.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
      
     Returns
     -------
-    epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param : floats
+    second_params : array of floats
     '''
     
-    epsilon_param = [[None]]
-    epsilon_param_z0 = [[None]]
-    Lagn_param = [[None]]
-    extra_param = [[None]]
+    check_file(infile, verbose=verbose)
+
+    second_params = [None]####here
     
     if inputformat not in const.inputformats:
         if verbose:
@@ -433,30 +411,32 @@ def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None,
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
+#        with h5py.File(infile, 'r') as hf:
+#            print('in hdf5'); exit()
+#            second_params = hf[]####here how to generate a matrix?
+#            for i in range(ncomp):
+#                if i==0:
+#                    lms = np.array([hf[cols[i][0]][:limit]])
+#                    lssfr = np.array([hf[cols[i][1]][:limit]])
+#                    lzgas = np.array([hf[cols[i][2]][:limit]])
+#                else:
+#                    lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
+#                    lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
+#                    lzgas = np.append(lzgas,[hf[cols[i][2]][:limit]],axis=0)
+#                
+#            if infile_z0[0]:
+#            epsilon_param_z0 = np.loadtxt(infile_z0,skiprows=ih,usecols=epsilon_params)[cut].T
+#
+#%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         if verbose:
             print('HDF5 not implemented yet for secondary params.')
         sys.exit()
-    elif inputformat=='txt':
+    elif inputformat=='txt': ###need to adapt to the generatisation and test
         ih = get_nheader(infile)
-        
-        if epsilon_params:
-            epsilon_param = np.loadtxt(infile,skiprows=ih,usecols=epsilon_params)[cut].T
-            
-        if infile_z0[0]:
-            epsilon_param_z0 = np.loadtxt(infile_z0,skiprows=ih,usecols=epsilon_params)[cut].T
+        outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
 
-        if Lagn_params:
-            Lagn_param = np.loadtxt(infile,skiprows=ih,usecols=Lagn_params)[cut].T
-            
-        if extra_params:
-            extra_param = np.loadtxt(infile,skiprows=ih,usecols=extra_params)[cut].T
-            if len(extra_params)==1:
-                extra_param = np.array([extra_param])
-        
-        if att_params:
-                att_param = np.loadtxt(infile,skiprows=ih,usecols=att_params)[cut].T
-                
-    return epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param
+    return outparams
 
 
 

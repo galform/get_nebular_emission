@@ -155,7 +155,7 @@ Z_central_cor=True
     # a way of evolving the filling factor with redshift. If this correction is to be used,
     # a fixed number of files is needed equal to that at z=0.
     # If local relations are to be used: infile_z0 = [None]
-infile_z0 = [None]
+infiles_z0 = [None]
 
 
 ####################################################
@@ -213,7 +213,7 @@ flux=True
 # Include other parameters in the output files
 extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','m_K','m_R','m_R_SDSS','m_I',
                       'Mdot_stb','Mdot_hh','Mhot','Lagn']
-extra_params_labels = ['Type of halo (central = 0)',
+extra_params_labels = ['Gal. type (central = 0)',
                        r'Black hole mass ($M_\odot \ h^{-1}$)',
                        r'Halo mass ($M_\odot \ h^{-1}$)',
                        r'Stellar mass of bulge ($M_\odot \ h^{-1}$)',
@@ -230,7 +230,7 @@ extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
 
 ### SELECTION CRITERIA ###
 # Cuts can be made on the input file
-# In this example, location 7 correspond to the stellar mass.
+# In this example, location 7 correspond to the halo mass.
 # The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
 cutcols = [7]
 # List of minimum values. None for no inferior limit.
@@ -245,7 +245,8 @@ maxcuts = [None]
 
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
-
+    infile_z0 = infiles_z0[ii]
+    
     if run_code:
         gne(infile, zz, m_sfr_z,
             h0,omega0,omegab,lambda0,vol,

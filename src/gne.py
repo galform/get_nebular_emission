@@ -15,17 +15,18 @@ from src.gne_plots import make_testplots
 
 def gne(infile, redshift, m_sfr_z,
         h0,omega0,omegab,lambda0,vol,
-        inputformat='HDF5',infile_z0=[None], h0units=True, 
+        inputformat='hdf5',infile_z0=None, h0units=True, 
         cutcols=[None], mincuts=[None], maxcuts=[None], 
-        att=False, att_params=None, att_ratio_lines=None,
+        att=False, att_params=[None], att_ratio_lines=[None],
         flux=False,
         flag=0,
         IMF=['Kennicut','Kennicut'],
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,
-        AGN=False, AGNinputs='Lagn', Lagn_params=None, Z_central_cor=False,
-        epsilon_params=None,
-        extra_params=None, extra_params_names=None, extra_params_labels=None,
+        AGN=False, AGNinputs='Lagn', Lagn_params=[None], Z_central_cor=False,
+        epsilon_params=[None],
+        extra_params=[None], extra_params_names=[None],
+        extra_params_labels=[None],
         attmod='cardelli89',
         unemod_sfr='kashino19', unemod_agn='panuzzo03',
         photmod_sfr='gutkin16', photmod_agn='feltre16',
@@ -175,13 +176,19 @@ def gne(infile, redshift, m_sfr_z,
                                          inoh = inoh,
                                          LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
                                          IMF=IMF,
-                                         verbose=verbose,testing=testing)
+                                         testing=testing,verbose=verbose)
 
-    epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param = io.get_secondary_data(
-        infile,cut,infile_z0=infile_z0,epsilon_params=epsilon_params,
-        extra_params=extra_params,Lagn_params=Lagn_params,
-        att_params=att_params,inputformat=inputformat,
-        attmod=attmod,verbose=verbose)
+    epsilon_param_z0 = [None]
+    if infile_z0 is not None:
+        epsilon_param_z0 = io.get_secondary_data(infile_z0,cut,
+                                                 inputformat=inputformat,
+                                                 params=epsilon_params,
+                                                 verbose=verbose)
+
+    extra_param = io.get_secondary_data(infile,cut,
+                                        inputformat=inputformat,
+                                        params=extra_params,
+                                        verbose=verbose)
 
     # Modification of the stellar mass-metallicity relation
     # 0 for no correction
@@ -196,7 +203,6 @@ def gne(infile, redshift, m_sfr_z,
                 q0=q0, z0=z0, T=T,
                 IMF=IMF,
                 h0units=h0units,
-                epsilon_param=epsilon_param,
                 epsilon_param_z0=epsilon_param_z0,
                 origin='sfr', unemod=unemod_sfr,
                 gamma=gamma, verbose=verbose)
@@ -227,6 +233,11 @@ def gne(infile, redshift, m_sfr_z,
         print(' Emission calculated.')
             
     if att:
+        att_param = io.get_secondary_data(infile,cut,
+                                          inputformat=inputformat,
+                                          params=att_params,
+                                          verbose=verbose)
+
         nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
                                       att_ratio_lines=att_ratio_lines,redshift=redshift,
                                       origin='sfr',
@@ -261,6 +272,15 @@ def gne(infile, redshift, m_sfr_z,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
+        Lagn_param = io.get_secondary_data(infile,cut,
+                                           inputformat=inputformat,
+                                           params=Lagn_params,
+                                           verbose=verbose)
+        epsilon_param = io.get_secondary_data(infile,cut,
+                                              inputformat=inputformat,
+                                              params=epsilon_params,
+                                              verbose=verbose)
+        
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
         

@@ -1130,7 +1130,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
 def get_une(lms_o, lssfr_o, lzgas_o,filenom,
             q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=None,
             Z_central_cor=False,
-            gamma=1.3, T=10000, epsilon_param=[[None]], epsilon_param_z0=[[None]],
+            gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01, h0units=True, IMF=['Kroupa','Kroupa'],
             unemod='kashino20', origin='sfr', verbose=True):
     '''
@@ -1189,26 +1189,25 @@ def get_une(lms_o, lssfr_o, lzgas_o,filenom,
     Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin=origin)
     
     epsilon = None
-    if epsilon_param[0][0] != None:
-        if origin=='agn':
-            epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],
-                                        filenom,
-                                        h0units=True,nH=const.nH_AGN,
-                                        profile='exponential',verbose=verbose)
-        if origin=='sfr':
-            # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
-            # epsilon = ng/const.nH_gal
-            # epsilon[epsilon>1] = 1
+    if origin=='agn' and epsilon_param is not None:
+        epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],
+                                    filenom,
+                                    h0units=True,nH=const.nH_AGN,
+                                    profile='exponential',verbose=verbose)
+    if origin=='sfr' and epsilon_param_z0 is not None:
+        # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
+        # epsilon = ng/const.nH_gal
+        # epsilon[epsilon>1] = 1
             
-            if epsilon_param_z0[0][0] != None:
-                # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
-                # ng_ratio = n_ratio(ng,ng_z0)
-                if redshift==0.8:
-                    ng_ratio = const.med_to_low
-                elif redshift==1.5:
-                    ng_ratio = const.high_to_low
-                else:
-                    ng_ratio = 1.
+        
+        # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
+        # ng_ratio = n_ratio(ng,ng_z0)
+        if redshift==0.8:
+            ng_ratio = const.med_to_low
+        elif redshift==1.5:
+            ng_ratio = const.high_to_low
+        else:
+            ng_ratio = 1.
                     
     if Z_central_cor and origin=='agn':
         lzgas = get_Zagn(lms_o,lzgas_o)
