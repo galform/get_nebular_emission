@@ -498,14 +498,13 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
     lms[ind] = const.notnum
     lssfr[ind] = const.notnum
     lzgas[ind] = const.notnum
-    #print('get_data',np.shape(lms)); exit()###here
+
     ####here is this correct? does not seem to make sense
     #if LC2sfr: # Avoid positive magnitudes of LC photons
     #    ind = np.where(lssfr>0)
     #    lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
 
     # Calculate the disk mass if we have only the total and bulge mass
-
     if mtot2mdisk:
         if ncomp!=2:
             if verbose:
@@ -540,9 +539,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         lms[ind] = np.log10(lms[ind])
 
     # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
-
     if LC2sfr:
-        
         for comp in range(ncomp):
             ins = np.zeros(len(lssfr))
             ind = np.where(lssfr[:, comp] != const.notnum)
@@ -625,9 +622,8 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         ind = np.where(ins>0)
         lzgas_tot[ind] = np.log10(ins[ind])
 
-
-
-    if testing: # here : Search more efficient form. Allow more components in the header
+    if testing and inputformat == 'txt':
+        ###here Search more efficiently. Allow more components in the header
         if ncomp==2:
             header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
                       ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
@@ -647,8 +643,6 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         with open(outfil, 'w') as outf:
             np.savetxt(outf, datatofile, delimiter=' ', header=header1)
             outf.closed
-
-
                     
     return lms,lssfr,lzgas,cut
 
