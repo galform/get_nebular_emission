@@ -316,7 +316,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                     param = hf[cutcols[i]][:]
                     mincut = mincuts[i]
                     maxcut = maxcuts[i]
-        
+
                     if mincut and maxcut:
                         ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
                     elif mincut:

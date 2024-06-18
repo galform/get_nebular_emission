@@ -66,7 +66,9 @@ def cardelli(waveA):
     Al_Av = ax+bx/Rv
     return Al_Av
 
-def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, costheta=0.3, albedo=0.56):
+
+
+def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, costheta=0.3, albedo=0.56):
     '''
     Given the wavelength, the cold gas mass, the half-mass radius and the global metallicity of the disk,
     along with the assumed albedo and scattering angle, it gives the attenuation coefficient.
@@ -101,8 +103,8 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, costheta=
     Al_Av = cardelli(wavelength)
     sectheta = 1./costheta
 
-    mean_col_dens_disc_log = (np.log10(Mcold_disc*const.h) + np.log10(const.Msun_to_kg) - 
-    np.log10(1.4*const.mp*np.pi)-2.*np.log10(a_disc*rhalf_mass_disc*const.h*const.Mpc_to_cm))
+    mean_col_dens_disc_log = (np.log10(Mcold_disc*h0) + np.log10(const.Msun_to_kg) - 
+    np.log10(1.4*const.mp*np.pi)-2.*np.log10(a_disc*rhalf_mass_disc*h0*const.Mpc_to_cm))
     
     tau_disc = np.log10(Al_Av) + np.log10((Z_disc/const.zsun)**s) + mean_col_dens_disc_log - np.log10(2.1e21)
     tau_disc = 10.**tau_disc
@@ -116,7 +118,7 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, costheta=
     return coef_att
 
 def attenuation(nebline, att_param=None, att_ratio_lines=None,
-                redshift=0, attmod='cardelli89',origin='sfr',
+                redshift=0, h0=0.7, attmod='cardelli89',origin='sfr',
                 photmod='gutkin16', cut=None, verbose=True):
     '''
     Get the attenuated emission lines from the raw ones.
@@ -186,7 +188,8 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
                     if comp==0:
                         coef_att[comp,i] = coef_att_cardelli(const.wavelength_model[photmod][i], 
                                     Mcold_disc=Mcold_disc, rhalf_mass_disc=Rhm, 
-                                    Z_disc=Z_disc, costheta=0.3, albedo=0.56) * const.line_att_coef_all(redshift)
+                                                             Z_disc=Z_disc, h0=h0,
+                                                             costheta=0.3, albedo=0.56) * const.line_att_coef_all(redshift)
                     else:
                         coef_att[comp,i] = coef_att[0,i]
             coef_att[(coef_att!=coef_att)&(coef_att!=const.notnum)] = 1.

@@ -242,7 +242,8 @@ def gne(infile, redshift, m_sfr_z,
                                           verbose=verbose)
 
         nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
-                                      att_ratio_lines=att_ratio_lines,redshift=redshift,
+                                      att_ratio_lines=att_ratio_lines,
+                                                    redshift=redshift,h0=h0,
                                       origin='sfr',
                                       cut=cut, attmod=attmod, photmod=photmod_sfr,verbose=verbose)
         
@@ -324,7 +325,7 @@ def gne(infile, redshift, m_sfr_z,
 
         if att:
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
-                                          att_ratio_lines=att_ratio_lines,redshift=redshift,
+                                                        att_ratio_lines=att_ratio_lines,redshift=redshift,h0=h0,
                                           origin='agn',
                                           cut=cut, attmod=attmod, photmod=photmod_agn,verbose=verbose)
             if verbose:

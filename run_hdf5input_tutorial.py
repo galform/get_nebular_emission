@@ -159,36 +159,20 @@ infiles_z0 = [None]
     # luminosity for the emission lines.
     
 # att=True to calculate the dust attenuation; False, otherwise
-att=False
-
-# attmod defines the attenuation model the code is going to use. 
-# Each model requires different parameters. The code also provides the
-    # possibility of using attenuation coefficients calculated externally and
-    # inserted in the input file.
-# att_params is a list with the location of the required parameters. Right now
-    # the code only has one attenuation model available, the attenuation curve
-    # from Cardelli et. al. 1989 used with the methodology of Favole et. al. 2020.
+att = True
     
-# To use cardelli's attenuation curve: attmod = 'cardelli89'.
-    # Parameters:
-        # Baryonic half-mass radius (Rhm).
-        # Cold gas mass (Mg).
-        # Cold gas metallicity (Z).
-    # att_params = [Rhm, Mg, Z]
-
+# To use Cardelli's law (following Favole et. al. 2020):
+    # attmod = 'cardelli89'.
+    # att_params = [half-mass radius, cold gas mass, cold gas metallicity]
 # To use already available attenuation coefficients: attmod = 'ratios'
     # att_params in this case has the location of the attenuation coefficients
     # for each line for which attenuation is going to be calculated.
     # This mode requieres an extra variable, att_ratio_lines, with the names
     # of the lines corresponding to the coefficients listed in att_params.
 # Example:
-    # Suppose we want to calculate the attenuation por Halpha and OII3727. Our 
-    # input file is a text file with the attenuation coefficients of 
-    # those two lines in the sixth and eighth columns.
-    # So:
-        # attmod = 'ratios'
-        # att_params = [5,7]
-        # att_ratio_lines = ['Halpha','OII3727']
+    # attmod = 'ratios'
+    # att_params = [31,32,33,34,35,36,36]
+    # att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
 
 attmod='cardelli89'
 att_params=['data/rhm_disk','data/mgas_disk','data/Zgas_disk'] 
@@ -203,7 +187,15 @@ flux=True
 # Include other parameters in the output files
 extra_params_names = ['mh','magK','magR','type','MBH']
 extra_params_labels = extra_params_names
-extra_params = ['data/mh','data/magK','data/magR','data/type','data/MBH'] 
+extra_params = ['data/mh','data/magK','data/magR','data/type','data/MBH']
+
+# Make the calculation on a subsample based on selection cuts
+# Paramter to impose cuts
+cutcols = ['data/mh']
+# List of minimum values. None for no inferior limit.
+mincuts = [20*9.35e8]
+# List of maximum values. None for no superior limit.
+maxcuts = [None]
 
 ##################################################################
 #############    Run the code and or make plots   ################
@@ -239,6 +231,7 @@ for ii, infile in enumerate(infiles):
             flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
+            cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
     if make_plots:

@@ -166,43 +166,25 @@ infiles_z0 = [None]
 # Continuum and line attenuation calculation. If this option is selected 
     # the output file will have intrinsic AND attenuated values of
     # luminosity for the emission lines.
-    
-# Calculate attenuation: att = True
-# Don't calculate attenuation: att = False
+
+# att=True to calculate the dust attenuation; False, otherwise
 att=True
-
-# attmod defines the attenuation model the code is going to use. 
-# Each model requires different parameters. The code also provides the
-    # possibility of using attenuation coefficients calculated externally and
-    # inserted in the input file.
-# att_params is a list with the location of the required parameters. Right now
-    # the code only has one attenuation model available, the attenuation curve
-    # from Cardelli et. al. 1989 used with the methodology of Favole et. al. 2020.
     
-# To use cardelli's attenuation curve: attmod = 'cardelli89'.
-    # Parameters:
-        # Baryonic half-mass radius (Rhm).
-        # Cold gas mass (Mg).
-        # Cold gas metallicity (Z).
-    # att_params = [Rhm, Mg, Z]
-
+# To use Cardelli's law (following Favole et. al. 2020):
+    # attmod = 'cardelli89'.
+    # att_params = [half-mass radius, cold gas mass, cold gas metallicity]
 # To use already available attenuation coefficients: attmod = 'ratios'
     # att_params in this case has the location of the attenuation coefficients
     # for each line for which attenuation is going to be calculated.
     # This mode requieres an extra variable, att_ratio_lines, with the names
     # of the lines corresponding to the coefficients listed in att_params.
 # Example:
-    # Suppose we want to calculate the attenuation por Halpha and OII3727. Our 
-    # input file is a text file with the attenuation coefficients of 
-    # those two lines in the sixth and eighth columns.
-    # So:
-        # attmod = 'ratios'
-        # att_params = [5,7]
-        # att_ratio_lines = ['Halpha','OII3727']
+    # attmod = 'ratios'
+    # att_params = [31,32,33,34,35,36,36]
+    # att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
 
-attmod='ratios'
-att_params=[31,32,33,34,35,36,36] # It would be [11,6,4] if you want to use Cardelli.
-att_ratio_lines=['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731']
+attmod='cardelli89'
+att_params= [11,6,4]
 
 ####################################################
 ##########      Other calculations     #############
@@ -253,8 +235,7 @@ for ii, infile in enumerate(infiles):
             h0,omega0,omegab,lambda0,vol,
             infile_z0=infile_z0, inputformat=inputformat,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
-            att=att,
-            att_params=att_params, att_ratio_lines=att_ratio_lines,
+            att=att, att_params=att_params,
             flux=flux,
             IMF = IMF,
             inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
