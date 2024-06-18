@@ -283,10 +283,10 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
     attmod : string
       Model of dust attenuation.
-    verbose : boolean
-      If True print out messages
     testing : boolean
       If True only run over few entries for testing purposes
+    verbose : boolean
+      If True print out messages
 
     Returns
     -------
@@ -299,7 +299,7 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     ncomp = get_ncomponents(cols)
     
     if testing:
-        limit = 50
+        limit = const.testlimit
     else:
         limit = None
         
@@ -310,51 +310,51 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
         sys.exit()
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:            
-            cut = np.arange(len(hf[cols[0][0]][:limit]))
-
+            ind = np.arange(len(hf[cols[0][0]][:]))
             for i in range(len(cutcols)):
                 if cutcols[i]:
-                    param = hf[cutcols[i]][:limit]
+                    param = hf[cutcols[i]][:]
                     mincut = mincuts[i]
                     maxcut = maxcuts[i]
+        
                     if mincut and maxcut:
-                        cut = np.intersect1d(cut,np.where((mincut<param)&(param<maxcut))[0])
+                        ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
                     elif mincut:
-                        cut = np.intersect1d(cut,np.where(mincut<param)[0])
+                        ind = np.intersect1d(ind,np.where(mincut<param)[0])
                     elif maxcut:
-                        cut = np.intersect1d(cut,np.where(param<maxcut)[0])
+                        ind = np.intersect1d(ind,np.where(param<maxcut)[0])
+            cut = ind[:limit]
                 
             for i in range(ncomp):
                 if i==0:
-                    lms = np.array([hf[cols[i][0]][:limit]])
-                    lssfr = np.array([hf[cols[i][1]][:limit]])
-                    lzgas = np.array([hf[cols[i][2]][:limit]])
+                    lms = np.array([hf[cols[i][0]][:]])
+                    lssfr = np.array([hf[cols[i][1]][:]])
+                    lzgas = np.array([hf[cols[i][2]][:]])
                 else:
-                    lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
-                    lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
-                    lzgas = np.append(lzgas,[hf[cols[i][2]][:limit]],axis=0)
+                    lms = np.append(lms,[hf[cols[i][0]][:]],axis=0)
+                    lssfr = np.append(lssfr,[hf[cols[i][1]][:]],axis=0)
+                    lzgas = np.append(lzgas,[hf[cols[i][2]][:]],axis=0)
+                    
     elif inputformat=='txt':
         ih = get_nheader(infile)
         
-        cut = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)[:limit]))
-        
-        if cutcols[0]:
-            for i in range(len(cutcols)):
-                
-                param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)[:limit]
+        ind = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)))
+        for i in range(len(cutcols)):
+            if cutcols[i]:
+                param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)
                 mincut = mincuts[i]
                 maxcut = maxcuts[i]
-                
+
                 if mincut and maxcut:
-                    cut = np.intersect1d(cut,np.where((mincut<param)&(param<maxcut))[0])
+                    ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
                 elif mincut:
-                    cut = np.intersect1d(cut,np.where(mincut<param)[0])
+                    ind = np.intersect1d(ind,np.where(mincut<param)[0])
                 elif maxcut:
-                    cut = np.intersect1d(cut,np.where(param<maxcut)[0])
-                    
-        
+                    ind = np.intersect1d(ind,np.where(param<maxcut)[0])
+        cut = ind[:limit]
+            
         for i in range(ncomp):
-            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T[:,:limit]
+            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
             
             if i==0:
                 lms = np.array([X[0]])
@@ -373,13 +373,13 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     lms = lms.T
     lssfr = lssfr.T
     lzgas = lzgas.T
-            
+
     return lms[cut], lssfr[cut], lzgas[cut], cut
 
 
 
-def get_secondary_data(infile, cut, inputformat='hdf5',
-                       params=[None], verbose=True):    
+def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
+                       testing=False, verbose=True):    
     '''
     Get data for epsilon calculation in the adecuate units.
     
@@ -393,6 +393,8 @@ def get_secondary_data(infile, cut, inputformat='hdf5',
        Format of the input file.
     params : list of either integers or strings
        Inputs columns for text files or dataset name for hdf5 files.
+    testing : boolean
+      If True only run over few entries for testing purposes
     verbose : boolean
      If True print out messages.
      
@@ -400,11 +402,9 @@ def get_secondary_data(infile, cut, inputformat='hdf5',
     -------
     second_params : array of floats
     '''
-    
+
     check_file(infile, verbose=verbose)
 
-    second_params = [None]####here
-    
     if inputformat not in const.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
@@ -412,22 +412,23 @@ def get_secondary_data(infile, cut, inputformat='hdf5',
         sys.exit()
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
-            print('in hdf5'); exit()
-#            second_params = hf[]####here how to generate a matrix?
-#            for i in range(ncomp):
-#                if i==0:
-#                    lms = np.array([hf[cols[i][0]][:limit]])
-#                    lssfr = np.array([hf[cols[i][1]][:limit]])
-#                    lzgas = np.array([hf[cols[i][2]][:limit]])
-#                else:
-#                    lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
-#                    lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
-#                    lzgas = np.append(lzgas,[hf[cols[i][2]][:limit]],axis=0)
-#                
-#            if infile_z0[0]:
-#            epsilon_param_z0 = np.loadtxt(infile_z0,skiprows=ih,usecols=epsilon_params)[cut].T
+            ii = 0
+            for nomparam in params:
+                if (nomparam is not None):
+                    try:
+                        ###here what if Pos/vel as matrix?
+                        prop = hf[nomparam][cut]
+                    except:
+                        print('\n WARNING (gne_io): no {} found in {}'.format(
+                            nomparam,infile))
 
-    elif inputformat=='txt': ###need to adapt to the generatisation and test
+                    if (ii == 0):
+                        outparams = prop
+                    else:
+                        outparams = np.vstack((outparams,prop))
+                    ii += 1
+
+    elif inputformat=='txt': ###need to adapt to the generalisation and test
         ih = get_nheader(infile)
         outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
 
@@ -621,28 +622,6 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         ins = np.sum(oh12,axis=1)
         ind = np.where(ins>0)
         lzgas_tot[ind] = np.log10(ins[ind])
-
-    if testing and inputformat == 'txt':
-        ###here Search more efficiently. Allow more components in the header
-        if ncomp==2:
-            header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
-                      ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
-                      'log(Z)_tot, log(Z)_disk, log(Z)_bulge'
-            datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,lzgas_tot,lzgas))
-        elif ncomp==1:
-            header1 = 'log(mstars), ' \
-                      'log(SFR), log(sSFR) ' \
-                      'log(Z)'
-            datatofile=np.column_stack((lms,lsfr,lssfr,lzgas))
-
-        if LC2sfr:
-            outfil = r"example_data/tmp_LC.dat"
-        else:
-            outfil = r"example_data/tmp_avSFR.dat"
-
-        with open(outfil, 'w') as outf:
-            np.savetxt(outf, datatofile, delimiter=' ', header=header1)
-            outf.closed
                     
     return lms,lssfr,lzgas,cut
 

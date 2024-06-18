@@ -176,20 +176,22 @@ def gne(infile, redshift, m_sfr_z,
                                          mincuts=mincuts,maxcuts=maxcuts,
                                          attmod=attmod,inoh = inoh,
                                          LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
-                                         verbose=verbose,testing=testing)
+                                         testing=testing,verbose=verbose)
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
         epsilon_param_z0 = io.get_secondary_data(infile_z0,cut,
                                                  inputformat=inputformat,
                                                  params=epsilon_params,
+                                                 testing=testing,
                                                  verbose=verbose)
 
     extra_param = io.get_secondary_data(infile,cut,
                                         inputformat=inputformat,
                                         params=extra_params,
+                                        testing=testing,
                                         verbose=verbose)
-
+    
     # Modification of the stellar mass-metallicity relation
     # 0 for no correction
     if flag==1:
@@ -236,6 +238,7 @@ def gne(infile, redshift, m_sfr_z,
         att_param = io.get_secondary_data(infile,cut,
                                           inputformat=inputformat,
                                           params=att_params,
+                                          testing=testing,
                                           verbose=verbose)
 
         nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
@@ -275,10 +278,12 @@ def gne(infile, redshift, m_sfr_z,
         Lagn_param = io.get_secondary_data(infile,cut,
                                            inputformat=inputformat,
                                            params=Lagn_params,
+                                           testing=testing,
                                            verbose=verbose)
         epsilon_param = io.get_secondary_data(infile,cut,
                                               inputformat=inputformat,
                                               params=epsilon_params,
+                                              testing=testing,
                                               verbose=verbose)
         
         if ncomp>1:

@@ -15,12 +15,12 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = True # use only the first 50 elements
+testing = False # use only the first 50 elements
 run_code = True
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True
-AGN = False
+AGN = True
 
 ###############################################################
 ### INPUT FILES
@@ -146,8 +146,8 @@ Z_central_cor=True
     # properties are often derived from local galaxies. get_emission_lines has
     # a way of evolving the filling factor with redshift. If this correction is to be used,
     # a fixed number of files is needed equal to that at z=0.
-    # If local relations are to be used: infile_z0 = [None]
-infile_z0 = [None]
+    # If local relations are to be used: infiles_z0 = [None]
+infiles_z0 = [None]
 
 
 ####################################################
@@ -210,6 +210,8 @@ extra_params = ['data/mh','data/magK','data/magR','data/type','data/MBH']
 ##################################################################
 
 for ii, infile in enumerate(infiles):
+    infile_z0 = infiles_z0[ii]
+    
     # Get the redshift, cosmology and volume of the model galaxies
     f = h5py.File(infile)
     header = f['header']

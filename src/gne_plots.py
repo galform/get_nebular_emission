@@ -948,10 +948,24 @@ def test_bpts(infile, zz, verbose=True):
         SII6717_flux_agn = np.sum(f['agn_data/SII6717_agn_flux'],axis=0)
         
     # Magnitudes for cuts
-    r = f['data/m_R'][:,0] 
-    k = f['data/m_K'][:,0]
+    ismagr = True
+    try:
+        magr = f['data/magR'][:,0]
+    except:
+        ismagr = False
+
+    ismagk = True
+    try:
+        magk = f['data/magK'][:,0]
+    except:
+        ismagk = False
+
     f.close()
 
+    if verbose:
+        if ismagr:print('Using R mag for the selection')
+        if ismagk:print('Using K mag for the selection')        
+    
     # Line information
     if AGN:
         Ha_flux = Ha_flux_sfr + Ha_flux_agn
@@ -1001,7 +1015,10 @@ def test_bpts(infile, zz, verbose=True):
     N2Ha =np.log10(NII_flux) - np.log10(Ha_flux)
     S2Ha =np.log10(SII_flux) - np.log10(Ha_flux)
 
-    mag_r = r[ind]; mag_k = k[ind]
+    if ismagr:
+        mag_r = magr[ind]
+    if ismagk:
+        mag_k = magk[ind]
 
     sel = np.copy(ind)
     
@@ -1027,14 +1044,23 @@ def test_bpts(infile, zz, verbose=True):
                 xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
 
             flux = 2e-16
-            sel = np.where((Ha_flux>flux) & (Hb_flux>flux) &
-                           (OIII_flux>flux) & (NII_flux>flux) &
-                           (SII_flux>flux)&(mag_r<17.77))
+
+            if ismagr:
+                sel = np.where((Ha_flux>flux) & (Hb_flux>flux) &
+                               (OIII_flux>flux) & (NII_flux>flux) &
+                               (SII_flux>flux)&(mag_r<17.77))
+            else:
+                sel = np.where((Ha_flux>flux) & (Hb_flux>flux) &
+                               (OIII_flux>flux) & (NII_flux>flux) &
+                               (SII_flux>flux))
 
         elif 0.7 <= redshift <= 0.9:            
             flux = 1e-16
-            sel = np.where((Ha_flux>flux) & (mag_r<124.1))
-
+            if ismagr:
+                sel = np.where((Ha_flux>flux) & (mag_r<124.1))
+            else:
+                sel = np.where(Ha_flux>flux)
+                
         elif 1.45 <= redshift <= 1.75:
             obsplot = True
             if bpt=='NII':
@@ -1047,8 +1073,11 @@ def test_bpts(infile, zz, verbose=True):
                 xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
 
             flux = 5e-17
-            sel = np.where((Ha_flux>flux) & (mag_k<23.5))
-
+            if ismagk:
+                sel = np.where((Ha_flux>flux) & (mag_k<23.5))
+            else:
+                sel = np.where(Ha_flux>flux)
+                
         if obsplot:
             ax.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
             if (np.shape(sel)[1]<1):

@@ -14,6 +14,7 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
+testing = False # use only the first 50 elements
 run_code = True
 make_plots = True
 
@@ -154,7 +155,7 @@ Z_central_cor=True
     # properties are often derived from local galaxies. get_emission_lines has
     # a way of evolving the filling factor with redshift. If this correction is to be used,
     # a fixed number of files is needed equal to that at z=0.
-    # If local relations are to be used: infile_z0 = [None]
+    # If local relations are to be used: infiles_z0 = [None]
 infiles_z0 = [None]
 
 
@@ -211,7 +212,7 @@ att_ratio_lines=['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6
 flux=True
 
 # Include other parameters in the output files
-extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','m_K','m_R','m_R_SDSS','m_I',
+extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','magK','magR','magR_SDSS','magI',
                       'Mdot_stb','Mdot_hh','Mhot','Lagn']
 extra_params_labels = ['Gal. type (central = 0)',
                        r'Black hole mass ($M_\odot \ h^{-1}$)',
@@ -265,7 +266,7 @@ for ii, infile in enumerate(infiles):
             attmod=attmod, unemod_sfr=unemod_sfr, 
             unemod_agn=unemod_agn, photmod_sfr=photmod_sfr,
             photmod_agn=photmod_agn,
-            verbose=True)
+            testing=testing,verbose=True)
 
     if make_plots:
         # Make test plots

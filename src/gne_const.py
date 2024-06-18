@@ -11,6 +11,7 @@ yr_to_s=3.154e7
 #--------------------------------------------
 
 notnum = -999.
+testlimit = 50
 
 mp = 1.67e-27 # Proton mass, kg
 c = 2.998e10 # Light velocity, cm/s
