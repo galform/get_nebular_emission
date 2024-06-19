@@ -22,15 +22,15 @@ make_plots = True
 AGN = True
 
 ###############################################################
-### INPUT FILE(S), redshift and cosmology
+### INPUT FILE
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
 infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
-redshifts = [0.]
 
-# Cosmology and volume of the simulation
+# Redshifts, cosmology and volume of the simulation
+redshifts = [0.]
 h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
@@ -39,6 +39,9 @@ vol    = pow(62.5,3) #Mpc/h
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
+
+### OUTPUT PATH (Default: output/)
+outpath = None  
 
 ####################################################
 ############  Emission from SF regions #############
@@ -229,17 +232,17 @@ for ii, infile in enumerate(infiles):
     infile_z0 = infiles_z0[ii]
     
     if run_code:
-        gne(infile, zz, m_sfr_z,
-            h0,omega0,omegab,lambda0,vol,
-            infile_z0=infile_z0, inputformat=inputformat,
-            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr, 
-            inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
-            IMF = IMF,
+        gne(infile, zz,h0,omega0,omegab,lambda0,vol,
+            inputformat=inputformat, outpath=outpath,
+            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
+            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            inoh=inoh,IMF = IMF,
             AGN=AGN,
             unemod_agn=unemod_agn, photmod_agn=photmod_agn,
-            epsilon_params=mg_r50,
+            mg_r50=mg_r50,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
+            infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,

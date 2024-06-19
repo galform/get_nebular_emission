@@ -15,7 +15,7 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = False # use only the first 50 elements
+testing = True # use only the first 50 elements
 run_code = True
 make_plots = True
 
@@ -33,6 +33,8 @@ infiles = ['src/example_data/GP20_62.5kpc_z0_example.hdf5']
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
 
+### OUTPUT PATH (Default: output/)
+outpath = None  
 
 ####################################################
 ############  Emission from SF regions #############
@@ -216,17 +218,17 @@ for ii, infile in enumerate(infiles):
 
     if run_code:
         # Run the code
-        gne(infile, zz, m_sfr_z,
-            h0,omega0,omegab,lambda0,vol,
-            infile_z0=infile_z0, inputformat=inputformat,
-            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr, 
-            inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
-            IMF = IMF,
+        gne(infile, zz,h0,omega0,omegab,lambda0,vol,
+            inputformat=inputformat, outpath=outpath,
+            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
+            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            inoh=inoh,IMF = IMF,
             AGN=AGN,
             unemod_agn=unemod_agn, photmod_agn=photmod_agn,
-            epsilon_params=mg_r50,
+            mg_r50=mg_r50,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
+            infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,

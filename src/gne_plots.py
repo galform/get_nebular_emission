@@ -961,10 +961,6 @@ def test_bpts(infile, zz, verbose=True):
         ismagk = False
 
     f.close()
-
-    if verbose:
-        if ismagr:print('Using R mag for the selection')
-        if ismagk:print('Using K mag for the selection')        
     
     # Line information
     if AGN:
@@ -1127,6 +1123,18 @@ def test_bpts(infile, zz, verbose=True):
         # Output files
         bptnoms[ii] = io.get_outnom(infile,ftype='plots',ptype=bpt+'bpt',verbose=verbose)
         plt.savefig(bptnoms[ii])
+
+        if verbose:
+            if ismagr and ismagk:
+                magmsg = '(R and K mag. used for selection)'
+            elif ismagr:
+                magmsg = '(R mag. used for selection)'
+            elif ismagk:
+                magmsg = '(K mag. used for selection)'
+            else:
+                magmsg = ''
+            print('    {} gal. for {}-BPT plot at z={} {}\n'.format(
+                np.shape(sel)[1],bpt,redshift,magmsg))
         
     return bptnoms
 
