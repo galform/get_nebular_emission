@@ -22,13 +22,13 @@ make_plots = True
 AGN = True
 
 ###############################################################
-### INPUT FILE(S) and redshift
+### INPUT FILE(S), redshift and cosmology
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
 infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
-redshifts = [0.15]
+redshifts = [0.]
 
 # Cosmology and volume of the simulation
 h0     = 0.704
@@ -37,20 +37,17 @@ omegab = 0.0482
 lambda0= 0.693
 vol    = pow(62.5,3) #Mpc/h
 
-### INPUT FORMAT
-# If your input files are text files (.txt, .dat, .csv...): inputformat = 'txt'
-# If your input files are HDF5 files: inputformat = 'hdf5'
+### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
 
 ####################################################
 ############  Emission from SF regions #############
 ####################################################
 
-### NEBULAR AND PHOTOIONIZATION MODELS for SF regions
 # All available models can be seen in gne_const module.
-# Model that connects global galactic properties with nebular parameters.
+# NEBULAR model connecting global properties to nebular parameters
 unemod_sfr='kashino20'
-# Photoionization model to get line luminosities from nebular parameters.
+# PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
 ### INPUT PARAMETERS
@@ -72,7 +69,7 @@ m_sfr_z = [[0,2,4],[1,3,5]]
 # mtot2mdisk = False; cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
 mtot2mdisk = False
 
-# LC2sfr is True when Lyman Continuum photons are given  instead of the SFR
+# LC2sfr is True when Lyman Continuum photons are given instead of the SFR
 # LC2sfr = True; cols = [[M,m_LC,Z]]
 # LC2sfr = False; cols = [[M,SFR,Z]] (Default option)      
 LC2sfr = False
@@ -81,7 +78,7 @@ LC2sfr = False
 #      False if Zgas = MZcold/Mcold (Default option)
 inoh = False
 
-### INITIAL MASS FUNCTIONs ###
+### INITIAL MASS FUNCTIONs
 # Specify the assumed IMFs for each galaxy component in the input data.
 # Example for two components: IMF = ['Kennicut','Kennicut']
 IMF = ['Kennicut','Kennicut']
@@ -90,18 +87,19 @@ IMF = ['Kennicut','Kennicut']
 #####  Emission from AGN narrow line regions #######
 ####################################################
 
-### NEBULAR AND PHOTOIONIZATION MODELS
 # All available models can be seen in gne_const module.
-# Model that connects global galactic properties with nebular parameters.
-unemod_agn='panuzzo03'
-# Photoionization model to get line luminosities from nebular parameters.
-photmod_agn='feltre16'
+# NEBULAR model connecting global properties to nebular parameters
+unemod_agn = 'panuzzo03'
+# PHOTOIONIZATION model for AGN regions to get line luminosities
+photmod_agn = 'feltre16'
 
-# Parameters for calculating emission from AGN NLR:
+# mg_r50 has the location of the following parameters:
 # Cold gas mass (Mg).
-# Baryonic half-mass radius (Rhm).
+# Baryonic half-mass radius (R50).
+# mg_r50 is a list of lists with either the column number
+# for each parameters or the name of the HDF5 variable.
 # For two disk and bulge:epsilon_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
-epsilon_params=[6,11,19,12]
+mg_r50 = [6,11,19,12]
     
 # Second, the AGNs bolometric luminosity is needed. This value can be in the
     # input file or it can be estimated from other paremeters. To indicate
@@ -168,7 +166,7 @@ infiles_z0 = [None]
     # luminosity for the emission lines.
 
 # att=True to calculate the dust attenuation; False, otherwise
-att=True
+att = True
     
 # To use Cardelli's law (following Favole et. al. 2020):
     # attmod = 'cardelli89'.
@@ -234,19 +232,19 @@ for ii, infile in enumerate(infiles):
         gne(infile, zz, m_sfr_z,
             h0,omega0,omegab,lambda0,vol,
             infile_z0=infile_z0, inputformat=inputformat,
-            cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
-            att=att, att_params=att_params,
-            flux=flux,
-            IMF = IMF,
+            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr, 
             inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
-            AGN=AGN,AGNinputs=AGNinputs, Lagn_params=Lagn_params,
+            IMF = IMF,
+            AGN=AGN,
+            unemod_agn=unemod_agn, photmod_agn=photmod_agn,
+            epsilon_params=mg_r50,
+            AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
-            epsilon_params=epsilon_params,
+            att=att, attmod=attmod, att_params=att_params,
+            flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
-            attmod=attmod, unemod_sfr=unemod_sfr, 
-            unemod_agn=unemod_agn, photmod_sfr=photmod_sfr,
-            photmod_agn=photmod_agn,
+            cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
     if make_plots:
