@@ -283,23 +283,23 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
     attmod : string
       Model of dust attenuation.
-    verbose : boolean
-      If True print out messages
     testing : boolean
       If True only run over few entries for testing purposes
+    verbose : boolean
+      If True print out messages
 
     Returns
     -------
     lms, lssfr, lzgas : floats
     cut : integers
     '''
-    
+
     check_file(infile, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
     
     if testing:
-        limit = 50
+        limit = const.testlimit
     else:
         limit = None
         
@@ -309,54 +309,52 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        with h5py.File(infile, 'r') as f:
-            hf = f['data']
-            
-            cut = np.arange(len(hf[cols[0][0]][:limit]))
-            
+        with h5py.File(infile, 'r') as hf:            
+            ind = np.arange(len(hf[cols[0][0]][:]))
             for i in range(len(cutcols)):
                 if cutcols[i]:
-                    param = hf[cutcols[i]][:limit]
+                    param = hf[cutcols[i]][:]
                     mincut = mincuts[i]
                     maxcut = maxcuts[i]
+
                     if mincut and maxcut:
-                        cut = np.intersect1d(cut,np.where((mincut<param)&(param<maxcut))[0])
+                        ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
                     elif mincut:
-                        cut = np.intersect1d(cut,np.where(mincut<param)[0])
+                        ind = np.intersect1d(ind,np.where(mincut<param)[0])
                     elif maxcut:
-                        cut = np.intersect1d(cut,np.where(param<maxcut)[0])
+                        ind = np.intersect1d(ind,np.where(param<maxcut)[0])
+            cut = ind[:limit]
                 
             for i in range(ncomp):
                 if i==0:
-                    lms = np.array([hf[cols[i][0]][:limit]])
-                    lssfr = np.array([hf[cols[i][1]][:limit]])
-                    lzgas = np.array([hf[cols[i][2]][:limit]])
+                    lms = np.array([hf[cols[i][0]][:]])
+                    lssfr = np.array([hf[cols[i][1]][:]])
+                    lzgas = np.array([hf[cols[i][2]][:]])
                 else:
-                    lms = np.append(lms,[hf[cols[i][0]][:limit]],axis=0)
-                    lssfr = np.append(lssfr,[hf[cols[i][1]][:limit]],axis=0)
-                    lzgas = np.append(lzgas,[hf[cols[i][2]][:limit]],axis=0)
+                    lms = np.append(lms,[hf[cols[i][0]][:]],axis=0)
+                    lssfr = np.append(lssfr,[hf[cols[i][1]][:]],axis=0)
+                    lzgas = np.append(lzgas,[hf[cols[i][2]][:]],axis=0)
+                    
     elif inputformat=='txt':
         ih = get_nheader(infile)
         
-        cut = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)[:limit]))
-        
-        if cutcols[0]:
-            for i in range(len(cutcols)):
-                
-                param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)[:limit]
+        ind = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)))
+        for i in range(len(cutcols)):
+            if cutcols[i]:
+                param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)
                 mincut = mincuts[i]
                 maxcut = maxcuts[i]
-                
+
                 if mincut and maxcut:
-                    cut = np.intersect1d(cut,np.where((mincut<param)&(param<maxcut))[0])
+                    ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
                 elif mincut:
-                    cut = np.intersect1d(cut,np.where(mincut<param)[0])
+                    ind = np.intersect1d(ind,np.where(mincut<param)[0])
                 elif maxcut:
-                    cut = np.intersect1d(cut,np.where(param<maxcut)[0])
-                    
-        
+                    ind = np.intersect1d(ind,np.where(param<maxcut)[0])
+        cut = ind[:limit]
+            
         for i in range(ncomp):
-            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T[:,:limit]
+            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
             
             if i==0:
                 lms = np.array([X[0]])
@@ -375,88 +373,66 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     lms = lms.T
     lssfr = lssfr.T
     lzgas = lzgas.T
-            
+
     return lms[cut], lssfr[cut], lzgas[cut], cut
 
 
 
-def get_secondary_data(infile, cut, infile_z0=None, epsilon_params=None, 
-                       Lagn_params=None, att_params=None, extra_params=None,
-                       inputformat='hdf5', attmod='cardelli89', verbose=True):    
+def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
+                       testing=False, verbose=True):    
     '''
     Get data for epsilon calculation in the adecuate units.
     
     Parameters
     ----------
     infile : string
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    infile_z0 : string
-     Name of the files with the galaxies at redshift 0. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    cut : strings
-     List of indexes of the selected galaxies from the samples.
+       Name of the input file. 
+    cut : array of integers
+       List of indexes of the selected galaxies from the samples.
     inputformat : string
-     Format of the input file.
-    epsilon_params : list
-     Inputs for epsilon calculation (parameter for Panuzzo 2003 nebular region model).
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    Lagn_params : list
-     Inputs for AGN's bolometric luminosity calculations.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    attmod : string
-     Attenuation model.
+       Format of the input file.
+    params : list of either integers or strings
+       Inputs columns for text files or dataset name for hdf5 files.
+    testing : boolean
+      If True only run over few entries for testing purposes
     verbose : boolean
      If True print out messages.
-    extra_params : list
-     Parameters from the input files which will be saved in the output file.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
      
     Returns
     -------
-    epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param : floats
+    second_params : array of floats
     '''
-    
-    epsilon_param = [[None]]
-    epsilon_param_z0 = [[None]]
-    Lagn_param = [[None]]
-    extra_param = [[None]]
-    
+
+    check_file(infile, verbose=verbose)
+
     if inputformat not in const.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        if verbose:
-            print('HDF5 not implemented yet for secondary params.')
-        sys.exit()
-    elif inputformat=='txt':
-        ih = get_nheader(infile)
-        
-        if epsilon_params:
-            epsilon_param = np.loadtxt(infile,skiprows=ih,usecols=epsilon_params)[cut].T
-            
-        if infile_z0[0]:
-            epsilon_param_z0 = np.loadtxt(infile_z0,skiprows=ih,usecols=epsilon_params)[cut].T
+        with h5py.File(infile, 'r') as hf:
+            ii = 0
+            for nomparam in params:
+                if (nomparam is not None):
+                    try:
+                        ###here what if Pos/vel as matrix?
+                        prop = hf[nomparam][cut]
+                    except:
+                        print('\n WARNING (gne_io): no {} found in {}'.format(
+                            nomparam,infile))
 
-        if Lagn_params:
-            Lagn_param = np.loadtxt(infile,skiprows=ih,usecols=Lagn_params)[cut].T
-            
-        if extra_params:
-            extra_param = np.loadtxt(infile,skiprows=ih,usecols=extra_params)[cut].T
-            if len(extra_params)==1:
-                extra_param = np.array([extra_param])
-        
-        if att_params:
-                att_param = np.loadtxt(infile,skiprows=ih,usecols=att_params)[cut].T
-                
-    return epsilon_param, epsilon_param_z0, Lagn_param, att_param, extra_param
+                    if (ii == 0):
+                        outparams = prop
+                    else:
+                        outparams = np.vstack((outparams,prop))
+                    ii += 1
+
+    elif inputformat=='txt': ###need to adapt to the generalisation and test
+        ih = get_nheader(infile)
+        outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
+
+    return outparams
 
 
 
@@ -516,31 +492,20 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
                                     maxcuts=maxcuts, mincuts=mincuts,
                                     inputformat=inputformat, 
                                     testing=testing, verbose=verbose)
-
     ncomp = get_ncomponents(cols)
 
     # Set to a default value if negative stellar masses
-    ind = np.where(lms<=1.)
+    ind = np.where((lms<=1.) | (lssfr<0) | (lzgas<=0))
     lms[ind] = const.notnum
     lssfr[ind] = const.notnum
     lzgas[ind] = const.notnum
 
-    if LC2sfr: # Avoid positives magnitudes of LC photons
-        ind = np.where(lssfr>0)
-        lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
-
-
-    else: # Avoid other negative SFR
-        ind = np.where(lssfr<=0)
-        lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
-
-
-
-    ind = np.where(lzgas<=0) # Avoid other negative Z
-    lzgas[ind] = const.notnum
+    ####here is this correct? does not seem to make sense
+    #if LC2sfr: # Avoid positive magnitudes of LC photons
+    #    ind = np.where(lssfr>0)
+    #    lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
 
     # Calculate the disk mass if we have only the total and bulge mass
-
     if mtot2mdisk:
         if ncomp!=2:
             if verbose:
@@ -575,9 +540,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         lms[ind] = np.log10(lms[ind])
 
     # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
-
     if LC2sfr:
-        
         for comp in range(ncomp):
             ins = np.zeros(len(lssfr))
             ind = np.where(lssfr[:, comp] != const.notnum)
@@ -659,31 +622,6 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
         ins = np.sum(oh12,axis=1)
         ind = np.where(ins>0)
         lzgas_tot[ind] = np.log10(ins[ind])
-
-
-
-    if testing: # here : Search more efficient form. Allow more components in the header
-        if ncomp==2:
-            header1 = 'log(mstars_tot), log(mstars_disk), log(mstars_bulge),' \
-                      ' log(SFR_tot), log(sSFR_tot), log(sSFR_disk), log(sSFR_bulge) ' \
-                      'log(Z)_tot, log(Z)_disk, log(Z)_bulge'
-            datatofile=np.column_stack((lms_tot,lms,lsfr,lssfr_tot,lssfr,lzgas_tot,lzgas))
-        elif ncomp==1:
-            header1 = 'log(mstars), ' \
-                      'log(SFR), log(sSFR) ' \
-                      'log(Z)'
-            datatofile=np.column_stack((lms,lsfr,lssfr,lzgas))
-
-        if LC2sfr:
-            outfil = r"example_data/tmp_LC.dat"
-        else:
-            outfil = r"example_data/tmp_avSFR.dat"
-
-        with open(outfil, 'w') as outf:
-            np.savetxt(outf, datatofile, delimiter=' ', header=header1)
-            outf.closed
-
-
                     
     return lms,lssfr,lzgas,cut
 
