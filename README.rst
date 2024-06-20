@@ -35,6 +35,16 @@ The code can be run following the **run_txtinput_tutorial.py** or **run_hdf5inpu
 python3 run_txtinput_tutorial.py
 ```
 
+By default, output data and plots will be generated in a folder within this directory called *output*.
+
+Folders
+-----------------------------
+**data** Contains the example data sets, the nebular tables used by the code and the observational data used in the test plots.
+
+**docs** These documentation folder allow us to produce the readthedocs website.
+
+**src** Contians the python programs to calculate spectral emission lines.
+
 
 Tutorials and testing
 -----------------------------
