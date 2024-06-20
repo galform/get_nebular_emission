@@ -31,6 +31,7 @@ infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
 
 # Redshifts, cosmology and volume of the simulation
 redshifts = [0.]
+snapshots = [61]
 h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482

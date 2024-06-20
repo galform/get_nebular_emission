@@ -210,6 +210,7 @@ for ii, infile in enumerate(infiles):
     f = h5py.File(infile)
     header = f['header']
     zz = header.attrs['redshift']
+    snapshot = header.attrs['snapnum']
     vol = header.attrs['bside_Mpch']**3
     h0 = header.attrs['h0']
     omega0 = header.attrs['omega0']
