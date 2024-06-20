@@ -28,7 +28,7 @@ AGN = True
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['src/example_data/GP20_62.5kpc_z0_example.hdf5']
+infiles = ['data/example_data/GP20_62.5kpc_z0_example.hdf5']
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'

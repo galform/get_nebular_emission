@@ -1029,7 +1029,7 @@ def test_bpts(infile, zz, verbose=True):
         # Add obs. data and further cuts if adequate
         if redshift <= 0.2:
             obsplot = True
-            obsfile = 'src/observational_data/favole2024.txt'
+            obsfile = 'data/observational_data/favole2024.txt'
             data = np.loadtxt(obsfile,skiprows=1,usecols=(15,9))
             yobs = np.log10(data[:,0]/data[:,1]) #O3/Hb
             if bpt=='NII':
@@ -1060,11 +1060,11 @@ def test_bpts(infile, zz, verbose=True):
         elif 1.45 <= redshift <= 1.75:
             obsplot = True
             if bpt=='NII':
-                obsfile = 'src/observational_data/NII_Kashino.txt'
+                obsfile = 'data/observational_data/NII_Kashino.txt'
                 yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
                 xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
             elif bpt=='SII':
-                obsfile = 'src/observational_data/SII_Kashino.txt'
+                obsfile = 'data/observational_data/SII_Kashino.txt'
                 yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
                 xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
 

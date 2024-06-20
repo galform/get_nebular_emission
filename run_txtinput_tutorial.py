@@ -15,7 +15,7 @@ from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False # use only the first 50 elements
-run_code = True
+run_code = False
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True
@@ -27,7 +27,7 @@ AGN = True
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
+infiles = ['data/example_data/iz61/GP20_32p25kpc_z0_example_vol0.txt']
 
 # Redshifts, cosmology and volume of the simulation
 redshifts = [0.]

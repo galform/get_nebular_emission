@@ -30,7 +30,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
         Name of the model file with data for the given metallicity.
     '''
 
-    root = 'src/nebular_data/' + photmod + '_tables/nebular_emission_Z'
+    root = 'data/nebular_data/' + photmod + '_tables/nebular_emission_Z'
     if len(zmet_str)<3:
         zmet_str = zmet_str+'0'
     zfile = root + zmet_str + '.txt'
