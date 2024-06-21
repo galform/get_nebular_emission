@@ -893,7 +893,7 @@ def lines_BPT(x, BPT, line):
 #
 
 
-def test_bpts(infile, zz, verbose=True):
+def test_bpts(infile, zz, snap, verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
     
@@ -903,6 +903,8 @@ def test_bpts(infile, zz, verbose=True):
        Name of the input file. 
     zz : float
        Redshift
+    snap: integer
+        Simulation snapshot number    
     verbose : boolean
        If True print out messages.
     '''
@@ -1139,8 +1141,8 @@ def test_bpts(infile, zz, verbose=True):
     return bptnoms
 
 
-def make_testplots(fnom,zz,verbose=True):    
+def make_testplots(fnom,zz,snap,verbose=True):    
     # Get output file for BPT plot
-    nbpt, sbpt = test_bpts(fnom,zz,verbose=verbose)
+    nbpt, sbpt = test_bpts(fnom,zz,snap,verbose=verbose)
     
     return ' '

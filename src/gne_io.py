@@ -629,7 +629,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
     return lms,lssfr,lzgas,cut
 
 
-def generate_header(infile, redshift,
+def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,
                     outpath=None,
                     unemod_sfr=None, unemod_agn=None,
@@ -644,6 +644,8 @@ def generate_header(infile, redshift,
         Path to input
     zz: float
         Redshift of the simulation snapshot
+    snap: integer
+        Simulation snapshot number
     h0 : float
         Hubble constant divided by 100
     omega0 : float

@@ -14,8 +14,8 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False # use only the first 50 elements
-run_code = False
+testing = False     # If True: use only the first 50 elements
+run_code = True
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True
@@ -27,7 +27,7 @@ AGN = True
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['data/example_data/iz61/GP20_32p25kpc_z0_example_vol0.txt']
+infiles = ['data/example_data/iz61/GP20_32p25kpc_z0_example_vol1.txt']
 
 # Redshifts, cosmology and volume of the simulation
 redshifts = [0.]
@@ -36,7 +36,7 @@ h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
 lambda0= 0.693
-vol    = pow(62.5,3) #Mpc/h
+vol    = pow(32.25,3) #Mpc/h
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
@@ -230,10 +230,11 @@ maxcuts = [None]
 
 for ii, infile in enumerate(infiles):
     zz = redshifts[ii]
+    snap = snapshots[ii]
     infile_z0 = infiles_z0[ii]
-    
+
     if run_code:
-        gne(infile, zz,h0,omega0,omegab,lambda0,vol,
+        gne(infile,zz,snap,h0,omega0,omegab,lambda0,vol,
             inputformat=inputformat, outpath=outpath,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
@@ -253,4 +254,4 @@ for ii, infile in enumerate(infiles):
 
     if make_plots:
         # Make test plots
-        make_testplots(infile,zz,verbose=True)
+        make_testplots(infile,zz,snap,verbose=True)

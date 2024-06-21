@@ -13,7 +13,7 @@ import time
 import numpy as np
 from src.gne_plots import make_testplots
 
-def gne(infile, redshift,h0,omega0,omegab,lambda0,vol,
+def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         inputformat='hdf5',h0units=True, outpath=None,
         unemod_sfr='kashino19',photmod_sfr='gutkin16',
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
@@ -44,8 +44,6 @@ def gne(infile, redshift,h0,omega0,omegab,lambda0,vol,
      List with the name of the input files. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
      - In csv files (*.csv), columns separated by ','.
-    outfile : string
-     Name of the output file.
     m_sfr_z : list
      - [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]
      - For text or csv files: list of integers with column position.
@@ -60,6 +58,8 @@ def gne(infile, redshift,h0,omega0,omegab,lambda0,vol,
       If not None: value of h, H0=100h km/s/Mpc.
     redshift : float
      Redshift of the input data.
+    snap: integer
+        Simulation snapshot number
     cutcols : list
      Parameters to look for cutting the data.
      - For text or csv files: list of integers with column position.
@@ -153,7 +153,7 @@ def gne(infile, redshift,h0,omega0,omegab,lambda0,vol,
     '''
 
     # Generate header in the output file from input
-    outfile = io.generate_header(infile, redshift,
+    outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,
                                  outpath=outpath,
                                  unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
