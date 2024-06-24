@@ -20,6 +20,7 @@ from src.gne_photio import get_limits #,get_lines_Gutkin
 #from scipy.stats import gaussian_kde
 #import sys
 #from cosmology import logL2flux, set_cosmology
+from src.gne_cosmology import set_cosmology,emission_line_luminosity
 import src.gne_style
 plt.style.use(src.gne_style.style1)
 
@@ -915,25 +916,29 @@ def test_bpts(infile, zz, snap, verbose=True):
     ymins = [-1.5,-2.1]
     ymaxs = [1.5,1.6]
 
-
     # Read header and SF information from file
     filenom = io.get_outnom(infile,ftype='line_data')
+
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
+    omega0 = header.attrs['omega0']
+    omegab = header.attrs['omegab']
+    lambda0 = header.attrs['lambda0']
+    h0 = header.attrs['h0']
     photmod_sfr = header.attrs['photmod_sfr']
     photmod_agn = header.attrs['photmod_agn']
 
     lu_sfr = f['sfr_data/lu_sfr'][:,0]
     lz_sfr = f['sfr_data/lz_sfr'][:,0]
-    Ha_flux_sfr = np.sum(f['sfr_data/Halpha_sfr_flux'],axis=0)
-    Hb_flux_sfr = np.sum(f['sfr_data/Hbeta_sfr_flux'],axis=0)
-    NII6548_flux_sfr = np.sum(f['sfr_data/NII6584_sfr_flux'],axis=0)
-    OII3727_flux_sfr = np.sum(f['sfr_data/OII3727_sfr_flux'],axis=0)
-    OIII5007_flux_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
-    SII6731_flux_sfr = np.sum(f['sfr_data/SII6731_sfr_flux'],axis=0)
-    SII6717_flux_sfr = np.sum(f['sfr_data/SII6717_sfr_flux'],axis=0)
-    
+    Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
+    Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
+    NII6548_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
+    OII3727_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
+    OIII5007_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
+    SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
+    SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
+
     # Read AGN information if it exists
     AGN = True
     if 'agn_data' not in f.keys(): AGN = False
@@ -941,14 +946,14 @@ def test_bpts(infile, zz, snap, verbose=True):
     if AGN:
         lu_agn = f['agn_data/lu_agn'][:,0]
         lz_agn = f['agn_data/lz_agn'][:,0]
-        Ha_flux_agn = np.sum(f['agn_data/Halpha_agn_flux'],axis=0)
-        Hb_flux_agn = np.sum(f['agn_data/Hbeta_agn_flux'],axis=0)
-        NII6548_flux_agn = np.sum(f['agn_data/NII6584_agn_flux'],axis=0)
-        OII3727_flux_agn = np.sum(f['agn_data/OII3727_agn_flux'],axis=0)
-        OIII5007_flux_agn = np.sum(f['agn_data/OIII5007_agn_flux'],axis=0)
-        SII6731_flux_agn = np.sum(f['agn_data/SII6731_agn_flux'],axis=0)
-        SII6717_flux_agn = np.sum(f['agn_data/SII6717_agn_flux'],axis=0)
-        
+        Ha_agn = np.sum(f['agn_data/Halpha_agn'],axis=0)
+        Hb_agn = np.sum(f['agn_data/Hbeta_agn'],axis=0)
+        NII6548_agn = np.sum(f['agn_data/NII6584_agn'],axis=0)
+        OII3727_agn = np.sum(f['agn_data/OII3727_agn'],axis=0)
+        OIII5007_agn = np.sum(f['agn_data/OIII5007_agn'],axis=0)
+        SII6731_agn = np.sum(f['agn_data/SII6731_agn'],axis=0)
+        SII6717_agn = np.sum(f['agn_data/SII6717_agn'],axis=0)
+
     # Magnitudes for cuts
     ismagr = True
     try:
@@ -963,23 +968,26 @@ def test_bpts(infile, zz, snap, verbose=True):
         ismagk = False
 
     f.close()
+
+    # Set the cosmology from the simulation
+    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
     
     # Line information
     if AGN:
-        Ha_flux = Ha_flux_sfr + Ha_flux_agn
-        Hb_flux = Hb_flux_sfr + Hb_flux_agn
-        NII_flux = NII6548_flux_sfr + NII6548_flux_agn
-        OII_flux = OII3727_flux_sfr + OII3727_flux_agn
-        OIII_flux = OIII5007_flux_sfr + OIII5007_flux_agn
-        SII_flux = SII6731_flux_sfr + SII6731_flux_agn +\
-            SII6717_flux_sfr + SII6717_flux_agn
+        Ha = Ha_sfr + Ha_agn
+        Hb = Hb_sfr + Hb_agn
+        NII = NII6548_sfr + NII6548_agn
+        OII = OII3727_sfr + OII3727_agn
+        OIII = OIII5007_sfr + OIII5007_agn
+        SII = SII6731_sfr + SII6731_agn +\
+            SII6717_sfr + SII6717_agn
     else:
-        Ha_flux = Ha_flux_sfr
-        Hb_flux = Hb_flux_sfr
-        NII_flux = NII6548_flux_sfr
-        OII_flux = OII3727_flux_sfr
-        OIII_flux = OIII5007_flux_sfr
-        SII_flux = SII6731_flux_sfr + SII6717_flux_sfr
+        Ha = Ha_sfr
+        Hb = Hb_sfr
+        NII = NII6548_sfr
+        OII = OII3727_sfr
+        OIII = OIII5007_sfr
+        SII = SII6731_sfr + SII6717_sfr
 
     minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
@@ -987,9 +995,9 @@ def test_bpts(infile, zz, snap, verbose=True):
     minU, maxU = float(minU), float(maxU)
     minZ, maxZ = float(minZ), float(maxZ)
 
-    ind = np.where((Ha_flux>0)   & (Hb_flux>0)  & 
-                    (NII_flux>0)  & (OII_flux>0) &
-                    (OIII_flux>0) & (SII_flux>0) &
+    ind = np.where((Ha>0)   & (Hb>0)  & 
+                    (NII>0)  & (OII>0) &
+                    (OIII>0) & (SII>0) &
                     (lu_sfr>minU)&(lu_sfr<maxU)&
                     (lz_sfr>np.log10(minZ))&(lz_sfr<np.log10(maxZ)))
     if (np.shape(ind)[1] < 1):
@@ -998,20 +1006,20 @@ def test_bpts(infile, zz, snap, verbose=True):
 
     # For colourbar
     if AGN:
-        Halpha_ratio = Ha_flux_agn[ind]/Ha_flux[ind]
+        Halpha_ratio = Ha_agn[ind]/Ha[ind]
     else:
-        Halpha_ratio = Ha_flux[ind]
+        Halpha_ratio = Ha[ind]
     
-    Ha_flux = Ha_flux[ind]
-    Hb_flux = Hb_flux[ind]
-    NII_flux = NII_flux[ind]
-    OII_flux = OII_flux[ind]
-    OIII_flux = OIII_flux[ind]
-    SII_flux = SII_flux[ind]
+    Ha = Ha[ind]
+    Hb = Hb[ind]
+    NII = NII[ind]
+    OII = OII[ind]
+    OIII = OIII[ind]
+    SII = SII[ind]
 
-    O3Hb =np.log10(OIII_flux) - np.log10(Hb_flux)
-    N2Ha =np.log10(NII_flux) - np.log10(Ha_flux)
-    S2Ha =np.log10(SII_flux) - np.log10(Ha_flux)
+    O3Hb =np.log10(OIII) - np.log10(Hb)
+    N2Ha =np.log10(NII) - np.log10(Ha)
+    S2Ha =np.log10(SII) - np.log10(Ha)
 
     if ismagr:
         mag_r = magr[ind]
@@ -1019,7 +1027,6 @@ def test_bpts(infile, zz, snap, verbose=True):
         mag_k = magk[ind]
 
     sel = np.copy(ind)
-    
     for ii, bpt in enumerate(['NII','SII']):
         # Set figure
         plt.figure(figsize=(15,15))
@@ -1041,23 +1048,26 @@ def test_bpts(infile, zz, snap, verbose=True):
                 data = np.loadtxt(obsfile,skiprows=1,usecols=(21,6))
                 xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
 
-            flux = 2e-16
+            flux = 2e-16 # erg/s/cm^2 Favole+2024
+            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
 
             if ismagr:
-                sel = np.where((Ha_flux>flux) & (Hb_flux>flux) &
-                               (OIII_flux>flux) & (NII_flux>flux) &
-                               (SII_flux>flux)&(mag_r<17.77))
+                sel = np.where((Ha> Lmin) & (Hb> Lmin) &
+                               (OIII> Lmin) & (NII> Lmin) &
+                               (SII> Lmin)&(mag_r<17.77))
             else:
-                sel = np.where((Ha_flux>flux) & (Hb_flux>flux) &
-                               (OIII_flux>flux) & (NII_flux>flux) &
-                               (SII_flux>flux))
+                sel = np.where((Ha> Lmin) & (Hb> Lmin) &
+                               (OIII> Lmin) & (NII> Lmin) &
+                               (SII> Lmin))
 
         elif 0.7 <= redshift <= 0.9:            
-            flux = 1e-16
+            flux = 1e-16  # erg/s/cm^2 Kashino+2019
+            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+            
             if ismagr:
-                sel = np.where((Ha_flux>flux) & (mag_r<124.1))
+                sel = np.where((Ha> Lmin) & (mag_r<124.1))
             else:
-                sel = np.where(Ha_flux>flux)
+                sel = np.where(Ha> Lmin)
                 
         elif 1.45 <= redshift <= 1.75:
             obsplot = True
@@ -1070,17 +1080,21 @@ def test_bpts(infile, zz, snap, verbose=True):
                 yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
                 xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
 
-            flux = 5e-17
+            flux = 5e-17  # erg/s/cm^2 Kashino+2019
+            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+            
             if ismagk:
-                sel = np.where((Ha_flux>flux) & (mag_k<23.5))
+                sel = np.where((Ha> Lmin) & (mag_k<23.5))
             else:
-                sel = np.where(Ha_flux>flux)
+                sel = np.where(Ha > Lmin)
                 
         if obsplot:
             ax.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
             if (np.shape(sel)[1]<1):
-                sel = np.copy(ind)
-            
+                sel1 = np.arange(0,len(Ha),1)
+                sel = np.expand_dims(sel1, axis=0)
+                print('WARNING: due to low numbers, using minimal cuts')
+
         # Model lines
         yobs = O3Hb[sel] #O3/Hb
         cha = Halpha_ratio[sel]

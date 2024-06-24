@@ -14,8 +14,8 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False     # If True: use only the first 50 elements
-run_code = True
+testing = True    # If True: use only the first 50 elements
+run_code = False
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True
@@ -27,7 +27,7 @@ AGN = True
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['data/example_data/iz61/GP20_32p25kpc_z0_example_vol1.txt']
+infiles = ['data/example_data/iz61/GP20_31p25kpc_z0_example_vol1.txt']
 
 # Redshifts, cosmology and volume of the simulation
 redshifts = [0.]
@@ -36,7 +36,7 @@ h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
 lambda0= 0.693
-vol    = pow(32.25,3) #Mpc/h
+vol    = pow(31.25,3) #Mpc/h
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
@@ -191,9 +191,6 @@ att_params= [11,6,4]
 ####################################################
 ##########      Other calculations     #############
 ####################################################
-
-# Flux calculation.
-flux=True
 
 # Include other parameters in the output files
 extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','magK','magR','magR_SDSS','magI',

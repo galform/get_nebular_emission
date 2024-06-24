@@ -15,7 +15,7 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = True # use only the first 50 elements
+testing = True    # If True: use only the first 50 elements
 run_code = True
 make_plots = True
 
@@ -28,7 +28,7 @@ AGN = True
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['data/example_data/GP20_62.5kpc_z0_example.hdf5']
+infiles = ['data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.hdf5']
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -183,9 +183,6 @@ att_params=['data/rhm_disk','data/mgas_disk','data/Zgas_disk']
 ##########      Other calculations     #############
 ####################################################
 
-# Flux calculation.
-flux=True
-
 # Include other parameters in the output files
 extra_params_names = ['mh','magK','magR','type','MBH']
 extra_params_labels = extra_params_names
@@ -210,7 +207,7 @@ for ii, infile in enumerate(infiles):
     f = h5py.File(infile)
     header = f['header']
     zz = header.attrs['redshift']
-    snapshot = header.attrs['snapnum']
+    snap = header.attrs['snapnum']
     vol = header.attrs['bside_Mpch']**3
     h0 = header.attrs['h0']
     omega0 = header.attrs['omega0']
@@ -219,7 +216,7 @@ for ii, infile in enumerate(infiles):
 
     if run_code:
         # Run the code
-        gne(infile, zz,h0,omega0,omegab,lambda0,vol,
+        gne(infile, zz,snap,h0,omega0,omegab,lambda0,vol,
             inputformat=inputformat, outpath=outpath,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
@@ -239,4 +236,4 @@ for ii, infile in enumerate(infiles):
 
     if make_plots:
         # Make test plots
-        make_testplots(infile,zz,verbose=True)
+        make_testplots(infile,zz,snap,verbose=True)
