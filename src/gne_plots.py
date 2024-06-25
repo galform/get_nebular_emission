@@ -3,14 +3,15 @@
 .. contributions:: Olivia Vidal <ovive.pro@gmail.com>
 .. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
-import src.gne_io as io
-import numpy as np
-#import os.path
+
+import os.path
 import h5py
+import numpy as np
 ## matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from matplotlib.cm import ScalarMappable
 #import matplotlib.gridspec as gridspec
+import src.gne_io as io
 #import src.gne_style as style
 #from src.gne_stats import perc_2arrays
 import src.gne_const as const
@@ -894,18 +895,18 @@ def lines_BPT(x, BPT, line):
 #
 
 
-def test_bpts(infile, zz, snap, verbose=True):
+def test_bpts(root, subvols=1, outpath=None, verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
     
     Parameters
     ----------
-    infile : string
-       Name of the input file. 
-    zz : float
-       Redshift
-    snap: integer
-        Simulation snapshot number    
+    root : string
+       Path to input files. 
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
     verbose : boolean
        If True print out messages.
     '''
@@ -916,9 +917,10 @@ def test_bpts(infile, zz, snap, verbose=True):
     ymins = [-1.5,-2.1]
     ymaxs = [1.5,1.6]
 
-    # Read header and SF information from file
-    filenom = io.get_outnom(infile,snap,ftype='line_data')
+    plotpath = io.get_plotpath(root)
 
+    # Get redshift and cosmology from data
+    filenom = root+'0.hdf5'
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -929,235 +931,263 @@ def test_bpts(infile, zz, snap, verbose=True):
     photmod_sfr = header.attrs['photmod_sfr']
     photmod_agn = header.attrs['photmod_agn']
 
-    lu_sfr = f['sfr_data/lu_sfr'][:,0]
-    lz_sfr = f['sfr_data/lz_sfr'][:,0]
-    Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
-    Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
-    NII6548_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
-    OII3727_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
-    OIII5007_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
-    SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
-    SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
-
-    # Read AGN information if it exists
-    AGN = True
-    if 'agn_data' not in f.keys(): AGN = False
-    
-    if AGN:
-        lu_agn = f['agn_data/lu_agn'][:,0]
-        lz_agn = f['agn_data/lz_agn'][:,0]
-        Ha_agn = np.sum(f['agn_data/Halpha_agn'],axis=0)
-        Hb_agn = np.sum(f['agn_data/Hbeta_agn'],axis=0)
-        NII6548_agn = np.sum(f['agn_data/NII6584_agn'],axis=0)
-        OII3727_agn = np.sum(f['agn_data/OII3727_agn'],axis=0)
-        OIII5007_agn = np.sum(f['agn_data/OIII5007_agn'],axis=0)
-        SII6731_agn = np.sum(f['agn_data/SII6731_agn'],axis=0)
-        SII6717_agn = np.sum(f['agn_data/SII6717_agn'],axis=0)
-
-    # Magnitudes for cuts
-    ismagr = True
-    try:
-        magr = f['data/magR'][:,0]
-    except:
-        ismagr = False
-
-    ismagk = True
-    try:
-        magk = f['data/magK'][:,0]
-    except:
-        ismagk = False
-
-    f.close()
-
     # Set the cosmology from the simulation
     set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
     
-    # Line information
-    if AGN:
-        Ha = Ha_sfr + Ha_agn
-        Hb = Hb_sfr + Hb_agn
-        NII = NII6548_sfr + NII6548_agn
-        OII = OII3727_sfr + OII3727_agn
-        OIII = OIII5007_sfr + OIII5007_agn
-        SII = SII6731_sfr + SII6731_agn +\
-            SII6717_sfr + SII6717_agn
-    else:
-        Ha = Ha_sfr
-        Hb = Hb_sfr
-        NII = NII6548_sfr
-        OII = OII3727_sfr
-        OIII = OIII5007_sfr
-        SII = SII6731_sfr + SII6717_sfr
+    # Prep plots ####here
 
-    minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
-
-    minU, maxU = float(minU), float(maxU)
-    minZ, maxZ = float(minZ), float(maxZ)
-
-    ind = np.where((Ha>0)   & (Hb>0)  & 
-                    (NII>0)  & (OII>0) &
-                    (OIII>0) & (SII>0) &
-                    (lu_sfr>minU)&(lu_sfr<maxU)&
-                    (lz_sfr>np.log10(minZ))&(lz_sfr<np.log10(maxZ)))
-    if (np.shape(ind)[1] < 1):
-        print('STOP BPT plots: not enough adequate data')
-        return None, None
-
-    # For colourbar
-    if AGN:
-        Halpha_ratio = Ha_agn[ind]/Ha[ind]
-    else:
-        Halpha_ratio = Ha[ind]
     
-    Ha = Ha[ind]
-    Hb = Hb[ind]
-    NII = NII[ind]
-    OII = OII[ind]
-    OIII = OIII[ind]
-    SII = SII[ind]
-
-    O3Hb =np.log10(OIII) - np.log10(Hb)
-    N2Ha =np.log10(NII) - np.log10(Ha)
-    S2Ha =np.log10(SII) - np.log10(Ha)
-
-    if ismagr:
-        mag_r = magr[ind]
-    if ismagk:
-        mag_k = magk[ind]
-
-    sel = np.copy(ind)
-    for ii, bpt in enumerate(['NII','SII']):
-        # Set figure
-        plt.figure(figsize=(15,15))
-        ax = plt.subplot()
-        ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
-        ax.set_xlim(xmins[ii], xmaxs[ii])
-        ax.set_ylim(ymins[ii], ymaxs[ii])
-        
-        # Add obs. data and further cuts if adequate
-        if redshift <= 0.2:
-            obsplot = True
-            obsfile = 'data/observational_data/favole2024.txt'
-            data = np.loadtxt(obsfile,skiprows=1,usecols=(15,9))
-            yobs = np.log10(data[:,0]/data[:,1]) #O3/Hb
-            if bpt=='NII':
-                data = np.loadtxt(obsfile,skiprows=1,usecols=(18,6))
-                xobs = np.log10(data[:,0]/data[:,1]) #N2/Ha
-            elif bpt=='SII':
-                data = np.loadtxt(obsfile,skiprows=1,usecols=(21,6))
-                xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
-
-            flux = 2e-16 # erg/s/cm^2 Favole+2024
-            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
-
-            if ismagr:
-                sel = np.where((Ha> Lmin) & (Hb> Lmin) &
-                               (OIII> Lmin) & (NII> Lmin) &
-                               (SII> Lmin)&(mag_r<17.77))
-            else:
-                sel = np.where((Ha> Lmin) & (Hb> Lmin) &
-                               (OIII> Lmin) & (NII> Lmin) &
-                               (SII> Lmin))
-
-        elif 0.7 <= redshift <= 0.9:            
-            flux = 1e-16  # erg/s/cm^2 Kashino+2019
-            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
-            
-            if ismagr:
-                sel = np.where((Ha> Lmin) & (mag_r<124.1))
-            else:
-                sel = np.where(Ha> Lmin)
-                
-        elif 1.45 <= redshift <= 1.75:
-            obsplot = True
-            if bpt=='NII':
-                obsfile = 'data/observational_data/NII_Kashino.txt'
-                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-            elif bpt=='SII':
-                obsfile = 'data/observational_data/SII_Kashino.txt'
-                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-
-            flux = 5e-17  # erg/s/cm^2 Kashino+2019
-            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
-            
-            if ismagk:
-                sel = np.where((Ha> Lmin) & (mag_k<23.5))
-            else:
-                sel = np.where(Ha > Lmin)
-                
-        if obsplot:
-            ax.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
-            if (np.shape(sel)[1]<1):
-                sel1 = np.arange(0,len(Ha),1)
-                sel = np.expand_dims(sel1, axis=0)
-                print('WARNING: due to low numbers, using minimal cuts')
-
-        # Model lines
-        yobs = O3Hb[sel] #O3/Hb
-        cha = Halpha_ratio[sel]
-        
-        if bpt=='NII':
-            xobs = N2Ha[sel] #N2/Ha
-        elif bpt=='SII':
-            xobs = S2Ha[sel] #S2/Ha
-        ax.scatter(xobs,yobs, c=cha,s=50, marker='o', cmap=cmap)
-        
-        # Add colorbar
-        sm = ScalarMappable(cmap=cmap) # Create ScalarMappable
-        sm.set_array(cha)
-        cbar = plt.colorbar(sm, ax=ax, cmap=cmap)
-        if AGN:
-            collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, tot}$'
-        else:
-            collabel = r'$F_{\rm H_{\alpha}}$'
-        cbar.set_label(collabel,rotation=270,labelpad=60)        
-            
-        # Lines
-        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
-        if bpt=='NII':
-            xtit = 'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)'
-
-            yline = lines_BPT(xline,bpt,'Kauffmann2003')
-            ax.plot(xline,yline,'k.')
-
-            yline = lines_BPT(xline,bpt,'Kewley2001')
-            ax.plot(xline,yline,'k-')
-        elif bpt=='SII':
-            xtit = 'log$_{10}$([SII]$\\lambda$6584/H$\\alpha$)'
-
-            yline = lines_BPT(xline,bpt,'Kewley2001')
-            ax.plot(xline,yline,'k-')
-
-            ylinel = lines_BPT(xline,bpt,'Kewley2006')
-            ax.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k--')
-
-        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
-        
-        # Output files
-        bptnoms[ii] = io.get_outnom(infile,snap,ftype='plots',
-                                    ptype=bpt+'bpt',verbose=verbose)
-        plt.savefig(bptnoms[ii])
-
-        if verbose:
-            if ismagr and ismagk:
-                magmsg = '(R and K mag. used for selection)'
-            elif ismagr:
-                magmsg = '(R mag. used for selection)'
-            elif ismagk:
-                magmsg = '(K mag. used for selection)'
-            else:
-                magmsg = ''
-            print('    {} gal. for {}-BPT plot at z={} {}\n'.format(
-                np.shape(sel)[1],bpt,redshift,magmsg))
+    # Add data to plots 
+    for ivol in range(subvols):
+        filenom = root+str(ivol)+'.hdf5'
+        print(filenom); exit() ###here        
+#        # Read header and SF information from file
+#        lu_sfr = f['sfr_data/lu_sfr'][:,0]
+#        lz_sfr = f['sfr_data/lz_sfr'][:,0]
+#        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
+#        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
+#        NII6548_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
+#        OII3727_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
+#        OIII5007_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
+#        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
+#        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
+#        
+#        # Read AGN information if it exists
+#        AGN = True
+#        if 'agn_data' not in f.keys(): AGN = False
+#        
+#        if AGN:
+#            lu_agn = f['agn_data/lu_agn'][:,0]
+#            lz_agn = f['agn_data/lz_agn'][:,0]
+#            Ha_agn = np.sum(f['agn_data/Halpha_agn'],axis=0)
+#            Hb_agn = np.sum(f['agn_data/Hbeta_agn'],axis=0)
+#            NII6548_agn = np.sum(f['agn_data/NII6584_agn'],axis=0)
+#            OII3727_agn = np.sum(f['agn_data/OII3727_agn'],axis=0)
+#            OIII5007_agn = np.sum(f['agn_data/OIII5007_agn'],axis=0)
+#            SII6731_agn = np.sum(f['agn_data/SII6731_agn'],axis=0)
+#            SII6717_agn = np.sum(f['agn_data/SII6717_agn'],axis=0)
+#        
+#        # Magnitudes for cuts
+#        ismagr = True
+#        try:
+#            magr = f['data/magR'][:,0]
+#        except:
+#            ismagr = False
+#        
+#        ismagk = True
+#        try:
+#            magk = f['data/magK'][:,0]
+#        except:
+#            ismagk = False
+#        
+#        f.close()
+#####################here
+#    
+#    # Line information
+#    if AGN:
+#        Ha = Ha_sfr + Ha_agn
+#        Hb = Hb_sfr + Hb_agn
+#        NII = NII6548_sfr + NII6548_agn
+#        OII = OII3727_sfr + OII3727_agn
+#        OIII = OIII5007_sfr + OIII5007_agn
+#        SII = SII6731_sfr + SII6731_agn +\
+#            SII6717_sfr + SII6717_agn
+#    else:
+#        Ha = Ha_sfr
+#        Hb = Hb_sfr
+#        NII = NII6548_sfr
+#        OII = OII3727_sfr
+#        OIII = OIII5007_sfr
+#        SII = SII6731_sfr + SII6717_sfr
+#
+#    minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
+#    minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
+#
+#    minU, maxU = float(minU), float(maxU)
+#    minZ, maxZ = float(minZ), float(maxZ)
+#
+#    ind = np.where((Ha>0)   & (Hb>0)  & 
+#                    (NII>0)  & (OII>0) &
+#                    (OIII>0) & (SII>0) &
+#                    (lu_sfr>minU)&(lu_sfr<maxU)&
+#                    (lz_sfr>np.log10(minZ))&(lz_sfr<np.log10(maxZ)))
+#    if (np.shape(ind)[1] < 1):
+#        print('STOP BPT plots: not enough adequate data')
+#        return None, None
+#
+#    # For colourbar
+#    if AGN:
+#        Halpha_ratio = Ha_agn[ind]/Ha[ind]
+#    else:
+#        Halpha_ratio = Ha[ind]
+#    
+#    Ha = Ha[ind]
+#    Hb = Hb[ind]
+#    NII = NII[ind]
+#    OII = OII[ind]
+#    OIII = OIII[ind]
+#    SII = SII[ind]
+#
+#    O3Hb =np.log10(OIII) - np.log10(Hb)
+#    N2Ha =np.log10(NII) - np.log10(Ha)
+#    S2Ha =np.log10(SII) - np.log10(Ha)
+#
+#    if ismagr:
+#        mag_r = magr[ind]
+#    if ismagk:
+#        mag_k = magk[ind]
+#
+#    sel = np.copy(ind)
+#    for ii, bpt in enumerate(['NII','SII']):
+#        # Set figure
+#        plt.figure(figsize=(15,15))
+#        ax = plt.subplot()
+#        ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
+#        ax.set_xlim(xmins[ii], xmaxs[ii])
+#        ax.set_ylim(ymins[ii], ymaxs[ii])
+#        
+#        # Add obs. data and further cuts if adequate
+#        if redshift <= 0.2:
+#            obsplot = True
+#            obsfile = 'data/observational_data/favole2024.txt'
+#            data = np.loadtxt(obsfile,skiprows=1,usecols=(15,9))
+#            yobs = np.log10(data[:,0]/data[:,1]) #O3/Hb
+#            if bpt=='NII':
+#                data = np.loadtxt(obsfile,skiprows=1,usecols=(18,6))
+#                xobs = np.log10(data[:,0]/data[:,1]) #N2/Ha
+#            elif bpt=='SII':
+#                data = np.loadtxt(obsfile,skiprows=1,usecols=(21,6))
+#                xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
+#
+#            flux = 2e-16 # erg/s/cm^2 Favole+2024
+#            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+#
+#            if ismagr:
+#                sel = np.where((Ha> Lmin) & (Hb> Lmin) &
+#                               (OIII> Lmin) & (NII> Lmin) &
+#                               (SII> Lmin)&(mag_r<17.77))
+#            else:
+#                sel = np.where((Ha> Lmin) & (Hb> Lmin) &
+#                               (OIII> Lmin) & (NII> Lmin) &
+#                               (SII> Lmin))
+#
+#        elif 0.7 <= redshift <= 0.9:            
+#            flux = 1e-16  # erg/s/cm^2 Kashino+2019
+#            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+#            
+#            if ismagr:
+#                sel = np.where((Ha> Lmin) & (mag_r<124.1))
+#            else:
+#                sel = np.where(Ha> Lmin)
+#                
+#        elif 1.45 <= redshift <= 1.75:
+#            obsplot = True
+#            if bpt=='NII':
+#                obsfile = 'data/observational_data/NII_Kashino.txt'
+#                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
+#                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+#            elif bpt=='SII':
+#                obsfile = 'data/observational_data/SII_Kashino.txt'
+#                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
+#                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+#
+#            flux = 5e-17  # erg/s/cm^2 Kashino+2019
+#            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+#            
+#            if ismagk:
+#                sel = np.where((Ha> Lmin) & (mag_k<23.5))
+#            else:
+#                sel = np.where(Ha > Lmin)
+#                
+#        if obsplot:
+#            ax.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
+#            if (np.shape(sel)[1]<1):
+#                sel1 = np.arange(0,len(Ha),1)
+#                sel = np.expand_dims(sel1, axis=0)
+#                print('WARNING: due to low numbers, using minimal cuts')
+#
+#        # Model lines
+#        yobs = O3Hb[sel] #O3/Hb
+#        cha = Halpha_ratio[sel]
+#        
+#        if bpt=='NII':
+#            xobs = N2Ha[sel] #N2/Ha
+#        elif bpt=='SII':
+#            xobs = S2Ha[sel] #S2/Ha
+#        ax.scatter(xobs,yobs, c=cha,s=50, marker='o', cmap=cmap)
+#        
+#        # Add colorbar
+#        sm = ScalarMappable(cmap=cmap) # Create ScalarMappable
+#        sm.set_array(cha)
+#        cbar = plt.colorbar(sm, ax=ax, cmap=cmap)
+#        if AGN:
+#            collabel = r'$F_{\rm H_{\alpha}, AGN}/F_{\rm H_{\alpha}, tot}$'
+#        else:
+#            collabel = r'$F_{\rm H_{\alpha}}$'
+#        cbar.set_label(collabel,rotation=270,labelpad=60)        
+#            
+#        # Lines
+#        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
+#        if bpt=='NII':
+#            xtit = 'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)'
+#
+#            yline = lines_BPT(xline,bpt,'Kauffmann2003')
+#            ax.plot(xline,yline,'k.')
+#
+#            yline = lines_BPT(xline,bpt,'Kewley2001')
+#            ax.plot(xline,yline,'k-')
+#        elif bpt=='SII':
+#            xtit = 'log$_{10}$([SII]$\\lambda$6584/H$\\alpha$)'
+#
+#            yline = lines_BPT(xline,bpt,'Kewley2001')
+#            ax.plot(xline,yline,'k-')
+#
+#            ylinel = lines_BPT(xline,bpt,'Kewley2006')
+#            ax.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k--')
+#
+#        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+#        
+#        # Output files
+#        bptnoms[ii] = io.get_outnom(infile,snap,ftype='plots',
+#                                    ptype=bpt+'bpt',verbose=verbose)
+#        plt.savefig(bptnoms[ii])
+#
+#        if verbose:
+#            if ismagr and ismagk:
+#                magmsg = '(R and K mag. used for selection)'
+#            elif ismagr:
+#                magmsg = '(R mag. used for selection)'
+#            elif ismagk:
+#                magmsg = '(K mag. used for selection)'
+#            else:
+#                magmsg = ''
+#            print('    {} gal. for {}-BPT plot at z={} {}\n'.format(
+#                np.shape(sel)[1],bpt,redshift,magmsg))
         
     return bptnoms
 
 
-def make_testplots(fnom,zz,snap,verbose=True):    
-    # Get output file for BPT plot
-    nbpt, sbpt = test_bpts(fnom,zz,snap,verbose=verbose)
+def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
+    '''
+    Make test plots
     
-    return ' '
+    Parameters
+    ----------
+    rootf : string
+       Path and root to input files
+    snap: integer
+        Simulation snapshot number
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
+    
+    # Get output file for BPT plot
+    nbpt, sbpt = test_bpts(root,subvols=subvols,verbose=verbose)
+    
+    return

@@ -67,6 +67,72 @@ def create_dir(outdir):
     return True
 
 
+def get_outroot(root,snap,outpath=None,verbose=False):
+    '''
+    Get path to output line data and the file root name
+
+    Parameters
+    -------
+    root : string
+        Root for input files
+    snap: integer
+        Simulation snapshot number
+    outpath : string
+        Path to output
+    verbose : boolean
+        If True print out messages
+
+    Returns
+    -------
+    outroot : string
+        Path to output line data files
+    '''
+
+    nom = os.path.splitext(root.split('/')[-1])[0]
+
+    if outpath is None:
+        dirf = 'output/iz' + str(snap) + '/'
+    else:
+        dirf = outpath + '/iz' + str(snap) + '/'
+
+    create_dir(dirf)    
+    outroot = dirf + nom 
+
+    if verbose:
+        print(f'* Root to output: {outroot}')
+    return outroot
+
+
+def get_plotpath(root,verbose=False):
+    '''
+    Get path to plots given the output data
+
+    Parameters
+    -------
+    root : string
+        Root to data to use for plotting
+    verbose : boolean
+        If True print out messages
+
+    Returns
+    -------
+    plotpath : string
+        Path to plots
+    '''
+
+    if ('/' in root):
+        index = root.rfind('/')
+        plotpath = root[:index]+'/plots/'
+    else:
+        plotpath = 'plots/'
+    create_dir(plotpath)    
+
+    if verbose:
+        print(f'* Path to plots: {plotpath}')
+    return plotpath
+
+
+
 def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
     '''
     Get output from a given filename

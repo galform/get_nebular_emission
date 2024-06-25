@@ -11,12 +11,13 @@ to also get the predicted attenuated luminosities.
 
 import src.gne_const as const
 from src.gne import gne
+from src.gne_io import get_outroot
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = True    # If True: use only the first 50 elements
-run_code = True
-make_plots = False
+run_code = False
+make_plots = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -224,7 +225,7 @@ maxcuts = [None]
 
 
 ##################################################################
-#############    Run the code and or make plots   ################
+#############    Run the code and/or make plots   ################
 ##################################################################
 
 for ivol in range(subvols):
@@ -252,6 +253,7 @@ for ivol in range(subvols):
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
-    if make_plots:
-        # Make test plots
-        make_testplots(infile,zz,snap,verbose=True)
+if make_plots:    
+    # Make test plots
+    make_testplots(root,snapshot,subvols=subvols,
+                   outpath=outpath,verbose=True)
