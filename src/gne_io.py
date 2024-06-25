@@ -67,7 +67,7 @@ def create_dir(outdir):
     return True
 
 
-def get_outnom(filenom,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
+def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
     '''
     Get output from a given filename
 
@@ -75,6 +75,8 @@ def get_outnom(filenom,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
     -------
     filenom : string
         Name of file
+    snap: integer
+        Simulation snapshot number
     dirf : string
         Path to output
     ftype : string
@@ -93,7 +95,8 @@ def get_outnom(filenom,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
     nom = os.path.splitext(filenom.split('/')[-1])[0]
 
     if dirf is None:
-        dirf = 'output/' + ftype + '/'
+        dirf = 'output/iz' + str(snap) + '/'
+        if ftype == 'plots': dirf = dirf + ftype + '/'
         create_dir(dirf)    
 
     if ftype == 'line_data':
@@ -104,7 +107,6 @@ def get_outnom(filenom,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
     if verbose:
         print(f'* Output {ftype}: {outfile}')
     return outfile
-
 
 
 
@@ -678,7 +680,7 @@ def generate_header(infile,redshift,snap,
     """
 
     # Get the file name
-    filenom = get_outnom(infile,dirf=outpath,ftype='line_data',verbose=verbose)
+    filenom = get_outnom(infile,snap,dirf=outpath,ftype='line_data',verbose=verbose)
     
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
@@ -873,3 +875,4 @@ def write_agn_data(filenom,lu_agn,lne_agn,lzgas_agn,
                     hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].dims[0].label = 'Lines units: egr s^-1'
 
     return 
+

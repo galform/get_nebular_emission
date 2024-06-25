@@ -45,8 +45,10 @@ Folders
 
 **src** Contians the python programs to calculate spectral emission lines.
 
+**tests** Automatic tests for functions in the package
 
-Tutorials and testing
+
+Tutorial with an example run
 -----------------------------
 
 Brief tutorial going through all the main options of the code are available for a input text file, **run_txtinput_tutorial.py**. A more in-depth review of all the options in the code can be found at Expósito-Márquez et. al. 2024 in prep. The tutorials run over model galaxies stored in the *example_data* directory. These are produced at z = 0 by the semi-analytical model described in [Gonzalez-Perez et al. 2020](https://academic.oup.com/mnras/article/498/2/1852/5894931).

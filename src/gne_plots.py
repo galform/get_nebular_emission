@@ -917,7 +917,7 @@ def test_bpts(infile, zz, snap, verbose=True):
     ymaxs = [1.5,1.6]
 
     # Read header and SF information from file
-    filenom = io.get_outnom(infile,ftype='line_data')
+    filenom = io.get_outnom(infile,snap,ftype='line_data')
 
     f = h5py.File(filenom, 'r') 
     header = f['header']
@@ -1137,7 +1137,8 @@ def test_bpts(infile, zz, snap, verbose=True):
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
         
         # Output files
-        bptnoms[ii] = io.get_outnom(infile,ftype='plots',ptype=bpt+'bpt',verbose=verbose)
+        bptnoms[ii] = io.get_outnom(infile,snap,ftype='plots',
+                                    ptype=bpt+'bpt',verbose=verbose)
         plt.savefig(bptnoms[ii])
 
         if verbose:

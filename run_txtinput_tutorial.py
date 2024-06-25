@@ -243,7 +243,6 @@ for ii, infile in enumerate(infiles):
             Z_central_cor=Z_central_cor,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
-            flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
