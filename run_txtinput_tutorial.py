@@ -15,8 +15,8 @@ from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = True    # If True: use only the first 50 elements
-run_code = False
-make_plots = True
+run_code = True
+make_plots = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -27,11 +27,13 @@ AGN = True
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['data/example_data/iz61/GP20_31p25kpc_z0_example_vol1.txt']
+root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
+endf   = '.txt'
+subvols = 2
 
 # Redshifts, cosmology and volume of the simulation
-redshifts = [0.]
-snapshots = [61]
+redshift = 0.
+snapshot = 61
 h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
@@ -158,7 +160,7 @@ Z_central_cor=True
     # a way of evolving the filling factor with redshift. If this correction is to be used,
     # a fixed number of files is needed equal to that at z=0.
     # If local relations are to be used: infiles_z0 = [None]
-infiles_z0 = [None]
+root_z0 = None
 
 
 ####################################################
@@ -225,13 +227,15 @@ maxcuts = [None]
 #############    Run the code and or make plots   ################
 ##################################################################
 
-for ii, infile in enumerate(infiles):
-    zz = redshifts[ii]
-    snap = snapshots[ii]
-    infile_z0 = infiles_z0[ii]
+for ivol in range(subvols):
+    infile = root+str(ivol)+endf
+
+    infile_z0 = root_z0
+    if root_z0 is not None:
+        infile_z0 = root_z0+str(ivol)+endf
 
     if run_code:
-        gne(infile,zz,snap,h0,omega0,omegab,lambda0,vol,
+        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
             inputformat=inputformat, outpath=outpath,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
