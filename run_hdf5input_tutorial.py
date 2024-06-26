@@ -15,20 +15,22 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = True    # If True: use only the first 50 elements
+testing = False    # If True: use only the first 50 elements
 run_code = True
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
 
-###############################################################
-### INPUT FILES
+##################################################################
+### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.hdf5']
+root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
+endf   = '.hdf5'
+subvols = 2
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -149,8 +151,7 @@ Z_central_cor=True
     # a way of evolving the filling factor with redshift. If this correction is to be used,
     # a fixed number of files is needed equal to that at z=0.
     # If local relations are to be used: infiles_z0 = [None]
-infiles_z0 = [None]
-
+root_z0 = None
 
 ####################################################
 ##########       Dust attenuation      #############
@@ -200,23 +201,26 @@ maxcuts = [None]
 #############    Run the code and or make plots   ################
 ##################################################################
 
-for ii, infile in enumerate(infiles):
-    infile_z0 = infiles_z0[ii]
+for ivol in range(subvols):
+    infile = root+str(ivol)+endf
+
+    infile_z0 = root_z0
+    if root_z0 is not None:
+        infile_z0 = root_z0+str(ivol)+endf
     
     # Get the redshift, cosmology and volume of the model galaxies
     f = h5py.File(infile)
     header = f['header']
-    zz = header.attrs['redshift']
-    snap = header.attrs['snapnum']
+    redshift = header.attrs['redshift']
+    snapshot = header.attrs['snapnum']
     vol = header.attrs['bside_Mpch']**3
     h0 = header.attrs['h0']
     omega0 = header.attrs['omega0']
     omegab = header.attrs['omegab']
     lambda0 = header.attrs['lambda0']    
 
-    if run_code:
-        # Run the code
-        gne(infile, zz,snap,h0,omega0,omegab,lambda0,vol,
+    if run_code:  # Run the code
+        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
             inputformat=inputformat, outpath=outpath,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
@@ -228,12 +232,11 @@ for ii, infile in enumerate(infiles):
             Z_central_cor=Z_central_cor,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
-            flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
-    if make_plots:
-        # Make test plots
-        make_testplots(infile,zz,snap,verbose=True)
+if make_plots:   # Make test plots
+    make_testplots(root,snapshot,subvols=subvols,
+                   outpath=outpath,verbose=True)

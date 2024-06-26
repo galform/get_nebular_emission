@@ -11,11 +11,10 @@ to also get the predicted attenuated luminosities.
 
 import src.gne_const as const
 from src.gne import gne
-from src.gne_io import get_outroot
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = True    # If True: use only the first 50 elements
+testing = False    # If True: use only the first 50 elements
 run_code = False
 make_plots = True
 
@@ -23,7 +22,7 @@ make_plots = True
 AGN = True
 
 ###############################################################
-### INPUT FILE
+### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
@@ -163,7 +162,6 @@ Z_central_cor=True
     # If local relations are to be used: infiles_z0 = [None]
 root_z0 = None
 
-
 ####################################################
 ##########       Dust attenuation      #############
 ####################################################
@@ -235,7 +233,7 @@ for ivol in range(subvols):
     if root_z0 is not None:
         infile_z0 = root_z0+str(ivol)+endf
 
-    if run_code:
+    if run_code:  # Run the code
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
             inputformat=inputformat, outpath=outpath,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
@@ -253,7 +251,6 @@ for ivol in range(subvols):
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
-if make_plots:    
-    # Make test plots
+if make_plots:  # Make test plots
     make_testplots(root,snapshot,subvols=subvols,
                    outpath=outpath,verbose=True)

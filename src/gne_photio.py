@@ -143,7 +143,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         ih = io.get_nheader(infile,firstchar='#')
         lower_limit = np.loadtxt(infile, skiprows=ind+ih, max_rows=1, usecols=(1),unpack=True)
         upper_limit = np.loadtxt(infile,skiprows=ind+ih, max_rows=1,usecols=(2),unpack=True)
-        return lower_limit,upper_limit
+        return float(lower_limit),float(upper_limit)
 
 
     
