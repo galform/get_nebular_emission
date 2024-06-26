@@ -13,28 +13,28 @@ import time
 import numpy as np
 from src.gne_plots import make_testplots
 
-def gne(infile, redshift, m_sfr_z,
-        h0,omega0,omegab,lambda0,vol,
-        inputformat='hdf5',infile_z0=None, h0units=True, 
-        cutcols=[None], mincuts=[None], maxcuts=[None], 
-        att=False, att_params=[None], att_ratio_lines=[None],
-        flux=False,
-        flag=0,
-        IMF=['Kennicut','Kennicut'],
+def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
+        inputformat='hdf5',h0units=True, outpath=None,
+        unemod_sfr='kashino19',photmod_sfr='gutkin16',
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
-        T=10000,
-        AGN=False, AGNinputs='Lagn', Lagn_params=[None], Z_central_cor=False,
-        epsilon_params=[None],
+        T=10000,xid_sfr=0.3,co_sfr=1,
+        m_sfr_z=[None],mtot2mdisk=True,LC2sfr=False,
+        inoh=False,
+        IMF=['Kennicut','Kennicut'],imf_cut_sfr=100,
+        AGN=False,
+        unemod_agn='panuzzo03',photmod_agn='feltre16',
+        xid_agn=0.5,alpha_agn=-1.7,
+        mg_r50=[None],AGNinputs='Lagn', Lagn_params=[None],
+        Z_central_cor=False,flag=0,
+        infile_z0=None,
+        att=False,attmod='cardelli89',
+        att_params=[None], att_ratio_lines=[None],
+        flux=True,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
-        attmod='cardelli89',
-        unemod_sfr='kashino19', unemod_agn='panuzzo03',
-        photmod_sfr='gutkin16', photmod_agn='feltre16',
-        inoh=False, LC2sfr=False,
-        cutlimits=False, mtot2mdisk=True,
-        verbose=True, testing=False,
-        xid_agn=0.5,alpha_agn=-1.7,
-        xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100):
+        cutcols=[None], mincuts=[None], maxcuts=[None],
+        cutlimits=False, 
+        testing=False,verbose=True):
     '''
     Calculate emission lines given the properties of model galaxies
 
@@ -44,8 +44,6 @@ def gne(infile, redshift, m_sfr_z,
      List with the name of the input files. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
      - In csv files (*.csv), columns separated by ','.
-    outfile : string
-     Name of the output file.
     m_sfr_z : list
      - [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]
      - For text or csv files: list of integers with column position.
@@ -60,6 +58,8 @@ def gne(infile, redshift, m_sfr_z,
       If not None: value of h, H0=100h km/s/Mpc.
     redshift : float
      Redshift of the input data.
+    snap: integer
+        Simulation snapshot number
     cutcols : list
      Parameters to look for cutting the data.
      - For text or csv files: list of integers with column position.
@@ -100,7 +100,7 @@ def gne(infile, redshift, m_sfr_z,
     Z_central_correction : boolean
      If False, the code supposes the central metallicity of the galaxy to be the mean one.
      If True, the code estimates the central metallicity of the galaxy from the mean one.
-    epsilon_params : list
+    mg_r50 : list
      Inputs for the calculation of the volume-filling factor.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
@@ -153,8 +153,9 @@ def gne(infile, redshift, m_sfr_z,
     '''
 
     # Generate header in the output file from input
-    outfile = io.generate_header(infile, redshift,
+    outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,
+                                 outpath=outpath,
                                  unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
                                  photmod_sfr=photmod_sfr,
                                  photmod_agn=photmod_agn,
@@ -163,8 +164,7 @@ def gne(infile, redshift, m_sfr_z,
     # Number of components
     ncomp = io.get_ncomponents(m_sfr_z)
     
-    # Time and passes variables
-    first = True
+    # Time variables
     start_total_time = time.perf_counter()
     start_time = time.perf_counter()
 
@@ -182,7 +182,7 @@ def gne(infile, redshift, m_sfr_z,
     if infile_z0 is not None:
         epsilon_param_z0 = io.get_secondary_data(infile_z0,cut,
                                                  inputformat=inputformat,
-                                                 params=epsilon_params,
+                                                 params=mg_r50,
                                                  testing=testing,
                                                  verbose=verbose)
 
@@ -269,7 +269,7 @@ def gne(infile, redshift, m_sfr_z,
                       extra_param=extra_param,
                       extra_params_names=extra_params_names,
                       extra_params_labels=extra_params_labels,
-                      first=first,verbose=verbose)
+                      verbose=verbose)
     
     del lu_sfr, lne_sfr, lzgas_sfr
     del lu_o_sfr, lne_o_sfr, lzgas_o_sfr
@@ -283,7 +283,7 @@ def gne(infile, redshift, m_sfr_z,
                                            verbose=verbose)
         epsilon_param = io.get_secondary_data(infile,cut,
                                               inputformat=inputformat,
-                                              params=epsilon_params,
+                                              params=mg_r50,
                                               testing=testing,
                                               verbose=verbose)
         
@@ -348,15 +348,13 @@ def gne(infile, redshift, m_sfr_z,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn,
-                          first=first,verbose=verbose)             
+                          verbose=verbose)             
         del lu_agn, lne_agn, lzgas_agn 
         del lu_o_agn, lne_o_agn, lzgas_o_agn
         del nebline_agn, nebline_agn_att
 
 
     del lms, lssfr, cut
-    if first:
-        first = False
     
     if verbose:
         print('* Total time: ', round(time.perf_counter() - start_total_time,2), 's.')

@@ -56,8 +56,7 @@ Based upon the 'Cosmology Calculator' (Wright, 2006, PASP,
 
 import sys
 import numpy as np
-import scipy as sp
-from scipy.constants import c,constants
+from scipy.constants import c,year,parsec,kilo,mega,giga
 from scipy.integrate import romberg
 
 WM = None
@@ -78,14 +77,14 @@ inv_dz = 1.0/dz
 
 zlow_lim = 0.001
 
-Mpc = constants.mega*constants.parsec #10**6*3.08567758131e+16
-H100 = 100.0*constants.kilo/Mpc # in h/s units
-Gyr = constants.giga*constants.year
-invH0 = (Mpc/(100.0*constants.kilo))/Gyr
+Mpc = mega*parsec #10**6*3.08567758131e+16
+H100 = 100.0*kilo/Mpc # in h/s units
+Gyr = giga*year
+invH0 = (Mpc/(100.0*kilo))/Gyr
 DH = c/1000./100. # Hubble Distance in Mpc/h (c is in m/s)
-Mpc2cm = constants.mega*constants.parsec*100.
-zlow = 0.00001 ; dlz = np.log(zmax)/float(nzmax) 
-lredshift = np.arange(np.log(zlow),np.log(zmax),dz)
+Mpc2cm = mega*parsec*100.
+#zlow = 0.00001 ; dlz = np.log(zmax)/float(nzmax) 
+#lredshift = np.arange(np.log(zlow),np.log(zmax),dz)
 
 asky =  4.0*np.pi*(180/np.pi)**2
 
@@ -149,7 +148,7 @@ def set_cosmology(omega0=None,omegab=None,lambda0=None,h0=None, \
         r_comoving[i] = r_comoving[i-1] + romberg(f,z1,z2)
 
     global kmpersec_to_mpchpergyr
-    kmpersec_to_mpchpergyr = constants.kilo * (Gyr/Mpc) * h
+    kmpersec_to_mpchpergyr = kilo * (Gyr/Mpc) * h
 
     return
 
@@ -559,7 +558,7 @@ def band_corrected_distance_modulus(z):
     if (z < zlow_lim):
         bcdm = 0.0
     else:
-        dref = 10.0/constants.mega # 10pc in Mpc
+        dref = 10.0/mega # 10pc in Mpc
         dL = luminosity_distance(z)
         bcdm = 5.0*np.log10(dL/dref) - 2.5*np.log10(1.0+z)
     return bcdm
@@ -712,15 +711,17 @@ def ndeg2nV(ndeg,z1,z2,verbose=False):
     return nV
 
     
-def logL2flux(log10luminosity,z):
+def logL2flux(log10luminosity,inz):
     """
     Returns flux in units of erg/s/cm^2 from input of
     log10(Luminosity in units of h-2erg/s)
     and corresponding redshifts.
     """
     if log10luminosity>-9.:
+        zz = max(inz,zlow_lim)
+        
         # Luminosity distance in cm/h
-        d_L = max(luminosity_distance(z),10.**-5)*Mpc2cm
+        d_L = luminosity_distance(zz)*Mpc2cm
 
         # Luminosities are in h-2 erg/s units
         den = 4.0*np.pi*(d_L**2)
@@ -733,15 +734,18 @@ def logL2flux(log10luminosity,z):
     return emission_line_flux
 
 
-def emission_line_flux(luminosity_data,z):
+def emission_line_flux(luminosity_data,inz):
     """
     Returns flux in units of erg/s/cm^2 from input of 
-    luminosity_data in units of E+40*h-2erg/s and corresponding redshifts.
+    bolometric luminosity_data in units of E+40*h-2erg/s
+    and corresponding redshifts.
     """
 
     if luminosity_data>0.:
+        zz = max(inz,zlow_lim)
+        
         # Luminosity distance in cm/h
-        d_L = max(luminosity_distance(z),10.**-5)*Mpc2cm
+        d_L = luminosity_distance(zz)*Mpc2cm
 
         # Luminosities are in 10^40 h-2 erg/s units
         den = 4.0*np.pi*(d_L**2)
@@ -753,19 +757,20 @@ def emission_line_flux(luminosity_data,z):
         
     return emission_line_flux
 
-def emission_line_luminosity(flux_data,z):
+
+def emission_line_luminosity(flux_data,inz):
     """
-    Returns luminosity in units of E+40*h-2erg/s from input of 
+    Returns bolometric luminosity in units of E+40*erg/s from input of 
     flux_data in units of erg/s/cm^2 and corresponding redshifts.
     """
 
     if flux_data>0.:
-        # Luminosity distance in cm/h
-        d_L = max(luminosity_distance(z),10.**-5)*Mpc2cm
+        zz = max(inz,zlow_lim)
         
-        #emission_line_luminosity = np.log10(4.0*np.pi*(d_L**2)*flux_data) - 40.
-        print('WARNING: unsure (1+z) F to L')
-        emission_line_luminosity = np.log10((1+z)*4.0*np.pi*(d_L**2)*flux_data) - 40. 
+        # Luminosity distance in cm/h
+        d_L = luminosity_distance(zz)*Mpc2cm
+        
+        emission_line_luminosity = np.log10(4.0*np.pi*(d_L**2)*flux_data) - 40.
         emission_line_luminosity = 10**(emission_line_luminosity)
     else:
         emission_line_luminosity = 0.
@@ -784,5 +789,6 @@ def polar2cartesians(ra,dec,zz):
 if __name__== "__main__":
     #set_Planck13()
     set_cosmology(0.2,0.0483,0.8,0.6777)
-    zz = 1.
-    print(distance_modulus(zz))
+    zz = 0.
+    #print(distance_modulus(zz))
+    print(emission_line_flux(1e41,zz))

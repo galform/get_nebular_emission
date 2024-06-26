@@ -14,31 +14,37 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False # use only the first 50 elements
-run_code = True
+testing = False    # If True: use only the first 50 elements
+run_code = False
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
 
 ###############################################################
-### INPUT FILE(S), redshift and cosmology
+### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc or buldge).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
-infiles = ['src/example_data/GP20_62.5kpc_z0_example.txt']
-redshifts = [0.]
+root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
+endf   = '.txt'
+subvols = 2
 
-# Cosmology and volume of the simulation
+# Redshifts, cosmology and volume of the simulation
+redshift = 0.
+snapshot = 61
 h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
 lambda0= 0.693
-vol    = pow(62.5,3) #Mpc/h
+vol    = pow(31.25,3) #Mpc/h
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
+
+### OUTPUT PATH (Default: output/)
+outpath = None  
 
 ####################################################
 ############  Emission from SF regions #############
@@ -154,8 +160,7 @@ Z_central_cor=True
     # a way of evolving the filling factor with redshift. If this correction is to be used,
     # a fixed number of files is needed equal to that at z=0.
     # If local relations are to be used: infiles_z0 = [None]
-infiles_z0 = [None]
-
+root_z0 = None
 
 ####################################################
 ##########       Dust attenuation      #############
@@ -188,9 +193,6 @@ att_params= [11,6,4]
 ##########      Other calculations     #############
 ####################################################
 
-# Flux calculation.
-flux=True
-
 # Include other parameters in the output files
 extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','magK','magR','magR_SDSS','magI',
                       'Mdot_stb','Mdot_hh','Mhot','Lagn']
@@ -221,32 +223,34 @@ maxcuts = [None]
 
 
 ##################################################################
-#############    Run the code and or make plots   ################
+#############    Run the code and/or make plots   ################
 ##################################################################
 
-for ii, infile in enumerate(infiles):
-    zz = redshifts[ii]
-    infile_z0 = infiles_z0[ii]
-    
-    if run_code:
-        gne(infile, zz, m_sfr_z,
-            h0,omega0,omegab,lambda0,vol,
-            infile_z0=infile_z0, inputformat=inputformat,
-            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr, 
-            inoh=inoh, mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
-            IMF = IMF,
+for ivol in range(subvols):
+    infile = root+str(ivol)+endf
+
+    infile_z0 = root_z0
+    if root_z0 is not None:
+        infile_z0 = root_z0+str(ivol)+endf
+
+    if run_code:  # Run the code
+        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
+            inputformat=inputformat, outpath=outpath,
+            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
+            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            inoh=inoh,IMF = IMF,
             AGN=AGN,
             unemod_agn=unemod_agn, photmod_agn=photmod_agn,
-            epsilon_params=mg_r50,
+            mg_r50=mg_r50,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central_cor=Z_central_cor,
+            infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
-            flux=flux,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
-    if make_plots:
-        # Make test plots
-        make_testplots(infile,zz,verbose=True)
+if make_plots:  # Make test plots
+    make_testplots(root,snapshot,subvols=subvols,
+                   outpath=outpath,verbose=True)

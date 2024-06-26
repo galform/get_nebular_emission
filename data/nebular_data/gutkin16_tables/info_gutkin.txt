@@ -1,0 +1,13 @@
+# Information on Gutkin+2016 tables:
+
+http://www.iap.fr/neogal/ewExternalFiles/README-1.txt
+
+# UNITS:
+
+[Z###] = dimensionless; Z017.txt corresponds to Zism=M(Z)/M(tot)=0.017
+[log(Us)] = dimensionless
+[xid] = dimensionless; dust-to-metal mass ratio
+[nh] = [cm**-3] ; hydrogen density
+[(C/O)/(C/O)sol]= dimensionless where (C/O)sol=0.44
+[mup] = [M_sun]; upper mass cutoff of the IMF
+[intensities of emission lines] = [Lbol_sun per unit SFR in 10^8yr]; calculated assuming constant SFR during 10^8yr and a Chabrier IMF. Lbol_sun = 3.826E+33egr s^-1

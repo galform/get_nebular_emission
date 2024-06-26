@@ -33,8 +33,8 @@ q0_orsi = 2.8e7 # cm/s
 #--------------------------------------------
 
 photmods = ['gutkin16', 'feltre16']
-mod_lim = {'gutkin16': r"src/nebular_data/gutkin16_tables/limits_gutkin.txt",
-           'feltre16': r"src/nebular_data/feltre16_tables/limits_feltre.txt"}
+mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
+           'feltre16': r"data/nebular_data/feltre16_tables/limits_feltre.txt"}
 
 unemods = ['kashino20', 'orsi14', 'panuzzo03']
 
