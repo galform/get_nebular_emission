@@ -6,7 +6,7 @@ The input of the code are global galactic properties.
 The intrinsic luminosities can be passed through an attenuation model 
 to also get the predicted attenuated luminosities.
 
-@authors: expox7, viogp
+@authors: expox7, viog
 """
 
 import src.gne_const as const
@@ -15,7 +15,7 @@ from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
-run_code = False
+run_code = True
 make_plots = True
 
 # Calculate emission from AGNs: AGN = True

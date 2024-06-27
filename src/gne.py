@@ -14,7 +14,7 @@ import numpy as np
 from src.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
-        inputformat='hdf5',h0units=True, outpath=None,
+        inputformat='hdf5',units_h0=True, outpath=None,
         unemod_sfr='kashino19',photmod_sfr='gutkin16',
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,xid_sfr=0.3,co_sfr=1,
@@ -170,7 +170,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
 
     # Read the input data and correct it to the adequate units, etc.
     lms, lssfr, lzgas, cut = io.get_data(infile, outfile,
-                                         m_sfr_z, h0units=h0units,
+                                         m_sfr_z, units_h0=units_h0,
                                          inputformat=inputformat,
                                          IMF=IMF,cutcols=cutcols,
                                          mincuts=mincuts,maxcuts=maxcuts,
@@ -204,7 +204,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         get_une(lms, lssfr, lzgas, outfile,
                 q0=q0, z0=z0, T=T,
                 IMF=IMF,
-                h0units=h0units,
+                units_h0=units_h0,
                 epsilon_param_z0=epsilon_param_z0,
                 origin='sfr', unemod=unemod_sfr,
                 gamma=gamma, verbose=verbose)
@@ -254,9 +254,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
 
     if flux:
         fluxes_sfr = calculate_flux(nebline_sfr,outfile,
-                                    h0units=h0units,origin='sfr')
+                                    units_h0=units_h0,origin='sfr')
         fluxes_sfr_att = calculate_flux(nebline_sfr_att,outfile,
-                                        h0units=h0units,origin='sfr')
+                                        units_h0=units_h0,origin='sfr')
         if verbose:
             print(' Flux calculated.')
     else:
@@ -296,7 +296,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
             get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
                     Z_central_cor=Z_central_cor,Lagn=Lagn, T=T,
-                    epsilon_param=epsilon_param,h0units=h0units,
+                    epsilon_param=epsilon_param,units_h0=units_h0,
                     IMF=IMF,
                     origin='agn',
                     unemod=unemod_agn, gamma=gamma, verbose=verbose)
@@ -335,9 +335,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
             
         if flux:
             fluxes_agn = calculate_flux(nebline_agn,outfile,
-                                        h0units=h0units,origin='agn')
+                                        units_h0=units_h0,origin='agn')
             fluxes_agn_att = calculate_flux(nebline_agn_att,outfile,
-                                            h0units=h0units,origin='agn')
+                                            units_h0=units_h0,origin='agn')
             if verbose:
                 print(' Flux calculated.')
         else:

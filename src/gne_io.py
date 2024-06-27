@@ -507,7 +507,7 @@ def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
 
 
 
-def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5', 
+def get_data(infile, outfile, cols, units_h0=True, inputformat='hdf5', 
              IMF=['Kennicut','Kennicut'],
              cutcols=None, mincuts=[None], maxcuts=[None],
              attmod='GALFORM',
@@ -543,7 +543,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
     IMF : array of strings
        Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
-    h0units : bool
+    units_h0 : bool
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
     mtot2mdisk : boolean
@@ -654,7 +654,7 @@ def get_data(infile, outfile, cols, h0units=True, inputformat='hdf5',
             ind = np.where(ins>0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-    if h0units:
+    if units_h0:
         # Read h0
         f = h5py.File(outfile, 'r')
         header = f['header']

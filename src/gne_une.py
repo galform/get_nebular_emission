@@ -645,7 +645,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,filenom,h0units=True,
+def calculate_epsilon(epsilon_param,max_r,filenom,units_h0=True,
                       nH=const.nH_AGN,profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
@@ -659,7 +659,7 @@ def calculate_epsilon(epsilon_param,max_r,filenom,h0units=True,
        Distance to the center within the surface density is going to be calculated (Mpc).
     filenom : string
        File with output
-    h0units : bool
+    units_h0 : bool
     nH : float
      Assumed hydrogen density in the ionizing regions.
     profile : string
@@ -672,7 +672,7 @@ def calculate_epsilon(epsilon_param,max_r,filenom,h0units=True,
     epsilon : array of floats
     '''
 
-    if h0units:
+    if units_h0:
         # Read h0
         f = h5py.File(filenom, 'r')
         header = f['header']
@@ -687,7 +687,7 @@ def calculate_epsilon(epsilon_param,max_r,filenom,h0units=True,
         ng = np.zeros(Mg.shape)
         if len(max_r) > 1:
             max_r = max_r[ind_epsilon]
-        if h0units:
+        if units_h0:
             ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(max_r,
                     Mg[ind_epsilon]/h0,r[ind_epsilon]/h0,nH=nH,verbose=verbose)
         else:
@@ -700,7 +700,7 @@ def calculate_epsilon(epsilon_param,max_r,filenom,h0units=True,
         ng = np.zeros(Mg.shape)
         if len(max_r) > 1:
             max_r = max_r[ind_epsilon]
-        if h0units:
+        if units_h0:
             ng_disk, ep_disk = epsilon_simplemodel(max_r,
                     Mg[ind_epsilon]/h0,r[ind_epsilon]/h0,nH=nH,verbose=verbose)
             ng_bulge, ep_bulge = epsilon_simplemodel(max_r,
@@ -1131,7 +1131,7 @@ def get_une(lms_o, lssfr_o, lzgas_o,filenom,
             q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=None,
             Z_central_cor=False,
             gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-            epsilon=0.01, h0units=True, IMF=['Kroupa','Kroupa'],
+            epsilon=0.01, units_h0=True, IMF=['Kroupa','Kroupa'],
             unemod='kashino20', origin='sfr', verbose=True):
     '''
     Given the global properties of a galaxy or a region
@@ -1192,7 +1192,7 @@ def get_une(lms_o, lssfr_o, lzgas_o,filenom,
     if origin=='agn' and epsilon_param is not None:
         epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],
                                     filenom,
-                                    h0units=True,nH=const.nH_AGN,
+                                    units_h0=True,nH=const.nH_AGN,
                                     profile='exponential',verbose=verbose)
     if origin=='sfr' and epsilon_param_z0 is not None:
         # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
