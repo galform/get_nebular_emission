@@ -170,14 +170,14 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     start_time = time.perf_counter()
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, lzgas, cut = io.get_data(infile, outfile,
-                                         m_sfr_z, units_h0=units_h0,
-                                         inputformat=inputformat,
-                                         IMF=IMF,cutcols=cutcols,
-                                         mincuts=mincuts,maxcuts=maxcuts,
-                                         attmod=attmod,inoh = inoh,
-                                         LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
-                                         testing=testing,verbose=verbose)
+    lms, lssfr, lzgas, cut = io.get_sfrdata(infile, outfile,
+                                            m_sfr_z, units_h0=units_h0,
+                                            inputformat=inputformat,
+                                            IMF=IMF,cutcols=cutcols,
+                                            mincuts=mincuts,maxcuts=maxcuts,
+                                            attmod=attmod,inoh = inoh,
+                                            LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
+                                            testing=testing,verbose=verbose)
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
