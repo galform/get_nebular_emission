@@ -6,7 +6,7 @@ The input of the code are global galactic properties.
 The intrinsic luminosities can be passed through an attenuation model 
 to also get the predicted attenuated luminosities.
 
-@authors: expox7, viog
+@authors: expox7, viogp
 """
 
 import src.gne_const as const
@@ -14,9 +14,9 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False    # If True: use only the first 50 elements
+testing = True    # If True: use only the first 50 elements
 run_code = True
-make_plots = True
+make_plots = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -88,6 +88,17 @@ inoh = False
 # Specify the assumed IMFs for each galaxy component in the input data.
 # Example for two components: IMF = ['Kennicut','Kennicut']
 IMF = ['Kennicut','Kennicut']
+
+### UNITS: 
+# units_h0=False if input units [Mass]=Msun, [Radius]=Mpc, [L]=erg/s (default)
+# units_h0=True  if input units [Mass]=Msun/h, [Radius]=Mpc/h, [L]=h^-2erg/s
+units_h0=True 
+# units_Gyr=False if input units [SFR,Mdot]=[Mass]/yr (default)
+# units_Gyr=True  if input units [SFR,Mdot]=[Mass]/Gyr 
+units_Gyr=True 
+# units_L40=False if input units [L]=(h^-2)erg/s  (default)
+# units_L40=True  if input units [L]=1e40(h^-2)erg/s
+units_L40=True 
 
 ####################################################
 #####  Emission from AGN narrow line regions #######
@@ -174,7 +185,7 @@ root_z0 = None
 att = True
     
 # To use Cardelli's law (following Favole et. al. 2020):
-    # attmod = 'cardelli89'.
+    # attmod = 'cardelli89' (default)
     # att_params = [half-mass radius, cold gas mass, cold gas metallicity]
 # To use already available attenuation coefficients: attmod = 'ratios'
     # att_params in this case has the location of the attenuation coefficients
@@ -235,7 +246,8 @@ for ivol in range(subvols):
 
     if run_code:  # Run the code
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
-            inputformat=inputformat, outpath=outpath,
+            inputformat=inputformat,outpath=outpath,
+            units_h0=units_h0,units_Gyr=units_Gyr,units_L40=units_L40,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,

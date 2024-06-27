@@ -14,7 +14,8 @@ import numpy as np
 from src.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
-        inputformat='hdf5',units_h0=True, outpath=None,
+        inputformat='hdf5',outpath=None,
+        units_h0=False,units_Gyr=False,units_L40=False,
         unemod_sfr='kashino19',photmod_sfr='gutkin16',
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,xid_sfr=0.3,co_sfr=1,
