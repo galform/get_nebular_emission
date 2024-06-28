@@ -14,9 +14,9 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False    # If True: use only the first 50 elements
+testing = True    # If True: use only the first 50 elements
 run_code = True
-make_plots = True
+make_plots = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -45,6 +45,17 @@ inputformat = 'txt'
 
 ### OUTPUT PATH (Default: output/)
 outpath = None  
+
+### UNITS: 
+# units_h0=False if input units [Mass]=Msun, [Radius]=Mpc, [L]=erg/s (default)
+# units_h0=True  if input units [Mass]=Msun/h, [Radius]=Mpc/h, [L]=h^-2erg/s
+units_h0=True 
+# units_Gyr=False if input units [SFR,Mdot]=[Mass]/yr (default)
+# units_Gyr=True  if input units [SFR,Mdot]=[Mass]/Gyr 
+units_Gyr=True 
+# units_L40=False if input units [L]=(h^-2)erg/s  (default)
+# units_L40=True  if input units [L]=1e40(h^-2)erg/s
+units_L40=True 
 
 ####################################################
 ############  Emission from SF regions #############
@@ -89,17 +100,6 @@ inoh = False
 # Example for two components: IMF = ['Kennicut','Kennicut']
 IMF = ['Kennicut','Kennicut']
 
-### UNITS: 
-# units_h0=False if input units [Mass]=Msun, [Radius]=Mpc, [L]=erg/s (default)
-# units_h0=True  if input units [Mass]=Msun/h, [Radius]=Mpc/h, [L]=h^-2erg/s
-units_h0=True 
-# units_Gyr=False if input units [SFR,Mdot]=[Mass]/yr (default)
-# units_Gyr=True  if input units [SFR,Mdot]=[Mass]/Gyr 
-units_Gyr=True 
-# units_L40=False if input units [L]=(h^-2)erg/s  (default)
-# units_L40=True  if input units [L]=1e40(h^-2)erg/s
-units_L40=True 
-
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
@@ -118,36 +118,43 @@ photmod_agn = 'feltre16'
 # For two disk and bulge:epsilon_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
 mg_r50 = [6,11,19,12]
     
-# Second, the AGNs bolometric luminosity is needed. This value can be in the
-    # input file or it can be estimated from other paremeters. To indicate
-    # how are you going to get it you use AGNinputs and then put the location
-    # of the corresponding parameters in Lagn_params:
-        # Lagn: Put the luminosity value directly.
-            # Parameters:
-                # Bolometric luminosity of the AGN: Lagn
-                # Bulge stellar mass: Ms_bulge
-            # Lagn_params = [Lagn, Ms_bulge]
-        # acc_rate: Put the mass accretion rate of the black hole.
-            # Parameters:
-                # Mass accretion rate: M_dot
-                # Black hole mass: Mbh
-                # Bulge stellar mass: Ms_bulge
-            # Lagn_params = [M_dot, Mbh, Ms_bulge]
-        # acc_rates: Put the mass accretion rates for the quasar mode and
-            # the radio mode.
-            # Parameters:
-                # Mass accretion rate of the quasar mode: M_dot_stb
-                # Mass accretion rate of the radio mode: M_dot_radio
-                # Black hole mass: Mbh
-                # Bulge stellar mass: Ms_bulge
-            # Lagn_params = [M_dot_stb, Mdot_radio, Mbh, Ms_bulge]
-        # radio_mode: Put the parameters needed to calculate the mass accretion
-            # rate of the radio mode and use it to calculate Lagn.
-            # Parameters:
-                # Mass of the hot gas: Mhot
-                # Black hole mass: Mbh
-                # Bulge stellar mass: Ms_bulge
-            # Lagn_params = [Mhot, Mbh, Ms_bulge]
+# The AGNs bolometric luminosity, Lagn, is needed.
+# This value can be either firectly input or calculated.
+# The way of obtaining Lagn is indicated in AGNinputs.
+# The calcultions require different black hole (BH) parameters.
+# AGNinputs='Lagn' if Lagn in input
+#            Lagn_params=[Lagn] in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
+# AGNinputs='acc_rate' for a calculation from
+#            the mass accretion rate of the BH, Mdot,
+#            the BH mass, Mbh,
+#            and, as an optional input, the BH spin, Mspin. 
+#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]  
+# AGNinputs='acc_stb' for a calculation from
+#            the mass accretion rate during the last starburst, Mdot_stb,
+#            the hot halo or radio mass accretion, Mdot_hh,
+#            the BH mass, Mbh,
+#            and, as an optional input, the BH spin, Mspin. 
+#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh,Mspin] or [Mdot_stb,Mdot_hh,Mbh] 
+# AGNinputs='radio_mode' for a calculation from
+#            the mass of the hot gas, Mhot,
+#            the BH mass, Mbh,
+#            and, as an optional input, the BH spin, Mspin. 
+#            Lagn_params=[Mhot,Mbh,Mspin] or [Mhot,Mbh] 
+# AGNinputs='quasar_mode' for a calculation from
+#            the mass of the bulge, Mbulge,
+#            the half-mass radius of the bulge, rbulge,
+#            the circular velocity of the bulge, vbulge,
+#            the BH mass, Mbh,
+#            and, as an optional input, the BH spin, Mspin. 
+#            Lagn_params=[Mbulge,rbulge,vbulge,Mbh,(Mspin)]
+# AGNinputs='complete' for a calculation from
+#            the mass of the bulge, Mbulge,
+#            the half-mass radius of the bulge, rbulge,
+#            the circular velocity of the bulge, vbulge,
+#            the mass of the hot gas, Mg,
+#            the BH mass, Mbh,
+#            and, as an optional input, the BH spin, Mspin. 
+#            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
 AGNinputs = 'Lagn'
 Lagn_params=[17,21]
 
