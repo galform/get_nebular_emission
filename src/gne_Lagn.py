@@ -135,7 +135,6 @@ def epsilon_td(spin):
     
     return epsilon_td
 
-# AGNinputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
 
 
 def Rsch(Mbh):
@@ -184,7 +183,7 @@ def get_Lagn(Lagn_params_vals,AGNinputs='complete',verbose=True):
             spin = Lagn_params_vals[2]
         else:
             spin = np.full(Mbh.shape,const.spin_bh)
-    elif AGNinputs=='acc_rates':
+    elif AGNinputs=='acc_stb':
         Mdot = (Lagn_params_vals[0] + Lagn_params_vals[1])*(1/const.yr_to_s)   
         Mbh = Lagn_params_vals[2]
         if len(Lagn_params_vals) > 3:

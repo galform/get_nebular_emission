@@ -147,7 +147,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
 
 
     
-def calculate_flux(nebline,filenom,units_h0=True,origin='sfr'):
+def calculate_flux(nebline,filenom,origin='sfr'):
     '''
     Get the fluxes for the emission lines given the luminosity and redshift.
 
@@ -158,7 +158,6 @@ def calculate_flux(nebline,filenom,units_h0=True,origin='sfr'):
         Lsun for L_AGN = 10^45 erg/s
     filenom : string
         Name of file with output
-    units_h0 : bool
     origin : string
         Emission source (star-forming region or AGN).
       

@@ -170,8 +170,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     start_time = time.perf_counter()
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, lzgas, cut = io.get_data(infile, outfile,
-                                         m_sfr_z, units_h0=units_h0,
+    lms, lssfr, lzgas, cut = io.get_data(infile, outfile,m_sfr_z,
+                                         units_h0=units_h0,h0=h0,
                                          inputformat=inputformat,
                                          IMF=IMF,cutcols=cutcols,
                                          mincuts=mincuts,maxcuts=maxcuts,
@@ -217,14 +217,14 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     lu_o_sfr = np.copy(lu_sfr)
     lne_o_sfr = np.copy(lne_sfr)
     lzgas_o_sfr = np.copy(lzgas_sfr)
-    ###here it doesn't make sense that nebline_agn has several components 
+
     clean_photarray(lms, lssfr, lu_sfr, lne_sfr, lzgas_sfr, photmod=photmod_sfr)
 
     nebline_sfr = get_lines(lu_sfr,lne_sfr,lzgas_sfr,photmod=photmod_sfr,
                             xid_phot=xid_sfr, co_phot=co_sfr,
                             imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
-    # Change units into erg/s
+    # Change units into erg/s  ###here ???
     if (photmod_sfr == 'gutkin16'):
         # Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
         sfr = np.zeros(shape=np.shape(lssfr))
@@ -254,10 +254,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         nebline_sfr_att = np.array(None)
 
     if flux:
-        fluxes_sfr = calculate_flux(nebline_sfr,outfile,
-                                    units_h0=units_h0,origin='sfr')
-        fluxes_sfr_att = calculate_flux(nebline_sfr_att,outfile,
-                                        units_h0=units_h0,origin='sfr')
+        fluxes_sfr = calculate_flux(nebline_sfr,outfile,origin='sfr')
+        fluxes_sfr_att = calculate_flux(nebline_sfr_att,outfile,origin='sfr')
         if verbose:
             print(' Flux calculated.')
     else:
@@ -309,9 +307,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         lu_o_agn = np.copy(lu_agn)
         lne_o_agn = np.copy(lne_agn)
         lzgas_o_agn = np.copy(lzgas_agn) 
-            
-        clean_photarray(lms, lssfr, lu_agn, lne_agn, lzgas_agn, photmod=photmod_agn)
-            
+        ###here it doesn't make sense that nebline_agn has several components
+        clean_photarray(lms, lssfr, lu_agn, lne_agn, lzgas_agn, photmod=photmod_agn)            
         nebline_agn = get_lines(lu_agn,lne_agn,lzgas_agn,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
@@ -335,10 +332,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
             nebline_agn_att = np.array(None)
             
         if flux:
-            fluxes_agn = calculate_flux(nebline_agn,outfile,
-                                        units_h0=units_h0,origin='agn')
-            fluxes_agn_att = calculate_flux(nebline_agn_att,outfile,
-                                            units_h0=units_h0,origin='agn')
+            fluxes_agn = calculate_flux(nebline_agn,outfile,origin='agn')
+            fluxes_agn_att = calculate_flux(nebline_agn_att,outfile,origin='agn')
             if verbose:
                 print(' Flux calculated.')
         else:

@@ -507,10 +507,11 @@ def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
 
 
 
-def get_data(infile, outfile, cols, units_h0=True, inputformat='hdf5', 
-             IMF=['Kennicut','Kennicut'],
+def get_data(infile, outfile, cols,
+             units_h0=False, h0=None,units_Gyr=False,
+             inputformat='hdf5',IMF=['Kennicut','Kennicut'],
              cutcols=None, mincuts=[None], maxcuts=[None],
-             attmod='GALFORM',
+             attmod='cardelli89',
              inoh = False, LC2sfr=False, mtot2mdisk=True, 
              verbose=False, testing=False):
     '''
