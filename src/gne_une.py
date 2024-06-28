@@ -4,30 +4,10 @@
 .. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
 import sys
-
 import numpy as np
 import h5py
 import src.gne_const as const
-from scipy.stats import gaussian_kde
 from src.gne_stats import perc_2arrays
-from src.gne_io import get_nheader
-
-
-def bursttobulge(lms,Lagn_param):
-    '''
-    Changes the bulge component of the stellar mass from the mass of the starburst
-    to the total mass of the bulge.
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    Lagn_params : floats
-     Parameters to calculate the AGN emission. 
-     The last one is always the stellar mass of the bulge.
-    '''
-    ind = np.where(Lagn_param[-1]>0)
-
-    lms[:,1] = const.notnum
-    lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
-
     
 def Z_blanc(logM_or):
     logZ = np.zeros(logM_or.shape)
@@ -123,124 +103,6 @@ def get_Ztremonti2(logM,logZ,minZ,maxZ,Lagn_param=[[None],[None]]):
     
     return logZ
     
-
-def Ledd(Mbh): # Eddington luminosity
-    '''
-    Given the mass of the black hole, calculates the Eddington luminosity.
-
-    Parameters
-    ----------
-    Mbh : floats
-     Mass of the black hole (Msun).
-     
-    Returns
-    -------
-    Ledd : floats
-    '''
-    
-    Ledd = 1.26e38*Mbh # erg s^-1
-    return Ledd
-    
-
-def acc_rate_edd(Mbh): # Eddington mass accretion rate
-    '''
-    Given the mass of the black hole, calculates the eddington accretion rate.
-
-    Parameters
-    ----------
-    Mbh : floats
-     Mass of the black hole (Msun).
-     
-    Returns
-    -------
-    acc_rate : floats
-    '''
-    
-    acc_rate = Ledd(Mbh)/(0.1*const.c**2) * (const.kg_to_Msun/1000) # Msun/s
-    return acc_rate
-
-
-def t_bulge(r_bulge, v_bulge): # Dynamical timescale of the bulge
-    '''
-    Given the bulge's half-mass radius and circular velocity at the half-mass radius,
-    calculates the dynamical timescale of the bulge.
-
-    Parameters
-    ----------
-    r_bulge : floats
-     Half-mass radius of the bulge (Mpc).
-    v_bulge : floats
-     Circular velocity at the half-mass radius of the bulge (km/s).
-     
-    Returns
-    -------
-    dyn_time : floats
-    '''
-    
-    dyn_time = r_bulge/v_bulge * 1e-5*const.Mpc_to_cm # s
-    return dyn_time
-
-
-def acc_rate_quasar(M_bulge, r_bulge, v_bulge):
-    '''
-    Given the mass of the bulge, the half-mass radius and circular velocity 
-    at the half-mass radius, calculates the accretion rate of the quasar (starburst) mode.
-
-    Parameters
-    ----------
-    M_bulge : floats
-     Mass of the bulge (Msun)
-    r_bulge : floats
-     Half-mass radius of the bulge (Mpc).
-    v_bulge : floats
-     Circular velocity at the half-mass radius of the bulge (km/s).
-     
-    Returns
-    -------
-    acc_rate : floats
-    '''
-    
-    acc_rate = M_bulge*const.fbh/(t_bulge(r_bulge, v_bulge)*const.fq) # Msun/s
-    return acc_rate
-
-def acc_rate_radio(Mhot, Mbh):
-    '''
-    Given the mass of the hot gas and the mass of the black hole, calculates
-    the accretion rate of the radio (hot gas) mode.
-
-    Parameters
-    ----------
-    Mhot : floats
-     Mass of the hot gas (Msun).
-    Mbh : floats
-     Mass of the black hole (Msun).
-     
-    Returns
-    -------
-    acc_rate : floats
-    '''
-    
-    acc_rate = const.kappa_agn*(Mhot*Mbh*1e-19)**const.kappa_agn_exp * (1/3.154e7) # Msun/s
-    return acc_rate
-
-
-def r_iso(spin):
-    Z1 = 1 + (1 - np.abs(spin)**2)**(1/3) * ((1+np.abs(spin))**(1/3) + (1-np.abs(spin))**(1/3))
-    Z2 = np.sqrt(3*np.abs(spin)**2 + Z1**2)
-    r_iso = 3 + Z2 - np.sign(spin)*np.sqrt((3-Z1)*(3+Z1+2*Z2))
-    
-    return r_iso
-    
-def epsilon_td(spin):
-    r = r_iso(spin)
-    epsilon_td = 1 - (1 - (2/(3*r)))**(1/2) # Radiative accretion efficiency for a thin accretion disc (general approximation, page 5)
-    
-    return epsilon_td
-
-# AGNinputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
-
-
-########################
 
 def alpha_B(T):
     '''

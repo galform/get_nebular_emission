@@ -3,14 +3,14 @@
 .. contributions:: Olivia Vidal <ovive.pro@gmail.com>
 .. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
+import time
+import numpy as np
 import src.gne_io as io
-from src.gne_une import get_une, bursttobulge, calculate_ng_hydro_eq, Z_blanc, get_Ztremonti, get_Ztremonti2, n_ratio
-from src.gne_agn import L_agn
+from src.gne_une import get_une, calculate_ng_hydro_eq, Z_blanc, get_Ztremonti, get_Ztremonti2, n_ratio
+from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as const
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
 from src.gne_att import attenuation
-import time
-import numpy as np
 from src.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
@@ -291,7 +291,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
         
-        Lagn = L_agn(Lagn_param,AGNinputs=AGNinputs,
+        Lagn = get_Lagn(Lagn_param,AGNinputs=AGNinputs,
                      verbose=verbose)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
