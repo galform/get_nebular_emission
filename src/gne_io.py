@@ -326,8 +326,97 @@ def locate_interval(val, edges):
 
 
 
-def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
-              inputformat='hdf5',testing=False, verbose=True):
+def get_selection(infile, outfile, inputformat='hdf5',
+                  cutcols=None, mincuts=[None], maxcuts=[None],
+                  testing=False,verbose=False):
+    '''
+    Get indexes of selected galaxies
+
+    Parameters
+    ----------
+    infile : strings
+     List with the name of the input files. 
+     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
+     - In csv files (*.csv), columns separated by ','.
+    inputformat : string
+     Format of the input file.
+    cutcols : list
+     Parameters to look for cutting the data.
+     - For text or csv files: list of integers with column position.
+     - For hdf5 files: list of data names.
+    mincuts : strings
+     Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
+    maxcuts : strings
+     Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
+    verbose : boolean
+      If True print out messages
+    testing : boolean
+      If True only run over few entries for testing purposes
+
+    Returns
+    -------
+    selection : array of integers
+    '''
+
+    selection = None
+    
+    check_file(infile, verbose=verbose)
+
+    if testing:
+        limit = const.testlimit
+    else:
+        limit = None    
+    
+    if inputformat not in const.inputformats:
+        if verbose:
+            print('STOP (gne_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(const.inputformats))
+        sys.exit()
+    elif inputformat=='hdf5':
+        with h5py.File(infile, 'r') as hf:            
+            ind = np.arange(len(hf[cutcols[0][0]][:]))
+            for i in range(len(cutcols)):
+                if cutcols[i]:
+                    param = hf[cutcols[i]][:]
+                    mincut = mincuts[i]
+                    maxcut = maxcuts[i]
+
+                    if mincut and maxcut:
+                        ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
+                    elif mincut:
+                        ind = np.intersect1d(ind,np.where(mincut<param)[0])
+                    elif maxcut:
+                        ind = np.intersect1d(ind,np.where(param<maxcut)[0])
+            selection = ind[:limit]
+                    
+    elif inputformat=='txt':
+        ih = get_nheader(infile)
+        ind = np.arange(len(np.loadtxt(infile,usecols=cutcols[0],skiprows=ih)))
+        for i in range(len(cutcols)):
+            if cutcols[i]:
+                param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)
+                mincut = mincuts[i]
+                maxcut = maxcuts[i]
+
+                if mincut and maxcut:
+                    ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
+                elif mincut:
+                    ind = np.intersect1d(ind,np.where(mincut<param)[0])
+                elif maxcut:
+                    ind = np.intersect1d(ind,np.where(param<maxcut)[0])
+        selection = ind[:limit]
+    else:
+        if verbose:
+            print('STOP (gne_io.get_selection): ',
+                  'Input file has not been found.')
+        sys.exit()
+
+    return selection
+
+
+
+def read_data(infile, cols, selection=None,inputformat='hdf5',
+              testing=False, verbose=True):
     '''
     It reads star masses, star formation rates and metallicities from a file.
 
@@ -362,68 +451,28 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     Returns
     -------
     lms, lssfr, lzgas : floats
-    cut : integers
     '''
-
-    check_file(infile, verbose=verbose)
 
     ncomp = get_ncomponents(cols)
     
-    if testing:
-        limit = const.testlimit
-    else:
-        limit = None
-        
     if inputformat not in const.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        with h5py.File(infile, 'r') as hf:            
-            ind = np.arange(len(hf[cols[0][0]][:]))
-            for i in range(len(cutcols)):
-                if cutcols[i]:
-                    param = hf[cutcols[i]][:]
-                    mincut = mincuts[i]
-                    maxcut = maxcuts[i]
-
-                    if mincut and maxcut:
-                        ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
-                    elif mincut:
-                        ind = np.intersect1d(ind,np.where(mincut<param)[0])
-                    elif maxcut:
-                        ind = np.intersect1d(ind,np.where(param<maxcut)[0])
-            cut = ind[:limit]
-                
-            for i in range(ncomp):
-                if i==0:
-                    lms = np.array([hf[cols[i][0]][:]])
-                    lssfr = np.array([hf[cols[i][1]][:]])
-                    lzgas = np.array([hf[cols[i][2]][:]])
-                else:
-                    lms = np.append(lms,[hf[cols[i][0]][:]],axis=0)
-                    lssfr = np.append(lssfr,[hf[cols[i][1]][:]],axis=0)
-                    lzgas = np.append(lzgas,[hf[cols[i][2]][:]],axis=0)
+        for i in range(ncomp):
+            if i==0:
+                lms = np.array([hf[cols[i][0]][:]])
+                lssfr = np.array([hf[cols[i][1]][:]])
+                lzgas = np.array([hf[cols[i][2]][:]])
+            else:
+                lms = np.append(lms,[hf[cols[i][0]][:]],axis=0)
+                lssfr = np.append(lssfr,[hf[cols[i][1]][:]],axis=0)
+                lzgas = np.append(lzgas,[hf[cols[i][2]][:]],axis=0)
                     
     elif inputformat=='txt':
-        ih = get_nheader(infile)
-        
-        ind = np.arange(len(np.loadtxt(infile,usecols=cols[0],skiprows=ih)))
-        for i in range(len(cutcols)):
-            if cutcols[i]:
-                param = np.loadtxt(infile,usecols=cutcols[i],skiprows=ih)
-                mincut = mincuts[i]
-                maxcut = maxcuts[i]
-
-                if mincut and maxcut:
-                    ind = np.intersect1d(ind,np.where((mincut<param)&(param<maxcut))[0])
-                elif mincut:
-                    ind = np.intersect1d(ind,np.where(mincut<param)[0])
-                elif maxcut:
-                    ind = np.intersect1d(ind,np.where(param<maxcut)[0])
-        cut = ind[:limit]
-            
+        ih = get_nheader(infile)            
         for i in range(ncomp):
             X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
             
@@ -445,7 +494,10 @@ def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
     lssfr = lssfr.T
     lzgas = lzgas.T
 
-    return lms[cut], lssfr[cut], lzgas[cut], cut
+    if selection is None:
+        return lms, lssfr, lzgas        
+    else:
+        return lms[selection], lssfr[selection], lzgas[selection]
 
 
 
@@ -506,8 +558,7 @@ def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
     return outparams
 
 
-
-def get_data(infile, outfile, cols,
+def get_data(infile, outfile, cols,selection=None,
              units_h0=False, h0=None,units_Gyr=False,
              inputformat='hdf5',IMF=['Kennicut','Kennicut'],
              cutcols=None, mincuts=[None], maxcuts=[None],
@@ -556,14 +607,12 @@ def get_data(infile, outfile, cols,
 
     Returns
     -------
-    lms, lssfr, lzgas : floats
-    cut : integers
+    lms, lssfr, lzgas : array of floats
     '''
     
-    lms,lssfr,lzgas,cut = read_data(infile, cols=cols, cutcols=cutcols,
-                                    maxcuts=maxcuts, mincuts=mincuts,
-                                    inputformat=inputformat, 
-                                    testing=testing, verbose=verbose)
+    lms,lssfr,lzgas = read_data(infile, cols=cols,selection=selection,
+                                inputformat=inputformat, 
+                                testing=testing, verbose=verbose)
     ncomp = get_ncomponents(cols)
 
     # Set to a default value if negative stellar masses
@@ -695,7 +744,7 @@ def get_data(infile, outfile, cols,
         ind = np.where(ins>0)
         lzgas_tot[ind] = np.log10(ins[ind])
                     
-    return lms,lssfr,lzgas,cut
+    return lms,lssfr,lzgas
 
 
 def generate_header(infile,redshift,snap,

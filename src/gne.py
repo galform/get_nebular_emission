@@ -169,15 +169,18 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     start_total_time = time.perf_counter()
     start_time = time.perf_counter()
 
+    # Get indexes for selection
+    cut = io.get_selection(infile,outfile,inputformat=inputformat,
+                           cutcols=cutcols,mincuts=mincuts,maxcuts=maxcuts,
+                           testing=testing,verbose=verbose)
+
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, lzgas, cut = io.get_data(infile, outfile,m_sfr_z,
-                                         units_h0=units_h0,h0=h0,
-                                         inputformat=inputformat,
-                                         IMF=IMF,cutcols=cutcols,
-                                         mincuts=mincuts,maxcuts=maxcuts,
-                                         attmod=attmod,inoh = inoh,
-                                         LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
-                                         testing=testing,verbose=verbose)
+    lms, lssfr, lzgas = io.get_data(infile, outfile,m_sfr_z,cut,
+                                       units_h0=units_h0,h0=h0,
+                                       inputformat=inputformat,IMF=IMF,
+                                       attmod=attmod,inoh = inoh,
+                                       LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
+                                       testing=testing,verbose=verbose)
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
