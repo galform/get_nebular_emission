@@ -326,7 +326,7 @@ def locate_interval(val, edges):
 
 
 
-def read_sfrdata(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
+def read_data(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
               inputformat='hdf5',testing=False, verbose=True):
     '''
     It reads star masses, star formation rates and metallicities from a file.
@@ -361,8 +361,8 @@ def read_sfrdata(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
 
     Returns
     -------
-    ms, ssfr, zgas : arrays of floats
-    cut : array of integers
+    lms, lssfr, lzgas : floats
+    cut : integers
     '''
 
     check_file(infile, verbose=verbose)
@@ -398,13 +398,13 @@ def read_sfrdata(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
                 
             for i in range(ncomp):
                 if i==0:
-                    ms = np.array([hf[cols[i][0]][:]])
-                    ssfr = np.array([hf[cols[i][1]][:]])
-                    zgas = np.array([hf[cols[i][2]][:]])
+                    lms = np.array([hf[cols[i][0]][:]])
+                    lssfr = np.array([hf[cols[i][1]][:]])
+                    lzgas = np.array([hf[cols[i][2]][:]])
                 else:
-                    ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
-                    ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
-                    zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
+                    lms = np.append(lms,[hf[cols[i][0]][:]],axis=0)
+                    lssfr = np.append(lssfr,[hf[cols[i][1]][:]],axis=0)
+                    lzgas = np.append(lzgas,[hf[cols[i][2]][:]],axis=0)
                     
     elif inputformat=='txt':
         ih = get_nheader(infile)
@@ -428,24 +428,24 @@ def read_sfrdata(infile, cols, cutcols=[None], mincuts=[None], maxcuts=[None],
             X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
             
             if i==0:
-                ms = np.array([X[0]])
-                ssfr = np.array([X[1]])
-                zgas = np.array([X[2]])
+                lms = np.array([X[0]])
+                lssfr = np.array([X[1]])
+                lzgas = np.array([X[2]])
             else:
-                ms = np.append(ms,[X[0]],axis=0)
-                ssfr = np.append(ssfr,[X[1]],axis=0)
-                zgas = np.append(zgas,[X[2]],axis=0)
+                lms = np.append(lms,[X[0]],axis=0)
+                lssfr = np.append(lssfr,[X[1]],axis=0)
+                lzgas = np.append(lzgas,[X[2]],axis=0)
     else:
         if verbose:
-            print('STOP (gne_io.read_sfrdata): ',
+            print('STOP (gne_io.read_data): ',
                   'Input file has not been found.')
         sys.exit()
         
-    ms = ms.T
-    ssfr = ssfr.T
-    zgas = zgas.T
+    lms = lms.T
+    lssfr = lssfr.T
+    lzgas = lzgas.T
 
-    return ms[cut], ssfr[cut], zgas[cut], cut
+    return lms[cut], lssfr[cut], lzgas[cut], cut
 
 
 
@@ -507,12 +507,12 @@ def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
 
 
 
-def get_sfrdata(infile, outfile, cols, units_h0=True, inputformat='hdf5', 
-                IMF=['Kennicut','Kennicut'],
-                cutcols=None, mincuts=[None], maxcuts=[None],
-                attmod='GALFORM',
-                inoh = False, LC2sfr=False, mtot2mdisk=True, 
-                verbose=False, testing=False):
+def get_data(infile, outfile, cols, units_h0=True, inputformat='hdf5', 
+             IMF=['Kennicut','Kennicut'],
+             cutcols=None, mincuts=[None], maxcuts=[None],
+             attmod='GALFORM',
+             inoh = False, LC2sfr=False, mtot2mdisk=True, 
+             verbose=False, testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
 
@@ -559,17 +559,17 @@ def get_sfrdata(infile, outfile, cols, units_h0=True, inputformat='hdf5',
     cut : integers
     '''
     
-    ms,ssfr,zgas,cut = read_sfrdata(infile, cols=cols, cutcols=cutcols,
-                                       maxcuts=maxcuts, mincuts=mincuts,
-                                       inputformat=inputformat, 
-                                       testing=testing, verbose=verbose)
+    lms,lssfr,lzgas,cut = read_data(infile, cols=cols, cutcols=cutcols,
+                                    maxcuts=maxcuts, mincuts=mincuts,
+                                    inputformat=inputformat, 
+                                    testing=testing, verbose=verbose)
     ncomp = get_ncomponents(cols)
 
     # Set to a default value if negative stellar masses
-    ind = np.where((ms<=1.) | (ssfr<0) | (zgas<=0))
-    ms[ind] = const.notnum
-    ssfr[ind] = const.notnum
-    zgas[ind] = const.notnum
+    ind = np.where((lms<=1.) | (lssfr<0) | (lzgas<=0))
+    lms[ind] = const.notnum
+    lssfr[ind] = const.notnum
+    lzgas[ind] = const.notnum
 
     ####here is this correct? does not seem to make sense
     #if LC2sfr: # Avoid positive magnitudes of LC photons
@@ -580,15 +580,15 @@ def get_sfrdata(infile, outfile, cols, units_h0=True, inputformat='hdf5',
     if mtot2mdisk:
         if ncomp!=2:
             if verbose:
-                print('STOP (gne_io.get_sfrdata): ',
+                print('STOP (gne_io.get_data): ',
                       'mtot2mdisk can only be True with two components.')
             sys.exit()
                 
-        lms_tot = ms[:,0]
+        lms_tot = lms[:,0]
 
         # Calculate the disk mass :
-        lmsdisk = ms[:,0] - ms[:,1]
-        lms = np.column_stack((lmsdisk,ms[:,1]))     
+        lmsdisk = lms[:,0] - lms[:,1]
+        lms = np.column_stack((lmsdisk,lms[:,1]))     
 
         # Take the log of the total stellar mass
         ind = np.where(lms_tot > 0.)
@@ -600,52 +600,53 @@ def get_sfrdata(infile, outfile, cols, units_h0=True, inputformat='hdf5',
 
     else:
         if ncomp!=1:
-            lms_tot = np.sum(ms,axis=1)
+            lms_tot = np.sum(lms,axis=1)
     
             # Take the log of the total stellar mass:
             ind = np.where(lms_tot > 0.)
             lms_tot[ind] = np.log10(lms_tot[ind])
     
         # Take the log of the stellar mass:
-        ind = np.where(ms > 0.)
-        lms = np.zeros(np.shape(ms)); lms.fill(const.notnum)
-        lms[ind] = np.log10(ms[ind])
+        ind = np.where(lms > 0.)
+        lms[ind] = np.log10(lms[ind])
 
     # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
-    lssfr = np.zeros(np.shape(ssfr)); lssfr.fill(const.notnum)
     if LC2sfr:
         for comp in range(ncomp):
-            ins = np.zeros(len(ssfr))
-            ind = np.where(ssfr[:, comp] != const.notnum)
+            ins = np.zeros(len(lssfr))
+            ind = np.where(lssfr[:, comp] != const.notnum)
             ###here this conversion does depend of the IMF and needs refs
-            ins[ind] = 1.02*(10.**(-0.4*ssfr[ind,comp]-4.))
+            ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,comp]-4.))
             ind = np.where(ins > 0)
-            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.###here
+            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
             ind = np.where(ins < 0)
+            lssfr[ind,comp] = const.notnum
+    
+            ind = np.where(lssfr[:, comp] == const.notnum)
             lssfr[ind,comp] = const.notnum
             
         if ncomp!=1:
             lssfr_tot = np.zeros(len(lssfr))
-            ssfr1 = np.zeros(lssfr.shape)
+            ssfr = np.zeros(lssfr.shape)
             
-            for comp in range(ncomp):###here do we need this?
+            for comp in range(ncomp):
                 ind = np.where(lssfr[:,comp] != const.notnum)
-                ssfr1[ind,comp] = 10. ** lssfr[ind,comp]
+                ssfr[ind,comp] = 10. ** lssfr[ind,comp]
 
-            ins = np.sum(ssfr1,axis=1)
+            ins = np.sum(ssfr,axis=1)
             ind = np.where(ins > 0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
     else: # If SFR as input
         for comp in range(ncomp):
             # Take the log of the ssfr:
-            ind = np.where(ssfr[:,comp] > 0.)[0]
+            ind = np.where(lssfr[:,comp] > 0.)[0]
             lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
-            ###here convertion of units
+
         if ncomp!=1:
             lssfr_tot = np.zeros(len(lssfr))
             ssfr = np.zeros(lssfr.shape)
-            for comp in range(ncomp):###here do we need this?
+            for comp in range(ncomp):
                 ind = np.where(lssfr[:,comp]!=const.notnum)
                 ssfr[ind,comp] = 10.**(lssfr[ind,comp])
 
@@ -671,14 +672,15 @@ def get_sfrdata(infile, outfile, cols, units_h0=True, inputformat='hdf5',
     else:
         lsfr = lssfr + lms
 
-    # Metallicity
-    lzgas = np.zeros(np.shape(zgas)); lzgas.fill(const.notnum)
-    ind = np.where(zgas > 0.)
-    lzgas[ind] = np.log10(zgas[ind])
     if inoh: ####here
         # Obtain Z=MZcold/Mcold from 12+log10(O/H)
-        lzgas[ind] = lzgas[ind] + const.ohsun - np.log10(const.zsun)
-        #Julen's version to be checked ####here
+        zgas = np.copy(lzgas)
+        lzgas = np.zeros(len(zgas))
+        ind = np.where(zgas>0)
+        lzgas[ind] = np.log10(zgas[ind]) + const.ohsun - np.log10(const.zsun)
+    else: #Julen's version to be checked ####here
+        ind = np.where(lzgas>0)
+        lzgas[ind] = np.log10(lzgas[ind])
 
     if ncomp!=1:
         oh12 = np.zeros(lzgas.shape)
