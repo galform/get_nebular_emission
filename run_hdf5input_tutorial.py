@@ -38,6 +38,17 @@ inputformat = 'hdf5'
 ### OUTPUT PATH (Default: output/)
 outpath = None  
 
+### UNITS: 
+# units_h0=False if input units [Mass]=Msun, [Radius]=Mpc, [L]=erg/s (default)
+# units_h0=True  if input units [Mass]=Msun/h, [Radius]=Mpc/h, [L]=h^-2erg/s
+units_h0=True 
+# units_Gyr=False if input units [SFR,Mdot]=[Mass]/yr (default)
+# units_Gyr=True  if input units [SFR,Mdot]=[Mass]/Gyr 
+units_Gyr=True 
+# units_L40=False if input units [L]=(h^-2)erg/s  (default)
+# units_L40=True  if input units [L]=1e40(h^-2)erg/s
+units_L40=True 
+
 ####################################################
 ############  Emission from SF regions #############
 ####################################################
@@ -172,7 +183,7 @@ root_z0 = None
 att = True
     
 # To use Cardelli's law (following Favole et. al. 2020):
-    # attmod = 'cardelli89'.
+    # attmod = 'cardelli89' (default)
     # att_params = [half-mass radius, cold gas mass, cold gas metallicity]
 # To use already available attenuation coefficients: attmod = 'ratios'
     # att_params in this case has the location of the attenuation coefficients
@@ -205,7 +216,7 @@ mincuts = [20*9.35e8]
 maxcuts = [None]
 
 ##################################################################
-#############    Run the code and or make plots   ################
+#############    Run the code and/or make plots   ################
 ##################################################################
 
 for ivol in range(subvols):
@@ -228,7 +239,8 @@ for ivol in range(subvols):
 
     if run_code:  # Run the code
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
-            inputformat=inputformat, outpath=outpath,
+            inputformat=inputformat,outpath=outpath,
+            units_h0=units_h0,units_Gyr=units_Gyr,units_L40=units_L40,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
@@ -244,6 +256,6 @@ for ivol in range(subvols):
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=True)
 
-if make_plots:   # Make test plots
+if make_plots:  # Make test plots
     make_testplots(root,snapshot,subvols=subvols,
                    outpath=outpath,verbose=True)
