@@ -415,7 +415,7 @@ def get_selection(infile, outfile, inputformat='hdf5',
 
 
 
-def read_data(infile, cols, selection=None,inputformat='hdf5',
+def read_components(infile, cols, selection=None,inputformat='hdf5',
               testing=False, verbose=True):
     '''
     It reads star masses, star formation rates and metallicities from a file.
@@ -486,7 +486,7 @@ def read_data(infile, cols, selection=None,inputformat='hdf5',
                 lzgas = np.append(lzgas,[X[2]],axis=0)
     else:
         if verbose:
-            print('STOP (gne_io.read_data): ',
+            print('STOP (gne_io.read_components): ',
                   'Input file has not been found.')
         sys.exit()
         
@@ -501,7 +501,7 @@ def read_data(infile, cols, selection=None,inputformat='hdf5',
 
 
 
-def get_secondary_data(infile, cut, inputformat='hdf5', params=[None],
+def read_data(infile, cut, inputformat='hdf5', params=[None],
                        testing=False, verbose=True):    
     '''
     Get data for epsilon calculation in the adecuate units.
@@ -610,7 +610,7 @@ def get_data(infile, outfile, cols,selection=None,
     lms, lssfr, lzgas : array of floats
     '''
     
-    lms,lssfr,lzgas = read_data(infile, cols=cols,selection=selection,
+    lms,lssfr,lzgas = read_components(infile, cols=cols,selection=selection,
                                 inputformat=inputformat, 
                                 testing=testing, verbose=verbose)
     ncomp = get_ncomponents(cols)
@@ -874,10 +874,10 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
         gdat = hf.create_group('data')
         
         gdat.create_dataset('lms', data=lms, maxshape=(None,None))
-        gdat['lms'].dims[0].label = 'log10(M*) (Msun)'
+        gdat['lms'].dims[0].label = 'log10(M*/Msun)'
         
         gdat.create_dataset('lssfr', data=lssfr, maxshape=(None,None))
-        gdat['lssfr'].dims[0].label = 'log10(SFR/M*) (1/yr)'
+        gdat['lssfr'].dims[0].label = 'log10(SFR/M*/yr)'
 
         if extra_param[0][0] != None:
             for i in range(len(extra_param)):
@@ -894,7 +894,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
         hfdat['lne_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
     
         hfdat.create_dataset('lz_sfr', data=lzgas_sfr, maxshape=(None,None))
-        hfdat['lz_sfr'].dims[0].label = 'log10(Z)'
+        hfdat['lz_sfr'].dims[0].label = 'log10(Z) (dimensionless)'
 
         for i in range(len(const.lines_model[photmod_sfr])):           
             hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr', 

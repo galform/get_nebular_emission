@@ -184,13 +184,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
-        epsilon_param_z0 = io.get_secondary_data(infile_z0,cut,
+        epsilon_param_z0 = io.read_data(infile_z0,cut,
                                                  inputformat=inputformat,
                                                  params=mg_r50,
                                                  testing=testing,
                                                  verbose=verbose)
 
-    extra_param = io.get_secondary_data(infile,cut,
+    extra_param = io.read_data(infile,cut,
                                         inputformat=inputformat,
                                         params=extra_params,
                                         testing=testing,
@@ -239,7 +239,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         print(' Emission calculated.')
             
     if att:
-        att_param = io.get_secondary_data(infile,cut,
+        att_param = io.read_data(infile,cut,
                                           inputformat=inputformat,
                                           params=att_params,
                                           testing=testing,
@@ -278,12 +278,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
-        Lagn_param = io.get_secondary_data(infile,cut,
+        Lagn_param = io.read_data(infile,cut,
                                            inputformat=inputformat,
                                            params=Lagn_params,
                                            testing=testing,
                                            verbose=verbose)
-        epsilon_param = io.get_secondary_data(infile,cut,
+        epsilon_param = io.read_data(infile,cut,
                                               inputformat=inputformat,
                                               params=mg_r50,
                                               testing=testing,
