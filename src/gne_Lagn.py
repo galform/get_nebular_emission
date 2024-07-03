@@ -157,7 +157,7 @@ def Rsch(Mbh):
 
 
 def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
-             h0=None,units_h0=False,units_Gyr=False,units_L40=False,
+             h0=None,units_h0=False,units_Gyr=False,units_L40h2=False,
              testing=False,verbose=True):
     '''
     Calculate or get the bolometric luminosity of BHs (erg/s) 
@@ -178,7 +178,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         True if input units with h
     units_Gyr: boolean
         True if input units with */Gyr
-    units_L40: boolean
+    units_L40h2: boolean
         True if input units with 1e40erg/s
     testing : boolean
         If True only run over few entries for testing purposes
@@ -196,7 +196,11 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
                                  testing=testing,verbose=verbose)
     
     if AGNinputs=='Lagn':
-        return Lagn_params_vals[0] # erg s^-1
+        Lagn = Lagn_params_vals[0]
+        if units_L40h2:
+            Lagn = Lagn_params[0]*1e40/h0/h0
+
+        return Lagn # erg s^-1
     elif AGNinputs=='acc_rate':
         Mdot = Lagn_params_vals[0]*(1/const.yr_to_s)
         Mbh = Lagn_params_vals[1]

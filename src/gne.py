@@ -15,7 +15,7 @@ from src.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         inputformat='hdf5',outpath=None,
-        units_h0=False,units_Gyr=False,units_L40=False,
+        units_h0=False,units_Gyr=False,units_L40h2=False,
         unemod_sfr='kashino19',photmod_sfr='gutkin16',
         q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
         T=10000,xid_sfr=0.3,co_sfr=1,
@@ -145,7 +145,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         True if input units with h
     units_Gyr: boolean
         True if input units with */Gyr
-    units_L40: boolean
+    units_L40h2: boolean
         True if input units with 1e40erg/s
     testing : boolean
         If True only run over few entries for testing purposes
@@ -303,7 +303,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,AGNinputs=AGNinputs,
                         h0=h0,units_h0=units_h0,
-                        units_Gyr=units_Gyr,units_L40=units_L40,
+                        units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
