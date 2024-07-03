@@ -548,13 +548,11 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
 
 
 
-def get_sfrdata(infile, outfile, cols,selection=None,
+def get_sfrdata(infile,cols,selection=None,
                 h0=None,units_h0=False, units_Gyr=False,
                 inputformat='hdf5',IMF=['Kennicut','Kennicut'],
-                cutcols=None, mincuts=[None], maxcuts=[None],
-                attmod='cardelli89',
                 inoh = False, LC2sfr=False, mtot2mdisk=True, 
-                verbose=False, testing=False):
+                testing=False,verbose=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
 
@@ -609,7 +607,9 @@ def get_sfrdata(infile, outfile, cols,selection=None,
         sfr = sfr/h0
     if units_Gyr:
         sfr = sfr/1e9
-        
+
+    ###here TODO transform quantities using IMF
+    
     # Set to a default value if negative stellar masses
     ind = np.where((ms<=1.) | (sfr<0) | (zgas<=0))
     ms[ind] = const.notnum
@@ -722,80 +722,43 @@ def get_sfrdata(infile, outfile, cols,selection=None,
     return lms,lssfr,lzgas
 
 
-
-def read_agndata(infile, cols, cut, inputformat='hdf5',
-                 testing=False, verbose=True):    
+def get_agndata(infile,cols,selection=None,
+                h0=None,units_h0=False,inputformat='hdf5',
+                IMF=['Kennicut','Kennicut'],
+                testing=False,verbose=False):
     '''
-    Read input M, SFR and Z data for each component
-    
+    Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
+
     Parameters
     ----------
     infile : string
-       Name of the input file.
-    cols : list of either integers or strings
-       Inputs columns for text files or dataset name for hdf5 files.
-    cut : array of integers
-       List of indexes of the selected galaxies from the samples.
+       Name of the input file
     inputformat : string
-       Format of the input file.
-    testing : boolean
-       If True only run over few entries for testing purposes
+     Format of the input file.
+    cols : list
+      Expected : component1 = total or disk, component2 = bulge
+    IMF : array of strings
+       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
+    units_h0 : bool
     verbose : boolean
-       If True print out messages.
-     
+      If True print out messages
+    testing : boolean
+      If True only run over few entries for testing purposes
+
     Returns
     -------
-    outms, outssfr, outzgas : array of floats
+    outparams : array of floats
     '''
 
-    check_file(infile, verbose=verbose)
-    
-    ncomp = get_ncomponents(cols)
-    
-    if inputformat not in const.inputformats:
-        if verbose:
-            print('STOP (gne_io): Unrecognised input format.',
-                  'Possible input formats = {}'.format(const.inputformats))
-        sys.exit()
-    elif inputformat=='hdf5':
-        for i in range(ncomp):
-            if i==0:
-                ms = np.array([hf[cols[i][0]][:]])
-                ssfr = np.array([hf[cols[i][1]][:]])
-                zgas = np.array([hf[cols[i][2]][:]])
-            else:
-                ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
-                ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
-                zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
-                    
-    elif inputformat=='txt':
-        ih = get_nheader(infile)            
-        for i in range(ncomp):
-            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
-            
-            if i==0:
-                ms = np.array([X[0]])
-                ssfr = np.array([X[1]])
-                zgas = np.array([X[2]])
-            else:
-                ms = np.append(ms,[X[0]],axis=0)
-                ssfr = np.append(ssfr,[X[1]],axis=0)
-                zgas = np.append(zgas,[X[2]],axis=0)
-    else:
-        if verbose:
-            print('STOP (gne_io.read_sfrdata): ',
-                  'Input file has not been found.')
-        sys.exit()
-        
-    ms = ms.T
-    ssfr = ssfr.T
-    zgas = zgas.T
+    vals = read_data(infile,selection,inputformat=inputformat,
+                     params=cols,testing=testing,verbose=verbose)
+    if units_h0:
+        #vals = vals/h0
+        vals = vals
 
-    outms = ms[cut]
-    outssfr = ssfr[cut]
-    outzgas = zgas[cut]
+    outparams = vals
     
-    return outms, outssfr, outzgas        
+    return outparams
 
 
 

@@ -181,11 +181,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
                            testing=testing,verbose=verbose)
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, lzgas = io.get_sfrdata(infile, outfile,m_sfr_z,cut,
+    lms, lssfr, lzgas = io.get_sfrdata(infile,m_sfr_z,selection=cut,
                                        h0=h0,units_h0=units_h0,
                                        units_Gyr=units_Gyr,
                                        inputformat=inputformat,IMF=IMF,
-                                       attmod=attmod,inoh = inoh,
+                                       inoh = inoh,
                                        LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
                                        testing=testing,verbose=verbose)
 
@@ -285,11 +285,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
-        epsilon_param = io.read_data(infile,cut,
-                                     inputformat=inputformat,
-                                     params=mg_r50,
-                                     testing=testing,
-                                     verbose=verbose)
+        epsilon_param = io.get_agndata(infile,mg_r50,selection=cut,
+                                       h0=h0,units_h0=units_h0,
+                                       inputformat=inputformat,IMF=IMF,
+                                       testing=testing,verbose=verbose)
         
         ###here to be removed from here
         Lagn_param = io.read_data(infile,cut,
