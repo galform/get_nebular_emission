@@ -414,97 +414,10 @@ def get_selection(infile, outfile, inputformat='hdf5',
     return selection
 
 
-
-def read_components(infile, cols, selection=None,inputformat='hdf5',
-              testing=False, verbose=True):
-    '''
-    It reads star masses, star formation rates and metallicities from a file.
-
-    Parameters
-    ----------
-    infile : string
-     - Name of the input file. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    inputformat : string
-     Format of the input file.
-    cols : list
-     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-     - Expected : component1 = total or disk, component2 = bulge
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cutcols : list
-     Parameters to look for cutting the data.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    mincuts : list
-     Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
-    maxcuts : list
-     Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
-    attmod : string
-      Model of dust attenuation.
-    testing : boolean
-      If True only run over few entries for testing purposes
-    verbose : boolean
-      If True print out messages
-
-    Returns
-    -------
-    lms, lssfr, lzgas : floats
-    '''
-
-    ncomp = get_ncomponents(cols)
-    
-    if inputformat not in const.inputformats:
-        if verbose:
-            print('STOP (gne_io): Unrecognised input format.',
-                  'Possible input formats = {}'.format(const.inputformats))
-        sys.exit()
-    elif inputformat=='hdf5':
-        for i in range(ncomp):
-            if i==0:
-                lms = np.array([hf[cols[i][0]][:]])
-                lssfr = np.array([hf[cols[i][1]][:]])
-                lzgas = np.array([hf[cols[i][2]][:]])
-            else:
-                lms = np.append(lms,[hf[cols[i][0]][:]],axis=0)
-                lssfr = np.append(lssfr,[hf[cols[i][1]][:]],axis=0)
-                lzgas = np.append(lzgas,[hf[cols[i][2]][:]],axis=0)
-                    
-    elif inputformat=='txt':
-        ih = get_nheader(infile)            
-        for i in range(ncomp):
-            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
-            
-            if i==0:
-                lms = np.array([X[0]])
-                lssfr = np.array([X[1]])
-                lzgas = np.array([X[2]])
-            else:
-                lms = np.append(lms,[X[0]],axis=0)
-                lssfr = np.append(lssfr,[X[1]],axis=0)
-                lzgas = np.append(lzgas,[X[2]],axis=0)
-    else:
-        if verbose:
-            print('STOP (gne_io.read_components): ',
-                  'Input file has not been found.')
-        sys.exit()
-        
-    lms = lms.T
-    lssfr = lssfr.T
-    lzgas = lzgas.T
-
-    if selection is None:
-        return lms, lssfr, lzgas        
-    else:
-        return lms[selection], lssfr[selection], lzgas[selection]
-
-
-
 def read_data(infile, cut, inputformat='hdf5', params=[None],
-                       testing=False, verbose=True):    
+              testing=False, verbose=True):    
     '''
-    Get data for epsilon calculation in the adecuate units.
+    Read input data per column/dataset
     
     Parameters
     ----------
@@ -517,13 +430,13 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
     params : list of either integers or strings
        Inputs columns for text files or dataset name for hdf5 files.
     testing : boolean
-      If True only run over few entries for testing purposes
+       If True only run over few entries for testing purposes
     verbose : boolean
-     If True print out messages.
+       If True print out messages.
      
     Returns
     -------
-    second_params : array of floats
+    outparams : array of floats
     '''
 
     check_file(infile, verbose=verbose)
@@ -558,13 +471,90 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
     return outparams
 
 
-def get_data(infile, outfile, cols,selection=None,
-             units_h0=False, h0=None,units_Gyr=False,
-             inputformat='hdf5',IMF=['Kennicut','Kennicut'],
-             cutcols=None, mincuts=[None], maxcuts=[None],
-             attmod='cardelli89',
-             inoh = False, LC2sfr=False, mtot2mdisk=True, 
-             verbose=False, testing=False):
+
+def read_sfrdata(infile, cols, cut, inputformat='hdf5',
+                 testing=False, verbose=True):    
+    '''
+    Read input M, SFR and Z data for each component
+    
+    Parameters
+    ----------
+    infile : string
+       Name of the input file.
+    cols : list of either integers or strings
+       Inputs columns for text files or dataset name for hdf5 files.
+    cut : array of integers
+       List of indexes of the selected galaxies from the samples.
+    inputformat : string
+       Format of the input file.
+    testing : boolean
+       If True only run over few entries for testing purposes
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    outms, outssfr, outzgas : array of floats
+    '''
+
+    check_file(infile, verbose=verbose)
+    
+    ncomp = get_ncomponents(cols)
+    
+    if inputformat not in const.inputformats:
+        if verbose:
+            print('STOP (gne_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(const.inputformats))
+        sys.exit()
+    elif inputformat=='hdf5':
+        for i in range(ncomp):
+            if i==0:
+                ms = np.array([hf[cols[i][0]][:]])
+                ssfr = np.array([hf[cols[i][1]][:]])
+                zgas = np.array([hf[cols[i][2]][:]])
+            else:
+                ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
+                ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
+                zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
+                    
+    elif inputformat=='txt':
+        ih = get_nheader(infile)            
+        for i in range(ncomp):
+            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
+            
+            if i==0:
+                ms = np.array([X[0]])
+                ssfr = np.array([X[1]])
+                zgas = np.array([X[2]])
+            else:
+                ms = np.append(ms,[X[0]],axis=0)
+                ssfr = np.append(ssfr,[X[1]],axis=0)
+                zgas = np.append(zgas,[X[2]],axis=0)
+    else:
+        if verbose:
+            print('STOP (gne_io.read_sfrdata): ',
+                  'Input file has not been found.')
+        sys.exit()
+        
+    ms = ms.T
+    ssfr = ssfr.T
+    zgas = zgas.T
+
+    outms = ms[cut]
+    outssfr = ssfr[cut]
+    outzgas = zgas[cut]
+    
+    return outms, outssfr, outzgas        
+
+
+
+def get_sfrdata(infile, outfile, cols,selection=None,
+                h0=None,units_h0=False, units_Gyr=False,
+                inputformat='hdf5',IMF=['Kennicut','Kennicut'],
+                cutcols=None, mincuts=[None], maxcuts=[None],
+                attmod='cardelli89',
+                inoh = False, LC2sfr=False, mtot2mdisk=True, 
+                verbose=False, testing=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
 
@@ -609,23 +599,31 @@ def get_data(infile, outfile, cols,selection=None,
     -------
     lms, lssfr, lzgas : array of floats
     '''
-    
-    lms,lssfr,lzgas = read_components(infile, cols=cols,selection=selection,
+
+    ms,ssfr,zgas = read_sfrdata(infile, cols, selection,
                                 inputformat=inputformat, 
                                 testing=testing, verbose=verbose)
-    ncomp = get_ncomponents(cols)
 
+    #if units_h0:
+    #    ms = ms/h0
+    
     # Set to a default value if negative stellar masses
-    ind = np.where((lms<=1.) | (lssfr<0) | (lzgas<=0))
-    lms[ind] = const.notnum
-    lssfr[ind] = const.notnum
-    lzgas[ind] = const.notnum
+    ind = np.where((ms<=1.) | (ssfr<0) | (zgas<=0))
+    ms[ind] = const.notnum
+    ssfr[ind] = const.notnum
+    zgas[ind] = const.notnum
 
+    ###here to remove
+    lssfr = ssfr
+    lzgas = zgas
+    
     ####here is this correct? does not seem to make sense
     #if LC2sfr: # Avoid positive magnitudes of LC photons
     #    ind = np.where(lssfr>0)
     #    lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
 
+    ncomp = get_ncomponents(cols)
+        
     # Calculate the disk mass if we have only the total and bulge mass
     if mtot2mdisk:
         if ncomp!=2:
@@ -634,31 +632,35 @@ def get_data(infile, outfile, cols,selection=None,
                       'mtot2mdisk can only be True with two components.')
             sys.exit()
                 
-        lms_tot = lms[:,0]
+        ms_tot = ms[:,0]
 
         # Calculate the disk mass :
-        lmsdisk = lms[:,0] - lms[:,1]
-        lms = np.column_stack((lmsdisk,lms[:,1]))     
+        msdisk = ms[:,0] - ms[:,1]
+        ms = np.column_stack((msdisk,ms[:,1]))     
 
         # Take the log of the total stellar mass
-        ind = np.where(lms_tot > 0.)
-        lms_tot[ind] = np.log10(lms_tot[ind])
+        lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(const.notnum)
+        ind = np.where(ms_tot > 0.)
+        lms_tot[ind] = np.log10(ms_tot[ind])
 
         # Take the log of the stellar mass:
-        ind = np.where(lms > 0.)
-        lms[ind] = np.log10(lms[ind])
+        lms = np.zeros(np.shape(ms)); lms.fill(const.notnum)
+        ind = np.where(ms > 0.)
+        lms[ind] = np.log10(ms[ind])
 
     else:
         if ncomp!=1:
-            lms_tot = np.sum(lms,axis=1)
+            ms_tot = np.sum(ms,axis=1)
     
             # Take the log of the total stellar mass:
-            ind = np.where(lms_tot > 0.)
-            lms_tot[ind] = np.log10(lms_tot[ind])
+            lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(const.notnum)
+            ind = np.where(ms_tot > 0.)
+            lms_tot[ind] = np.log10(ms_tot[ind])
     
         # Take the log of the stellar mass:
-        ind = np.where(lms > 0.)
-        lms[ind] = np.log10(lms[ind])
+        lms = np.zeros(np.shape(ms)); lms.fill(const.notnum)
+        ind = np.where(ms > 0.)
+        lms[ind] = np.log10(ms[ind])
 
     # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
     if LC2sfr:
@@ -717,6 +719,7 @@ def get_data(infile, outfile, cols,selection=None,
         if ncomp!=1:
             lms_tot = lms_tot - np.log10(h0)
 
+            
     if ncomp!=1:
         lsfr = lssfr_tot+lms_tot
     else:
