@@ -617,7 +617,7 @@ def get_sfrdata(infile, outfile, cols,selection=None,
     zgas[ind] = const.notnum
 
     ###here to remove
-    lssfr = sfr
+    #lssfr = sfr
     lzgas = zgas
     
     ####here is this correct? does not seem to make sense
@@ -666,63 +666,35 @@ def get_sfrdata(infile, outfile, cols,selection=None,
         lms[ind] = np.log10(ms[ind])
 
     # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
+    lssfr = np.zeros(np.shape(sfr)); lssfr.fill(const.notnum)
     if LC2sfr:
         for comp in range(ncomp):
-            ins = np.zeros(len(lssfr))
-            ind = np.where(lssfr[:, comp] != const.notnum)
-            ###here this conversion does depend of the IMF and needs refs
-            ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,comp]-4.))
+            ins = np.zeros(len(sfr))
+            ind = np.where(sfr[:, comp] != const.notnum)
+            ins[ind] = 1.02*(10.**(-0.4*sfr[ind,comp]-4.))
+
             ind = np.where(ins > 0)
-            #lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
             lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp]
-            ind = np.where(ins < 0)
-            lssfr[ind,comp] = const.notnum
     
             ind = np.where(lssfr[:, comp] == const.notnum)
             lssfr[ind,comp] = const.notnum
             
-        if ncomp!=1:
-            lssfr_tot = np.zeros(len(lssfr))
-            ssfr = np.zeros(lssfr.shape)
-            
-            for comp in range(ncomp):
-                ind = np.where(lssfr[:,comp] != const.notnum)
-                ssfr[ind,comp] = 10. ** lssfr[ind,comp]
-
-            ins = np.sum(ssfr,axis=1)
-            ind = np.where(ins > 0)
-            lssfr_tot[ind] = np.log10(ins[ind])
-
     else: # If SFR as input
         for comp in range(ncomp):
             # Take the log of the ssfr:
-            ind = np.where(lssfr[:,comp] > 0.)[0]
-            #lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
-            lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp]
+            ind = np.where(sfr[:,comp] > 0.)[0]
+            lssfr[ind,comp] = np.log10(sfr[ind,comp]) - lms[ind,comp]
 
-        if ncomp!=1:
-            lssfr_tot = np.zeros(len(lssfr))
-            ssfr = np.zeros(lssfr.shape)
-            for comp in range(ncomp):
-                ind = np.where(lssfr[:,comp]!=const.notnum)
-                ssfr[ind,comp] = 10.**(lssfr[ind,comp])
+    if ncomp!=1:
+        lssfr_tot = np.zeros(len(lssfr))
+        ssfr = np.zeros(lssfr.shape)
+        for comp in range(ncomp):
+            ind = np.where(lssfr[:,comp]!=const.notnum)
+            ssfr[ind,comp] = 10.**(lssfr[ind,comp])
 
-            ins = np.sum(ssfr,axis=1)
-            ind = np.where(ins>0)
-            lssfr_tot[ind] = np.log10(ins[ind])
-
-    #if units_h0:
-    #    # Read h0
-    #    f = h5py.File(outfile, 'r')
-    #    header = f['header']
-    #    h0 = header.attrs['h0']
-    #    f.close()
-    #
-    #    # Correct the units of the stellar mass
-    #    ind = np.where(lms > 0.)
-    #    lms[ind] = lms[ind] - np.log10(h0)
-    #    if ncomp!=1:
-    #        lms_tot = lms_tot - np.log10(h0)
+        ins = np.sum(ssfr,axis=1)
+        ind = np.where(ins>0)
+        lssfr_tot[ind] = np.log10(ins[ind])
 
             
     if ncomp!=1:
