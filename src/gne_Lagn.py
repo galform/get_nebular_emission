@@ -191,68 +191,115 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         Bolometric luminosity of the BHs (erg/s)
     '''
 
-    Lagn_params_vals = read_data(infile,cut,inputformat=inputformat,
+    vals = read_data(infile,cut,inputformat=inputformat,
                                  params=params,
                                  testing=testing,verbose=verbose)
     
     if AGNinputs=='Lagn':
-        Lagn = Lagn_params_vals[0]
+        Lagn = vals[0]
         if units_L40h2:
-            Lagn = Lagn_params[0]*1e40/h0/h0
+            Lagn = Lagn*1e40/h0/h0
 
         return Lagn # erg s^-1
+    
     elif AGNinputs=='acc_rate':
-        Mdot = Lagn_params_vals[0]*(1/const.yr_to_s)
-        Mbh = Lagn_params_vals[1]
-        if len(Lagn_params_vals) > 2:
-            spin = Lagn_params_vals[2]
+        Mdot = vals[0]
+        if units_h0:
+            Mdot = Mdot/h0
+        if units_Gyr:
+            Mdot = Mdot/1e9
+        Mdot = Mdot/const.yr_to_s
+        
+        Mbh = vals[1]
+        if units_h0:
+            Mbh = Mbh/h0
+
+        if len(vals) > 2:
+            spin = vals[2]
         else:
             spin = np.full(Mbh.shape,const.spin_bh)
+
     elif AGNinputs=='acc_stb':
-        Mdot = (Lagn_params_vals[0] + Lagn_params_vals[1])*(1/const.yr_to_s)   
-        Mbh = Lagn_params_vals[2]
-        if len(Lagn_params_vals) > 3:
-            spin = Lagn_params_vals[3]
+        Mdot = vals[0] + vals[1]
+        if units_h0:
+            Mdot = Mdot/h0
+        if units_Gyr:
+            Mdot = Mdot/1e9
+        Mdot = Mdot/const.yr_to_s
+        
+        Mbh = vals[2]
+        if units_h0:
+            Mbh = Mbh/h0
+
+        if len(vals) > 3:
+            spin = vals[3]
         else:
             spin = np.full(Mbh.shape,const.spin_bh)
+
     elif AGNinputs=='radio_mode':
-        Mdot = np.zeros(Lagn_params_vals[0].shape)
-        ind_radio = np.where((Lagn_params_vals[0]!=0)&(Lagn_params_vals[1]!=0))[0]
-        Mdot[ind_radio] = acc_rate_radio(Lagn_params_vals[0][ind_radio], 
-                                               Lagn_params_vals[1][ind_radio])
-        Mbh = Lagn_params_vals[1]
-        if len(Lagn_params_vals) > 2:
-            spin = Lagn_params_vals[2]
+        Mhot = vals[0]
+        Mbh = vals[1]
+        if units_h0:
+            Mhot = Mhot/h0
+            Mbh = Mbh/h0            
+        
+        Mdot = np.zeros(Mhot.shape)
+        ind_radio = np.where((Mhot!=0)&(Mbh!=0))[0]
+        Mdot[ind_radio] = acc_rate_radio(Mhot[ind_radio], 
+                                         Mbh[1][ind_radio])
+        
+        if len(vals) > 2:
+            spin = vals[2]
         else:
             spin = np.full(Mbh.shape,const.spin_bh)
+
     elif AGNinputs=='quasar_mode':
-        Mdot = np.zeros(Lagn_params_vals[0].shape)
-        ind_quasar = np.where(Lagn_params_vals[0]!=0)[0]
-        Mdot[ind_quasar] = acc_rate_quasar(Lagn_params_vals[0][ind_quasar], 
-                                Lagn_params_vals[1][ind_quasar], Lagn_params_vals[2][ind_quasar])
-        Mbh = Lagn_params_vals[3]
-        if len(Lagn_params_vals) > 4:
-            spin = Lagn_params_vals[4]
+        M_b = vals[0]
+        r_b = vals[1]
+        v_b = vals[2]
+        Mbh = vals[3]
+        if units_h0:
+            M_b = M_b/h0
+            r_b = r_b/h0
+            Mbh = Mbh/h0
+
+        Mdot = np.zeros(M_b.shape)
+        ind_quasar = np.where(M_b!=0)[0]
+        Mdot[ind_quasar] = acc_rate_quasar(M_b[ind_quasar], 
+                                           r_b[ind_quasar], v_b[ind_quasar])
+
+        if len(vals) > 4:
+            spin = vals[4]
         else:
             spin = np.full(Mbh.shape,const.spin_bh)
+
     elif AGNinputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
-        Mdot_quasar = np.zeros(Lagn_params_vals[0].shape)
-        Mdot_radio = np.zeros(Lagn_params_vals[0].shape)
+        M_b = vals[0]
+        r_b = vals[1]
+        v_b = vals[2]
+        Mhot = vals[3]
+        Mbh = vals[4]
+        if units_h0:
+            M_b = M_b/h0
+            r_b = r_b/h0
+            Mhot = Mhot/h0
+            Mbh = Mbh/h0
+
+        Mdot_quasar = np.zeros(Mbh.shape)
+        ind_quasar = np.where(M_b!=0)[0]
+        Mdot_quasar[ind_quasar] = acc_rate_quasar(M_b[ind_quasar], 
+                                                  r_b[ind_quasar],
+                                                  v_b[ind_quasar])
         
-        ind_quasar = np.where(Lagn_params_vals[0]!=0)[0]
-        Mdot_quasar[ind_quasar] = acc_rate_quasar(Lagn_params_vals[0][ind_quasar], 
-                                Lagn_params_vals[1][ind_quasar], Lagn_params_vals[2][ind_quasar])
-        
-        ind_radio = np.where((Lagn_params_vals[3]!=0)&(Lagn_params_vals[4]!=0))[0]
-        Mdot_radio[ind_radio] = acc_rate_radio(Lagn_params_vals[3][ind_radio], 
-                                               Lagn_params_vals[4][ind_radio])
+        Mdot_radio = np.zeros(Mbh.shape)        
+        ind_radio = np.where((Mhot!=0)&(Mbh!=0))[0]
+        Mdot_radio[ind_radio] = acc_rate_radio(Mhot[ind_radio], 
+                                               Mbh[ind_radio])
         
         Mdot = Mdot_radio + Mdot_quasar
         
-        Mbh = Lagn_params_vals[4]
-        
-        if len(Lagn_params_vals) > 5:
-            spin = Lagn_params_vals[5]
+        if len(vals) > 5:
+            spin = vals[5]
         else:
             spin = np.full(Mbh.shape,const.spin_bh)
     
