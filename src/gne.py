@@ -214,8 +214,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     Q_sfr, lu_sfr, lne_sfr, lzgas_sfr, epsilon_sfr, ng_ratio = \
         get_une(lms, lssfr, lzgas, outfile,
                 q0=q0, z0=z0, T=T,
-                IMF=IMF,
-                units_h0=units_h0,
                 epsilon_param_z0=epsilon_param_z0,
                 origin='sfr', unemod=unemod_sfr,
                 gamma=gamma, verbose=verbose)
@@ -309,8 +307,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
             get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
                     Z_central_cor=Z_central_cor,Lagn=Lagn, T=T,
-                    epsilon_param=epsilon_param,units_h0=units_h0,
-                    IMF=IMF,
+                    epsilon_param=epsilon_param,
                     origin='agn',
                     unemod=unemod_agn, gamma=gamma, verbose=verbose)
 
