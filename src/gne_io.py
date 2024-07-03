@@ -753,8 +753,7 @@ def get_agndata(infile,cols,selection=None,
     vals = read_data(infile,selection,inputformat=inputformat,
                      params=cols,testing=testing,verbose=verbose)
     if units_h0:
-        #vals = vals/h0
-        vals = vals
+        vals = vals/h0
 
     outparams = vals
     
