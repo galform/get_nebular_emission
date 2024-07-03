@@ -600,21 +600,24 @@ def get_sfrdata(infile, outfile, cols,selection=None,
     lms, lssfr, lzgas : array of floats
     '''
 
-    ms,ssfr,zgas = read_sfrdata(infile, cols, selection,
-                                inputformat=inputformat, 
-                                testing=testing, verbose=verbose)
+    ms,sfr,zgas = read_sfrdata(infile, cols, selection,
+                               inputformat=inputformat, 
+                               testing=testing, verbose=verbose)
 
-    #if units_h0:
-    #    ms = ms/h0
-    
+    if units_h0:
+        ms = ms/h0
+        sfr = sfr/h0
+    if units_Gyr:
+        sfr = sfr/1e9
+        
     # Set to a default value if negative stellar masses
-    ind = np.where((ms<=1.) | (ssfr<0) | (zgas<=0))
+    ind = np.where((ms<=1.) | (sfr<0) | (zgas<=0))
     ms[ind] = const.notnum
-    ssfr[ind] = const.notnum
+    sfr[ind] = const.notnum
     zgas[ind] = const.notnum
 
     ###here to remove
-    lssfr = ssfr
+    lssfr = sfr
     lzgas = zgas
     
     ####here is this correct? does not seem to make sense
@@ -670,7 +673,8 @@ def get_sfrdata(infile, outfile, cols,selection=None,
             ###here this conversion does depend of the IMF and needs refs
             ins[ind] = 1.02*(10.**(-0.4*lssfr[ind,comp]-4.))
             ind = np.where(ins > 0)
-            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
+            #lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp] - 9.
+            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp]
             ind = np.where(ins < 0)
             lssfr[ind,comp] = const.notnum
     
@@ -693,7 +697,8 @@ def get_sfrdata(infile, outfile, cols,selection=None,
         for comp in range(ncomp):
             # Take the log of the ssfr:
             ind = np.where(lssfr[:,comp] > 0.)[0]
-            lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
+            #lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp] - 9.
+            lssfr[ind,comp] = np.log10(lssfr[ind,comp]) - lms[ind,comp]
 
         if ncomp!=1:
             lssfr_tot = np.zeros(len(lssfr))
@@ -706,18 +711,18 @@ def get_sfrdata(infile, outfile, cols,selection=None,
             ind = np.where(ins>0)
             lssfr_tot[ind] = np.log10(ins[ind])
 
-    if units_h0:
-        # Read h0
-        f = h5py.File(outfile, 'r')
-        header = f['header']
-        h0 = header.attrs['h0']
-        f.close()
-
-        # Correct the units of the stellar mass
-        ind = np.where(lms > 0.)
-        lms[ind] = lms[ind] - np.log10(h0)
-        if ncomp!=1:
-            lms_tot = lms_tot - np.log10(h0)
+    #if units_h0:
+    #    # Read h0
+    #    f = h5py.File(outfile, 'r')
+    #    header = f['header']
+    #    h0 = header.attrs['h0']
+    #    f.close()
+    #
+    #    # Correct the units of the stellar mass
+    #    ind = np.where(lms > 0.)
+    #    lms[ind] = lms[ind] - np.log10(h0)
+    #    if ncomp!=1:
+    #        lms_tot = lms_tot - np.log10(h0)
 
             
     if ncomp!=1:
