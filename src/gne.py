@@ -131,10 +131,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
      If True the galaxies with U, ne and Z outside the photoionization model's grid limits won't be considered.
     mtot2mdisk : boolean
      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
-    verbose : boolean
-     If True print out messages.
-    testing : boolean
-     If True only run over few entries for testing purposes.
     xid_agn : float
      Dust-to-metal ratio for the AGN photoionisation model.
     alpha_agn : float
@@ -145,7 +141,17 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
      C/O ratio for the SF photoionisation model.
     imf_cut_sfr : float
      Solar mass high limit for the IMF for the SF photoionisation model.
-    
+    units_h0: boolean
+        True if input units with h
+    units_Gyr: boolean
+        True if input units with */Gyr
+    units_L40: boolean
+        True if input units with 1e40erg/s
+    testing : boolean
+        If True only run over few entries for testing purposes
+    verbose : boolean
+        If True print out messages
+
     Notes
     -------
     This code returns an .hdf5 file with the mass, specific star formation rate,
@@ -185,16 +191,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
         epsilon_param_z0 = io.read_data(infile_z0,cut,
-                                                 inputformat=inputformat,
-                                                 params=mg_r50,
-                                                 testing=testing,
-                                                 verbose=verbose)
-
-    extra_param = io.read_data(infile,cut,
                                         inputformat=inputformat,
-                                        params=extra_params,
+                                        params=mg_r50,
                                         testing=testing,
                                         verbose=verbose)
+
+    extra_param = io.read_data(infile,cut,
+                               inputformat=inputformat,
+                               params=extra_params,
+                               testing=testing,
+                               verbose=verbose)
     
     # Modification of the stellar mass-metallicity relation
     # 0 for no correction
@@ -240,10 +246,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
             
     if att:
         att_param = io.read_data(infile,cut,
-                                          inputformat=inputformat,
-                                          params=att_params,
-                                          testing=testing,
-                                          verbose=verbose)
+                                 inputformat=inputformat,
+                                 params=att_params,
+                                 testing=testing,
+                                 verbose=verbose)
 
         nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
                                       att_ratio_lines=att_ratio_lines,
@@ -278,22 +284,27 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
-        Lagn_param = io.read_data(infile,cut,
-                                           inputformat=inputformat,
-                                           params=Lagn_params,
-                                           testing=testing,
-                                           verbose=verbose)
         epsilon_param = io.read_data(infile,cut,
-                                              inputformat=inputformat,
-                                              params=mg_r50,
-                                              testing=testing,
-                                              verbose=verbose)
+                                     inputformat=inputformat,
+                                     params=mg_r50,
+                                     testing=testing,
+                                     verbose=verbose)
         
+        ###here to be removed from here
+        Lagn_param = io.read_data(infile,cut,
+                                  inputformat=inputformat,
+                                  params=Lagn_params,
+                                  testing=testing,
+                                  verbose=verbose)        
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
+        ###here to be removed until here (affecting to tremonti aprox)
         
-        Lagn = get_Lagn(Lagn_param,AGNinputs=AGNinputs,
-                     verbose=verbose)
+        Lagn = get_Lagn(infile,cut,inputformat=inputformat,
+                        params=Lagn_params,AGNinputs=AGNinputs,
+                        h0=h0,units_h0=units_h0,
+                        units_Gyr=units_Gyr,units_L40=units_L40,
+                        testing=testing,verbose=verbose)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
             get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,

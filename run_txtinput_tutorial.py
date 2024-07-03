@@ -14,7 +14,7 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = True    # If True: use only the first 50 elements
+testing = False    # If True: use only the first 50 elements
 run_code = True
 make_plots = True
 

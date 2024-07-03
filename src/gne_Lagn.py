@@ -4,6 +4,7 @@
 """
 import numpy as np
 import src.gne_const as const
+from src.gne_io import read_data
 
 def bursttobulge(lms,Lagn_param):
     '''
@@ -155,24 +156,44 @@ def Rsch(Mbh):
     return Rs
 
 
-def get_Lagn(Lagn_params_vals,AGNinputs='complete',verbose=True):
+def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
+             h0=None,units_h0=False,units_Gyr=False,units_L40=False,
+             testing=False,verbose=True):
     '''
-    It reads parameters from the input file from which it can calculate or get the 
-    AGN luminosities and returns those values.
+    Calculate or get the bolometric luminosity of BHs (erg/s) 
 
     Parameters
     ----------
-    Lagn_params : floats
-     Parameters to calculate the AGN emission. 
+    infile : string
+        Name of the input file
+    cut : array of integers
+        Indexes of selected galaxies for the study
+    inputformat : string
+        Format of the input file.
+    params : array of strings
+        Names of the parameters to calculate the AGN emission. 
     AGNinputs : string
-     Type of inputs for AGN's bolometric luminosity calculations.
+        Type of calculation to obtain Lagn
+    units_h0: boolean
+        True if input units with h
+    units_Gyr: boolean
+        True if input units with */Gyr
+    units_L40: boolean
+        True if input units with 1e40erg/s
+    testing : boolean
+        If True only run over few entries for testing purposes
     verbose : boolean
-      If True print out messages.
-
+        If True print out messages
+    
     Returns
     -------
-    Lagn : floats
+    Lagn : array of floats
+        Bolometric luminosity of the BHs (erg/s)
     '''
+
+    Lagn_params_vals = read_data(infile,cut,inputformat=inputformat,
+                                 params=params,
+                                 testing=testing,verbose=verbose)
     
     if AGNinputs=='Lagn':
         return Lagn_params_vals[0] # erg s^-1
