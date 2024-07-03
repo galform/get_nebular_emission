@@ -615,10 +615,6 @@ def get_sfrdata(infile, outfile, cols,selection=None,
     ms[ind] = const.notnum
     sfr[ind] = const.notnum
     zgas[ind] = const.notnum
-
-    ###here to remove
-    #lssfr = sfr
-    lzgas = zgas
     
     ####here is this correct? does not seem to make sense
     #if LC2sfr: # Avoid positive magnitudes of LC photons
@@ -702,20 +698,19 @@ def get_sfrdata(infile, outfile, cols,selection=None,
     else:
         lsfr = lssfr + lms
 
+    # Obtain Z=MZcold/Mcold        
+    lzgas = np.zeros(zgas.shape); lzgas.fill(const.notnum)
     if inoh: ####here
         # Obtain Z=MZcold/Mcold from 12+log10(O/H)
-        zgas = np.copy(lzgas)
-        lzgas = np.zeros(len(zgas))
         ind = np.where(zgas>0)
         lzgas[ind] = np.log10(zgas[ind]) + const.ohsun - np.log10(const.zsun)
     else: #Julen's version to be checked ####here
-        ind = np.where(lzgas>0)
-        lzgas[ind] = np.log10(lzgas[ind])
+        ind = np.where(zgas>0)
+        lzgas[ind] = np.log10(zgas[ind])
 
     if ncomp!=1:
         oh12 = np.zeros(lzgas.shape)
-        lzgas_tot = np.zeros(len(lzgas))
-
+        lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(const.notnum)
         for comp in range(ncomp):
             ind = np.where(lzgas[:,comp] != const.notnum)
             oh12[ind,comp] = 10. ** (lzgas[ind,comp])
@@ -725,6 +720,83 @@ def get_sfrdata(infile, outfile, cols,selection=None,
         lzgas_tot[ind] = np.log10(ins[ind])
                     
     return lms,lssfr,lzgas
+
+
+
+def read_agndata(infile, cols, cut, inputformat='hdf5',
+                 testing=False, verbose=True):    
+    '''
+    Read input M, SFR and Z data for each component
+    
+    Parameters
+    ----------
+    infile : string
+       Name of the input file.
+    cols : list of either integers or strings
+       Inputs columns for text files or dataset name for hdf5 files.
+    cut : array of integers
+       List of indexes of the selected galaxies from the samples.
+    inputformat : string
+       Format of the input file.
+    testing : boolean
+       If True only run over few entries for testing purposes
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    outms, outssfr, outzgas : array of floats
+    '''
+
+    check_file(infile, verbose=verbose)
+    
+    ncomp = get_ncomponents(cols)
+    
+    if inputformat not in const.inputformats:
+        if verbose:
+            print('STOP (gne_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(const.inputformats))
+        sys.exit()
+    elif inputformat=='hdf5':
+        for i in range(ncomp):
+            if i==0:
+                ms = np.array([hf[cols[i][0]][:]])
+                ssfr = np.array([hf[cols[i][1]][:]])
+                zgas = np.array([hf[cols[i][2]][:]])
+            else:
+                ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
+                ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
+                zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
+                    
+    elif inputformat=='txt':
+        ih = get_nheader(infile)            
+        for i in range(ncomp):
+            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
+            
+            if i==0:
+                ms = np.array([X[0]])
+                ssfr = np.array([X[1]])
+                zgas = np.array([X[2]])
+            else:
+                ms = np.append(ms,[X[0]],axis=0)
+                ssfr = np.append(ssfr,[X[1]],axis=0)
+                zgas = np.append(zgas,[X[2]],axis=0)
+    else:
+        if verbose:
+            print('STOP (gne_io.read_sfrdata): ',
+                  'Input file has not been found.')
+        sys.exit()
+        
+    ms = ms.T
+    ssfr = ssfr.T
+    zgas = zgas.T
+
+    outms = ms[cut]
+    outssfr = ssfr[cut]
+    outzgas = zgas[cut]
+    
+    return outms, outssfr, outzgas        
+
 
 
 def generate_header(infile,redshift,snap,
