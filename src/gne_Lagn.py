@@ -192,8 +192,8 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
     '''
 
     vals = read_data(infile,cut,inputformat=inputformat,
-                                 params=params,
-                                 testing=testing,verbose=verbose)
+                     params=params,
+                     testing=testing,verbose=verbose)
     
     if AGNinputs=='Lagn':
         Lagn = vals[0]

@@ -366,15 +366,15 @@ def get_selection(infile, outfile, inputformat='hdf5',
         limit = const.testlimit
     else:
         limit = None    
-    
+
     if inputformat not in const.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        with h5py.File(infile, 'r') as hf:            
-            ind = np.arange(len(hf[cutcols[0][0]][:]))
+        with h5py.File(infile, 'r') as hf:
+            ind = np.arange(len(hf[cutcols[0]][:]))
             for i in range(len(cutcols)):
                 if cutcols[i]:
                     param = hf[cutcols[i]][:]
@@ -388,7 +388,6 @@ def get_selection(infile, outfile, inputformat='hdf5',
                     elif maxcut:
                         ind = np.intersect1d(ind,np.where(param<maxcut)[0])
             selection = ind[:limit]
-                    
     elif inputformat=='txt':
         ih = get_nheader(infile)
         ind = np.arange(len(np.loadtxt(infile,usecols=cutcols[0],skiprows=ih)))
@@ -507,16 +506,16 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        for i in range(ncomp):
-            if i==0:
-                ms = np.array([hf[cols[i][0]][:]])
-                ssfr = np.array([hf[cols[i][1]][:]])
-                zgas = np.array([hf[cols[i][2]][:]])
-            else:
-                ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
-                ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
-                zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
-                    
+        with h5py.File(infile, 'r') as hf:
+            for i in range(ncomp):
+                if i==0:
+                    ms = np.array([hf[cols[i][0]][:]])
+                    ssfr = np.array([hf[cols[i][1]][:]])
+                    zgas = np.array([hf[cols[i][2]][:]])
+                else:
+                    ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
+                    ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
+                    zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
     elif inputformat=='txt':
         ih = get_nheader(infile)            
         for i in range(ncomp):
@@ -727,7 +726,7 @@ def get_agndata(infile,cols,selection=None,
                 IMF=['Kennicut','Kennicut'],
                 testing=False,verbose=False):
     '''
-    Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
+    Get Mgas and R50 in the adecuate units.
 
     Parameters
     ----------

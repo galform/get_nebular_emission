@@ -115,7 +115,7 @@ photmod_agn = 'feltre16'
 # Baryonic half-mass radius (R50).
 # mg_r50 is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
-# For two disk and bulge:epsilon_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
+# For disk and bulge:epsilon_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
 mg_r50 = [6,11,19,12]
     
 # The AGNs bolometric luminosity, Lagn, is needed.
