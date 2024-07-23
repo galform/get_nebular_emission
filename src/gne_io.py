@@ -761,8 +761,8 @@ def get_agndata(infile,cols,selection=None,
 
 
 def generate_header(infile,redshift,snap,
-                    h0,omega0,omegab,lambda0,vol,
-                    outpath=None,
+                    h0,omega0,omegab,lambda0,vol,mp,
+                    units_h0=False,outpath=None,
                     unemod_sfr=None, unemod_agn=None,
                     photmod_sfr=None, photmod_agn=None,
                     attmod=None,verbose=True):
@@ -786,7 +786,11 @@ def generate_header(infile,redshift,snap,
     lambda0 : float
         Cosmological constant z=0
     vol : float
-        Simulation volume in Mpc/h
+        Simulation volume
+    mp : float
+        Simulation resolution, particle mass
+    units_h0: boolean
+        True if input units with h    
     outpath : string
         Path to output
     unemod_sfr : string
@@ -810,6 +814,11 @@ def generate_header(infile,redshift,snap,
 
     # Get the file name
     filenom = get_outnom(infile,snap,dirf=outpath,ftype='line_data',verbose=verbose)
+
+    # Change units if required
+    if units_h0:
+        vol = vol/(h0*h0*h0)
+        mp = mp/h0
     
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
@@ -822,7 +831,8 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'omega0'] = omega0
     head.attrs[u'omegab'] = omegab
     head.attrs[u'lambda0'] = lambda0
-    head.attrs[u'vol_Mpch'] = vol
+    head.attrs[u'vol_Mpc3'] = vol
+    head.attrs[u'mp_Msun'] = mp
 
     if unemod_sfr is not None: head.attrs[u'unemod_sfr'] = unemod_sfr
     if unemod_agn is not None: head.attrs[u'unemod_agn'] = unemod_agn

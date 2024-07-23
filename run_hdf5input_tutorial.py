@@ -235,10 +235,11 @@ for ivol in range(subvols):
     h0 = header.attrs['h0']
     omega0 = header.attrs['omega0']
     omegab = header.attrs['omegab']
-    lambda0 = header.attrs['lambda0']    
-
+    lambda0 = header.attrs['lambda0']
+    mp = header.attrs['mp_Msunh']        
+    
     if run_code:  # Run the code
-        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
+        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,

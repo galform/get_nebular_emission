@@ -13,7 +13,7 @@ from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flu
 from src.gne_att import attenuation
 from src.gne_plots import make_testplots
 
-def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
+def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
         unemod_sfr='kashino19',photmod_sfr='gutkin16',
@@ -161,8 +161,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,
 
     # Generate header in the output file from input
     outfile = io.generate_header(infile,redshift,snap,
-                                 h0,omega0,omegab,lambda0,vol,
-                                 outpath=outpath,
+                                 h0,omega0,omegab,lambda0,vol,mp,
+                                 units_h0,outpath=outpath,
                                  unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
                                  photmod_sfr=photmod_sfr,
                                  photmod_agn=photmod_agn,
