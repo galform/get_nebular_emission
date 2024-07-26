@@ -366,15 +366,15 @@ def get_selection(infile, outfile, inputformat='hdf5',
         limit = const.testlimit
     else:
         limit = None    
-    
+
     if inputformat not in const.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        with h5py.File(infile, 'r') as hf:            
-            ind = np.arange(len(hf[cutcols[0][0]][:]))
+        with h5py.File(infile, 'r') as hf:
+            ind = np.arange(len(hf[cutcols[0]][:]))
             for i in range(len(cutcols)):
                 if cutcols[i]:
                     param = hf[cutcols[i]][:]
@@ -388,7 +388,6 @@ def get_selection(infile, outfile, inputformat='hdf5',
                     elif maxcut:
                         ind = np.intersect1d(ind,np.where(param<maxcut)[0])
             selection = ind[:limit]
-                    
     elif inputformat=='txt':
         ih = get_nheader(infile)
         ind = np.arange(len(np.loadtxt(infile,usecols=cutcols[0],skiprows=ih)))
@@ -507,16 +506,16 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
                   'Possible input formats = {}'.format(const.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
-        for i in range(ncomp):
-            if i==0:
-                ms = np.array([hf[cols[i][0]][:]])
-                ssfr = np.array([hf[cols[i][1]][:]])
-                zgas = np.array([hf[cols[i][2]][:]])
-            else:
-                ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
-                ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
-                zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
-                    
+        with h5py.File(infile, 'r') as hf:
+            for i in range(ncomp):
+                if i==0:
+                    ms = np.array([hf[cols[i][0]][:]])
+                    ssfr = np.array([hf[cols[i][1]][:]])
+                    zgas = np.array([hf[cols[i][2]][:]])
+                else:
+                    ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
+                    ssfr = np.append(ssfr,[hf[cols[i][1]][:]],axis=0)
+                    zgas = np.append(zgas,[hf[cols[i][2]][:]],axis=0)
     elif inputformat=='txt':
         ih = get_nheader(infile)            
         for i in range(ncomp):
@@ -727,7 +726,7 @@ def get_agndata(infile,cols,selection=None,
                 IMF=['Kennicut','Kennicut'],
                 testing=False,verbose=False):
     '''
-    Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
+    Get Mgas and R50 in the adecuate units.
 
     Parameters
     ----------
@@ -762,8 +761,8 @@ def get_agndata(infile,cols,selection=None,
 
 
 def generate_header(infile,redshift,snap,
-                    h0,omega0,omegab,lambda0,vol,
-                    outpath=None,
+                    h0,omega0,omegab,lambda0,vol,mp,
+                    units_h0=False,outpath=None,
                     unemod_sfr=None, unemod_agn=None,
                     photmod_sfr=None, photmod_agn=None,
                     attmod=None,verbose=True):
@@ -787,7 +786,11 @@ def generate_header(infile,redshift,snap,
     lambda0 : float
         Cosmological constant z=0
     vol : float
-        Simulation volume in Mpc/h
+        Simulation volume
+    mp : float
+        Simulation resolution, particle mass
+    units_h0: boolean
+        True if input units with h    
     outpath : string
         Path to output
     unemod_sfr : string
@@ -811,6 +814,11 @@ def generate_header(infile,redshift,snap,
 
     # Get the file name
     filenom = get_outnom(infile,snap,dirf=outpath,ftype='line_data',verbose=verbose)
+
+    # Change units if required
+    if units_h0:
+        vol = vol/(h0*h0*h0)
+        mp = mp/h0
     
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
@@ -823,7 +831,8 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'omega0'] = omega0
     head.attrs[u'omegab'] = omegab
     head.attrs[u'lambda0'] = lambda0
-    head.attrs[u'vol_Mpch'] = vol
+    head.attrs[u'vol_Mpc3'] = vol
+    head.attrs[u'mp_Msun'] = mp
 
     if unemod_sfr is not None: head.attrs[u'unemod_sfr'] = unemod_sfr
     if unemod_agn is not None: head.attrs[u'unemod_agn'] = unemod_agn

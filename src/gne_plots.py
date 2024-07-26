@@ -895,6 +895,69 @@ def lines_BPT(x, BPT, line):
 #
 
 
+def test_umz(root, subvols=1, outpath=None, verbose=True):
+    '''
+    Make plots of the ionizing parameter versus stellar mass and Zgas,
+    for SF regions and AGNs.
+    
+    Parameters
+    ----------
+    root : string
+       Path to input files. 
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    # Get redshift and model information from data
+    filenom = root+'0.hdf5'
+    print(filenom); exit()
+    f = h5py.File(filenom, 'r') 
+    header = f['header']
+    redshift = header.attrs['redshift']
+    photmod_sfr = header.attrs['photmod_sfr']
+    photmod_agn = header.attrs['photmod_agn']
+    f.close()
+
+    # Prep plots
+    fig, ((axsz, axsm), (axaz, axam)) = plt.subplots(2, 2, figsize=(30, 15),
+                                                     sharex='col',
+                                                     sharey='row')
+    
+    # Read limits for properties and photoionisation models
+    minUs, maxUs = get_limits(propname='U', photmod=photmod_sfr)
+    minZs, maxZs = get_limits(propname='Z', photmod=photmod_sfr)
+
+    minUa, maxUa = get_limits(propname='U', photmod=photmod_agn)
+    minZa, maxZa = get_limits(propname='Z', photmod=photmod_agn)
+    print(minUa,maxUa); exit()
+
+    xtit = 'log$_{10}(Z/Z_{\odot})$'
+    axaz.set_xlabel(xtit)
+    axaz.set_xlim(min(minZs,minZa)-0.5, max(maxZs,maxZa)+0.5)
+    axaz.set_ylim(min(minUs,minUa)-0.5, max(maxUs,maxUa)+0.5)
+    ytit = 'log$_{10}U_{\rm AGN}$'
+    axaz.set_ylabel(ytit)
+    ytit = 'log$_{10}U_{\rm SF}$'
+    axsz.set_ylabel(ytit)
+
+    xtit = 'log$_{10}(M_*/M_{\odot})$'
+    axam.set_xlabel(xtit)
+    axaz.set_xlim(min(minZs,minZa)-0.5, max(maxZs,maxZa)+0.5)
+
+    # Output
+    pltpath = io.get_plotpath(root)
+    plotnom = pltpath+'umz.pdf'
+    #plt.savefig(plotnom)
+    if verbose:
+         print(f'* U plots: {plotnom}')
+    
+    return plotnom
+
+
 def test_bpts(root, subvols=1, outpath=None, verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
@@ -922,6 +985,7 @@ def test_bpts(root, subvols=1, outpath=None, verbose=True):
     h0 = header.attrs['h0']
     photmod_sfr = header.attrs['photmod_sfr']
     photmod_agn = header.attrs['photmod_agn']
+
     f.close()
     
     # Set the cosmology from the simulation
@@ -1196,6 +1260,9 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     '''
 
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
+
+    # Get output file for BPT plot
+    #umz = test_umz(root,subvols=subvols,verbose=verbose)
     
     # Get output file for BPT plot
     bpt = test_bpts(root,subvols=subvols,verbose=verbose)

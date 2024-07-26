@@ -38,7 +38,8 @@ h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
 lambda0= 0.693
-vol    = pow(31.25,3) #Mpc/h
+vol    = pow(31.25,3) 
+mp     = 9.35e8       
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
@@ -115,7 +116,7 @@ photmod_agn = 'feltre16'
 # Baryonic half-mass radius (R50).
 # mg_r50 is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
-# For two disk and bulge:epsilon_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
+# For disk and bulge:epsilon_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
 mg_r50 = [6,11,19,12]
     
 # The AGNs bolometric luminosity, Lagn, is needed.
@@ -235,7 +236,7 @@ extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
 # The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
 cutcols = [7]
 # List of minimum values. None for no inferior limit.
-mincuts = [20*9.35e8]
+mincuts = [20*mp]
 # List of maximum values. None for no superior limit.
 maxcuts = [None]
 
@@ -252,7 +253,7 @@ for ivol in range(subvols):
         infile_z0 = root_z0+str(ivol)+endf
 
     if run_code:  # Run the code
-        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,
+        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
             unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
