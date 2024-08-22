@@ -22,7 +22,7 @@ def bursttobulge(lms,Lagn_param):
     lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
 
 
-def Ledd(Mbh): # Eddington luminosity
+def get_Ledd(Mbh): # Eddington luminosity
     '''
     Calculate the Eddington luminosity for a black hole of mass Mbh,
     following Eq.3 in Griffin+2019
@@ -44,7 +44,8 @@ def Ledd(Mbh): # Eddington luminosity
 def acc_rate_edd(Mbh): # Eddington mass accretion rate
     '''
     Calculate the Eddington mass accretion rate of a black hole,
-    following Eq.4 in Griffin+2019 (or 14.9 in the book from Mo, van den Bosch and White)
+    following Eq.4 in Griffin+2019
+    (or 14.9 in the book from Mo, van den Bosch and White)
 
     Parameters
     ----------
@@ -55,9 +56,9 @@ def acc_rate_edd(Mbh): # Eddington mass accretion rate
     -------
     acc_rate : array of floats
     '''
-    
-    #acc_rate = Ledd(Mbh)/(c.e_r_agn*c.c_cm*c.c_cm) * (c.kg_to_Msun/1000) # Msun/s
-    acc_rate = Ledd(Mbh)/(c.e_r_agn*c.c_cm*c.c_cm)  # Msun/s
+
+    acc_rate = (1e-7*c.yr_to_s/c.Msun) * get_Ledd(Mbh)/(c.e_r_agn*c.c*c.c)
+
     return acc_rate # Msun/yr
 
 
@@ -135,7 +136,7 @@ def acc_rate_radio(Mhot, Mbh, kagn=c.kagn, kagn_exp=c.kagn_exp):
 
 
 def get_Lagn_M16(Mdot):
-    LagnM16 = Mdot*c.c_cm*c.c_cm*c.e_r_agn*(1-c.e_f_agn)
+    LagnM16 = Mdot*c.c*c.c*c.e_r_agn*(1-c.e_f_agn)
     
     return LagnM16
 
@@ -362,7 +363,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn[i] = epsilon_td(spin[i])*Mdot[i]*c.c_cm**2 * (1000/c.kg_to_Msun)
         else:
             # n4.append(i)
-            Lagn[i] = c.eta_edd*Ledd(Mbh[i])*(1 + np.log(mdot[i]/c.eta_edd))
+            Lagn[i] = c.eta_edd*get_Ledd(Mbh[i])*(1 + np.log(mdot[i]/c.eta_edd))
             
     # logLagn = np.log10(Lagn)
     # print(len(n1),len(n2),len(n3),len(n4))
