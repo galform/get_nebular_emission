@@ -3,7 +3,7 @@
 .. contributions:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
 import numpy as np
-import src.gne_const as const
+import src.gne_const as c
 from src.gne_io import read_data
 
 def bursttobulge(lms,Lagn_param):
@@ -18,44 +18,47 @@ def bursttobulge(lms,Lagn_param):
     '''
     ind = np.where(Lagn_param[-1]>0)
 
-    lms[:,1] = const.notnum
+    lms[:,1] = c.notnum
     lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
 
 
 def Ledd(Mbh): # Eddington luminosity
     '''
-    Given the mass of the black hole, calculates the Eddington luminosity.
+    Calculate the Eddington luminosity for a black hole of mass Mbh,
+    following Eq.3 in Griffin+2019
 
     Parameters
     ----------
-    Mbh : floats
+    Mbh : array of floats
      Mass of the black hole (Msun).
      
     Returns
     -------
-    Ledd : floats
+    Ledd : array of floats
     '''
     
-    Ledd = 1.26e38*Mbh # erg s^-1
-    return Ledd
+    Ledd = 1.26e38*Mbh # erg/s
+    return Ledd # erg/s
     
 
 def acc_rate_edd(Mbh): # Eddington mass accretion rate
     '''
-    Given the mass of the black hole, calculates the eddington accretion rate.
+    Calculate the Eddington mass accretion rate of a black hole,
+    following Eq.4 in Griffin+2019 (or 14.9 in the book from Mo, van den Bosch and White)
 
     Parameters
     ----------
-    Mbh : floats
-     Mass of the black hole (Msun).
+    Mbh : array of floats
+         Mass of the black hole (Msun).
      
     Returns
     -------
-    acc_rate : floats
+    acc_rate : array of floats
     '''
     
-    acc_rate = Ledd(Mbh)/(0.1*const.c**2) * (const.kg_to_Msun/1000) # Msun/s
-    return acc_rate
+    #acc_rate = Ledd(Mbh)/(c.e_r_agn*c.c_cm*c.c_cm) * (c.kg_to_Msun/1000) # Msun/s
+    acc_rate = Ledd(Mbh)/(c.e_r_agn*c.c_cm*c.c_cm)  # Msun/s
+    return acc_rate # Msun/yr
 
 
 def t_bulge(r_bulge, v_bulge): # Dynamical timescale of the bulge
@@ -75,7 +78,7 @@ def t_bulge(r_bulge, v_bulge): # Dynamical timescale of the bulge
     dyn_time : floats
     '''
     
-    dyn_time = r_bulge/v_bulge * 1e-5*const.Mpc_to_cm # s
+    dyn_time = r_bulge/v_bulge * 1e-5*c.Mpc_to_cm # s
     return dyn_time
 
 
@@ -98,28 +101,57 @@ def acc_rate_quasar(M_bulge, r_bulge, v_bulge):
     acc_rate : floats
     '''
     
-    acc_rate = M_bulge*const.fbh/(t_bulge(r_bulge, v_bulge)*const.fq) # Msun/s
+    acc_rate = M_bulge*c.fbh/(t_bulge(r_bulge, v_bulge)*c.fq) # Msun/s
     return acc_rate
 
-def acc_rate_radio(Mhot, Mbh):
+
+def acc_rate_radio(Mhot, Mbh, kagn=c.kagn, kagn_exp=c.kagn_exp):
     '''
-    Given the mass of the hot gas and the mass of the black hole, calculates
-    the accretion rate of the radio (hot gas) mode.
+    Given the mass of the hot gas and the mass of the black hole,
+    calculates the accretion rate of the radio (hot gas) mode,
+    following Eq. 1 in Henriques+2016.
+    Default kagn values are derived from a GP20 sample 
 
     Parameters
     ----------
-    Mhot : floats
-     Mass of the hot gas (Msun).
-    Mbh : floats
-     Mass of the black hole (Msun).
-     
+    Mhot : array of floats
+        Mass of the hot gas (Msun).
+    Mbh : array of floats
+        Mass of the black hole (Msun).
+    kagn : float
+        Multiplicative factor
+    kagn_exp : float
+        Exponent for the dependence of Mdot with Mbh*Mhot
+    
     Returns
     -------
-    acc_rate : floats
+    acc_rate : array of floats
     '''
     
-    acc_rate = const.kappa_agn*(Mhot*Mbh*1e-19)**const.kappa_agn_exp * (1/3.154e7) # Msun/s
+    #acc_rate = kagn*(Mhot*Mbh*1e-19)**kagn_exp # Msun/s
+    acc_rate = (Mhot*Mbh*1e-19) # Msun/s
+
     return acc_rate
+
+
+def get_Lagn_M16(Mdot):
+    LagnM16 = Mdot*c.c_cm*c.c_cm*c.e_r_agn*(1-c.e_f_agn)
+    
+    return LagnM16
+
+
+def get_Lagn_H14(Mdot,Mbh):
+    Mdot_edd = acc_rate_edd(Mbh)
+    fedd = Mdot/Mdot_edd
+
+    if fedd>0.1:
+        LagnH14 = get_Lagn_M16(Mdot)
+    else:
+        L_edd = 0 ###here
+        LagnH14 = 0 ###here 
+    
+    return LagnH14
+
 
 
 def r_iso(spin):
@@ -152,7 +184,7 @@ def Rsch(Mbh):
     Rs : floats
     '''
     
-    Rs = 2*const.G*Mbh/(const.c**2) * 1e10 * 3.086e19 #km
+    Rs = 2*c.G*Mbh/(c.c_cm**2) * 1e10 * 3.086e19 #km
     return Rs
 
 
@@ -208,7 +240,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Mdot = Mdot/h0
         if units_Gyr:
             Mdot = Mdot/1e9
-        Mdot = Mdot/const.yr_to_s
+        Mdot = Mdot/c.yr_to_s
         
         Mbh = vals[1]
         if units_h0:
@@ -217,7 +249,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         if len(vals) > 2:
             spin = vals[2]
         else:
-            spin = np.full(Mbh.shape,const.spin_bh)
+            spin = np.full(Mbh.shape,c.spin_bh)
 
     elif AGNinputs=='acc_stb':
         Mdot = vals[0] + vals[1]
@@ -225,7 +257,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Mdot = Mdot/h0
         if units_Gyr:
             Mdot = Mdot/1e9
-        Mdot = Mdot/const.yr_to_s
+        Mdot = Mdot/c.yr_to_s
         
         Mbh = vals[2]
         if units_h0:
@@ -234,7 +266,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         if len(vals) > 3:
             spin = vals[3]
         else:
-            spin = np.full(Mbh.shape,const.spin_bh)
+            spin = np.full(Mbh.shape,c.spin_bh)
 
     elif AGNinputs=='radio_mode':
         Mhot = vals[0]
@@ -245,14 +277,15 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         
         Mdot = np.zeros(Mhot.shape)
         ind_radio = np.where((Mhot!=0)&(Mbh!=0))[0]
-        Mdot[ind_radio] = acc_rate_radio(Mhot[ind_radio], 
-                                         Mbh[1][ind_radio])
+        Mdot[ind_radio] = acc_rate_radio(Mhot[ind_radio],
+                                         Mbh[ind_radio])
         
         if len(vals) > 2:
             spin = vals[2]
         else:
-            spin = np.full(Mbh.shape,const.spin_bh)
-
+            Lagn = get_Lagn_M16(Mdot)
+            return Lagn # erg s^-1  ###here
+            
     elif AGNinputs=='quasar_mode':
         M_b = vals[0]
         r_b = vals[1]
@@ -271,7 +304,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         if len(vals) > 4:
             spin = vals[4]
         else:
-            spin = np.full(Mbh.shape,const.spin_bh)
+            spin = np.full(Mbh.shape,c.spin_bh)
 
     elif AGNinputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
         M_b = vals[0]
@@ -301,7 +334,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         if len(vals) > 5:
             spin = vals[5]
         else:
-            spin = np.full(Mbh.shape,const.spin_bh)
+            spin = np.full(Mbh.shape,c.spin_bh)
     
     Mdot_edd = acc_rate_edd(Mbh)
     
@@ -316,20 +349,20 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             # n0.append(i)
             continue
         
-        # Lagn[i] = epsilon_td(const.spin_bh)*Mdot[i]*const.c**2 * (1000/const.kg_to_Msun)
+        # Lagn[i] = epsilon_td(c.spin_bh)*Mdot[i]*c.c_cm**2 * (1000/c.kg_to_Msun)
         
-        if mdot[i] < const.acc_rate_crit_visc:
+        if mdot[i] < c.acc_rate_crit_visc:
             # n1.append(i)
-            Lagn[i] = 0.2*epsilon_td(spin[i])*Mdot[i]*const.c**2*(mdot[i]/const.alpha_adaf**2)*((1-const.beta)/0.5)*(6/r_iso(spin[i])) * (1000/const.kg_to_Msun)
-        elif mdot[i] < const.acc_rate_crit_adaf:
+            Lagn[i] = 0.2*epsilon_td(spin[i])*Mdot[i]*c.c_cm**2*(mdot[i]/c.alpha_adaf**2)*((1-c.beta)/0.5)*(6/r_iso(spin[i])) * (1000/c.kg_to_Msun)
+        elif mdot[i] < c.acc_rate_crit_adaf:
             # n2.append(i)
-            Lagn[i] = 0.2*epsilon_td(spin[i])*Mdot[i]*const.c**2*(mdot[i]/const.alpha_adaf**2)*(const.beta/0.5)*(6/r_iso(spin[i])) * (1000/const.kg_to_Msun)
-        elif mdot[i] < const.eta_edd:
+            Lagn[i] = 0.2*epsilon_td(spin[i])*Mdot[i]*c.c_cm**2*(mdot[i]/c.alpha_adaf**2)*(c.beta/0.5)*(6/r_iso(spin[i])) * (1000/c.kg_to_Msun)
+        elif mdot[i] < c.eta_edd:
             # n3.append(i)
-            Lagn[i] = epsilon_td(spin[i])*Mdot[i]*const.c**2 * (1000/const.kg_to_Msun)
+            Lagn[i] = epsilon_td(spin[i])*Mdot[i]*c.c_cm**2 * (1000/c.kg_to_Msun)
         else:
             # n4.append(i)
-            Lagn[i] = const.eta_edd*Ledd(Mbh[i])*(1 + np.log(mdot[i]/const.eta_edd))
+            Lagn[i] = c.eta_edd*Ledd(Mbh[i])*(1 + np.log(mdot[i]/c.eta_edd))
             
     # logLagn = np.log10(Lagn)
     # print(len(n1),len(n2),len(n3),len(n4))

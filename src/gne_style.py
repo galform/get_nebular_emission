@@ -4,15 +4,15 @@ from cycler import cycler
 
 style1 = {
     # Line styles
-    'lines.linewidth': 2.5,
+    'lines.linewidth': 3,
     'lines.antialiased': True,
 
     # Font
-    'font.size': 22.0,
+    'font.size': 24.0,
     'font.family': 'sans-serif',
 
     # Axes
-    'axes.linewidth': 1.5,
+    'axes.linewidth': 2,
     'axes.titlesize': 'medium',
     'axes.labelsize': 'large',
     'axes.prop_cycle': cycler('color', [
@@ -55,13 +55,13 @@ style1 = {
 
     # Legend
     'legend.fancybox': False,
-    'legend.fontsize': 'medium',
+    'legend.fontsize': 'large',
     'legend.scatterpoints': 1,
     'legend.numpoints': 1,
     'legend.loc': 'best',
 
     # Default colormap
-    #'image.cmap': 'jet', 
+    #'image.cmap': 'viridis', 
 
     # Figure
     'figure.figsize': [6.5, 7],

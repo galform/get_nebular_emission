@@ -7,13 +7,10 @@
 import os.path
 import h5py
 import numpy as np
-## matplotlib.use("Agg")
 from matplotlib import pyplot as plt
-from matplotlib.cm import ScalarMappable
-#import matplotlib.gridspec as gridspec
+from matplotlib.pyplot import cm
 import src.gne_io as io
-#import src.gne_style as style
-#from src.gne_stats import perc_2arrays
+from src.gne_stats import perc_2arrays
 import src.gne_const as const
 #from src.gne_io import get_nheader, check_file
 from src.gne_photio import get_limits #,get_lines_Gutkin
@@ -76,7 +73,6 @@ def lines_BPT(x, BPT, line):
         return None
             
     return boundary
-
 
 
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
@@ -365,200 +361,7 @@ def lines_BPT(x, BPT, line):
 #    # Save figures
 #    print('Plot: {}'.format(plotf))
 #    fig.savefig(plotf)
-#
-#def test_medians(infile, outplot, lines_cut=0, r_cut=999 ,i_cut=999 ,k_cut=999, verbose=False):
-#    '''
-#    Given U and ne calculated from the Mstar and the SFR in gne_une.
-#    get the plot of the medians of these quantities in masses bins.
-#    Compare the plots between the data calculated from the average SFR and
-#    from the SFR calculated from the LC photons.
-#
-#    Parameters
-#    ----------
-#    outplot : string
-#     Path to the folder where save the plot.
-#    verbose : boolean
-#     If True print out messages.
-#    lines_cut : float
-#     Minimum flux for emision lines (Ha, Hb, OIII, NII and SII; Units: erg s^-1 cm^-2).
-#    r_cut : float
-#     Maximum r magnitude.
-#    i_cut : float
-#     Maximum i magnitude.
-#    k_cut : float
-#     Maximum k magnitude.
-#
-#    Notes
-#    -------
-#    Medians U and ne for each bin of mass in two differents plots.
-#
-#    '''
-#    
-#    set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=const.h)
-#    U_ne = ['u', 'ne']
-#    cm = plt.get_cmap('tab10')  # Colour map to draw colours from
-#    color = []
-#
-#    # Prepare the bins
-#    mmin = 9.25
-#    mmax = 12.25
-#    dm = 0.2
-#    mbins = np.arange(mmin, (mmax + dm), dm)
-#    mbinsH = np.arange(mmin, mmax, dm)
-#    mhist = mbinsH + dm * 0.5
-#
-#    for iu, une in enumerate(U_ne):
-#        
-#        if iu==0:
-#            mmin = 9.5
-#            mmax = 11.5
-#            dm = 0.2
-#            mbins = np.arange(mmin, (mmax + dm), dm)
-#            mbinsH = np.arange(mmin, mmax, dm)
-#            mhist = mbinsH + dm * 0.5
-#            
-#            fig, ax = plt.subplots(2, 1, figsize=(10,20), sharex=True, sharey=True)
-#
-#            for axis in ax.flat:
-#                axis.tick_params(labelsize=35)
-#                axis.set_xlim((mmin,mmax))
-#                axis.set_ylim((-4.75,-1.25))
-#                # axis.locator_params(axis='both', nbins=6)
-#                axis.locator_params(axis='x', nbins=6)
-#                axis.locator_params(axis='y', nbins=12)
-#                axis.grid()
-#                
-#            ax[1].set_xlabel(r'$\log M_*$ [M$_\odot$]',size=35)
-#            ylabels = [r'$\log U_{\rm SF}$',r'$\log U_{\rm SF}$',r'$\log U_{\rm AGN}$']
-#        else:
-#            mmin = 9.25
-#            mmax = 12.25
-#            dm = 0.2
-#            mbins = np.arange(mmin, (mmax + dm), dm)
-#            mbinsH = np.arange(mmin, mmax, dm)
-#            mhist = mbinsH + dm * 0.5
-#            
-#            plt.figure()
-#            plt.xlabel(r'$\log M_*$ [M$_\odot$]',size=15)
-#            plt.ylim((1.25,2.75))
-#            plt.ylabel(r'$\log n_e$ [cm$^{-3}$]',size=15)
-#
-#        plotf = outplot + '/test_medians_'+ une+'.pdf'
-#        col = cm(iu)
-#        color.append(col)# col change for each iteration
-#        
-#        if iu==0:
-#            plt.ylim((-4.75,-1.25))
-#            ylabels = [r'$\log U_{\rm SF}$',r'$\log U_{\rm SF}$',r'$\log U_{\rm AGN}$']
-#        else:
-#            plt.ylim((1.25,2.75))
-#            plt.ylabel(r'$\log n_e$ [cm$^{-3}$]',size=15)
-#
-#        with h5py.File(infile,'r') as file:
-#            f = file['data']
-#            
-#            lu = f['lu_sfr'][:,0]
-#            lne = f['lne_sfr'][:,0]
-#            
-#            lus = [f['lu_sfr'][:,0],f['lu_sfr'][:,1],f['lu_agn'][:,0]]
-#            lnes = [f['lne_sfr'][:,0],f['lne_sfr'][:,1]]
-#            lms = np.log10(10**f['lms'][:,0] + 10**f['lms'][:,1])
-#            
-#            Ha_flux_sfr = np.sum(f['Halpha_sfr_flux'],axis=0)
-#            Ha_flux_agn = np.sum(f['Halpha_agn_flux'],axis=0)
-#            Ha_flux = Ha_flux_sfr + Ha_flux_agn
-#            
-#            Hb_flux_sfr = np.sum(f['Hbeta_sfr_flux'],axis=0)
-#            Hb_flux_agn = np.sum(f['Hbeta_agn_flux'],axis=0)
-#            Hb_flux = Hb_flux_sfr + Hb_flux_agn
-#            
-#            NII6548_flux_sfr = np.sum(f['NII6584_sfr_flux'],axis=0)
-#            NII6548_flux_agn = np.sum(f['NII6584_agn_flux'],axis=0)
-#            NII6548_flux = NII6548_flux_sfr + NII6548_flux_agn
-#            
-#            OII3727_flux_sfr = np.sum(f['OII3727_sfr_flux'],axis=0)
-#            OII3727_flux_agn = np.sum(f['OII3727_agn_flux'],axis=0)
-#            OII3727_flux = OII3727_flux_sfr + OII3727_flux_agn
-#            
-#            OIII5007_flux_sfr = np.sum(f['OIII5007_sfr_flux'],axis=0)
-#            OIII5007_flux_agn = np.sum(f['OIII5007_agn_flux'],axis=0)
-#            OIII5007_flux = OIII5007_flux_sfr + OIII5007_flux_agn
-#            
-#            SII6731_flux_sfr = np.sum(f['SII6731_sfr_flux'],axis=0)
-#            SII6731_flux_agn = np.sum(f['SII6731_agn_flux'],axis=0)
-#            SII6731_flux = SII6731_flux_sfr + SII6731_flux_agn
-#            
-#            SII6717_flux_sfr = np.sum(f['SII6717_sfr_flux'],axis=0)
-#            SII6717_flux_agn = np.sum(f['SII6717_agn_flux'],axis=0)
-#            SII6731_flux = SII6731_flux + SII6717_flux_sfr + SII6717_flux_agn
-#            
-#            r = f['m_R'][0]
-#            k = f['m_K'][0]
-#            I = f['m_I'][0]
-#            
-#        for num in range(3):
-#            
-#            if iu==1 and num==2:
-#                break
-#            
-#            if iu==0:
-#                lu = lus[num]
-#            else:
-#                lu = lnes[num]
-#            
-#            cut = (np.where((lu!=const.notnum)&(lne!=const.notnum)&
-#                             (Ha_flux>lines_cut)&(Hb_flux>lines_cut)&(OIII5007_flux>lines_cut)&
-#                              (NII6548_flux>lines_cut)&(SII6731_flux>lines_cut)&
-#                              (r<r_cut)&(I<i_cut)&(k<k_cut))[0])
-#            
-#            # MEDIANS:
-#            median = perc_2arrays(mbins, lms[cut], lu[cut], 0.5)
-#        
-#            ind = np.where(median>const.notnum)
-#            
-#            median = median[ind]
-#        
-#            # QUARTILES:
-#            up_qu = perc_2arrays(mbins, lms[cut], lu[cut], 0.75)[ind]
-#            low_qu = perc_2arrays(mbins, lms[cut], lu[cut], 0.25)[ind]    
-#            qu = np.append([median-low_qu],[up_qu-median],axis=0)
-#            
-#            if iu==0:
-#                if num==0:
-#                    eb1=ax[0].errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, 
-#                                 color='black')
-#                    eb1[-1][0].set_linestyle('-')
-#                elif num==1:
-#                    eb2=ax[0].errorbar(mhist[ind],median,marker='o',ls='--',yerr=qu,elinewidth=0.5, capsize=5, 
-#                                 color='black')
-#                    eb2[-1][0].set_linestyle('--')
-#                else:
-#                    ax[1].errorbar(mhist[ind],median,marker='o',yerr=qu,elinewidth=0.5, capsize=5, 
-#                             color='black')
-#
-#                if num==0:
-#                    ax[0].set_ylabel(ylabels[num],size=35)
-#                elif num==2:
-#                    ax[1].set_ylabel(ylabels[num],size=35)
-#            else:
-#                if num==0:
-#                    eb1=plt.errorbar(mhist[ind],median,marker='o',ls='-',yerr=qu,elinewidth=0.5, capsize=5, 
-#                             color='black')
-#                    eb1[-1][0].set_linestyle('-')
-#                else:
-#                    eb2=plt.errorbar(mhist[ind],median,marker='o',ls='--',yerr=qu,elinewidth=0.5, capsize=5, 
-#                             color='black')
-#                    eb2[-1][0].set_linestyle('--')
-#        
-#        if iu==1:
-#            plt.xlim((mmin,mmax))
-#            plt.grid()
-#        else:
-#            fig.subplots_adjust(wspace=0,hspace=0)
-#        plt.savefig(plotf)
-#        # plt.close()
-#
-#
+
 
 #def test_interpolation(infile, zz, verbose=True):
 #    '''
@@ -914,44 +717,197 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
 
     # Get redshift and model information from data
     filenom = root+'0.hdf5'
-    print(filenom); exit()
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
     photmod_sfr = header.attrs['photmod_sfr']
     photmod_agn = header.attrs['photmod_agn']
+    mp = header.attrs['mp_Msun']
+    lms = f['data/lms'][:,:]
     f.close()
 
+    # Get number of components
+    ncomp = np.shape(lms)[1]
+    
     # Prep plots
-    fig, ((axsz, axsm), (axaz, axam)) = plt.subplots(2, 2, figsize=(30, 15),
-                                                     sharex='col',
-                                                     sharey='row')
+    fig = plt.figure(figsize=(30, 30))
+    gs = fig.add_gridspec(2, 2, hspace=0, wspace=0)
+    (axsz, axsm), (axaz, axam) = gs.subplots(sharex='col', sharey='row')
     
     # Read limits for properties and photoionisation models
     minUs, maxUs = get_limits(propname='U', photmod=photmod_sfr)
-    minZs, maxZs = get_limits(propname='Z', photmod=photmod_sfr)
-
+    umins = minUs - 0.5; umaxs = maxUs +0.5
+    minZs1, maxZs1 = get_limits(propname='Z', photmod=photmod_sfr)
+    minZs = np.log10(minZs1); maxZs = np.log10(maxZs1);
+    
     minUa, maxUa = get_limits(propname='U', photmod=photmod_agn)
-    minZa, maxZa = get_limits(propname='Z', photmod=photmod_agn)
-    print(minUa,maxUa); exit()
+    umina = minUa - 0.5; umaxa = maxUa +0.5
+    minZa1, maxZa1 = get_limits(propname='Z', photmod=photmod_agn)
+    minZa = np.log10(minZa1); maxZa = np.log10(maxZa1);
 
-    xtit = 'log$_{10}(Z/Z_{\odot})$'
+    zmin = min(minZs,minZa)-0.5
+    zmax = max(maxZs,maxZa)+0.5
+    
+    xtit = 'log$_{10}(Z)$'
     axaz.set_xlabel(xtit)
-    axaz.set_xlim(min(minZs,minZa)-0.5, max(maxZs,maxZa)+0.5)
-    axaz.set_ylim(min(minUs,minUa)-0.5, max(maxUs,maxUa)+0.5)
-    ytit = 'log$_{10}U_{\rm AGN}$'
+    ytit = 'log$_{10}U_{\\rm AGN}$'
     axaz.set_ylabel(ytit)
-    ytit = 'log$_{10}U_{\rm SF}$'
+    axaz.set_xlim(zmin, zmax)
+    axaz.set_ylim(umina, umaxa)
+
+    ytit = 'log$_{10}U_{\\rm SF}$'
     axsz.set_ylabel(ytit)
+    axsz.set_ylim(umins, umaxs)
 
-    xtit = 'log$_{10}(M_*/M_{\odot})$'
+    xtit = 'log$_{10}(M_*/M_{\\odot})$'
     axam.set_xlabel(xtit)
-    axaz.set_xlim(min(minZs,minZa)-0.5, max(maxZs,maxZa)+0.5)
 
+    # Squares with limits
+    axsz.add_patch(plt.Rectangle((minZs, minUs), maxZs-minZs,
+                                 maxUs-minUs,ec="r",fc="none"))
+    axaz.add_patch(plt.Rectangle((minZa, minUa), maxZa-minZa,
+                                 maxUa-minUa,ec="r",fc="none"))
+
+    # Initialise counters per component
+    tots, tota, ina, ins = [np.zeros(ncomp) for i in range(4)]
+    
+    # Read data in each subvolume
+    for ivol in range(subvols):
+        filenom = root+str(ivol)+'.hdf5' #; print(filenom); exit()
+        f = h5py.File(filenom, 'r')
+        lms1 = f['data/lms'][:]
+
+        # Read SF information from file
+        lusfr1 = f['sfr_data/lu_sfr'][:]
+        lzsfr1 = f['sfr_data/lz_sfr'][:]
+
+        # Read AGN information if it exists
+        AGN = True
+        if 'agn_data' not in f.keys(): AGN = False
+        if AGN: 
+            luagn1 = f['agn_data/lu_agn'][:]
+            lzagn1 = f['agn_data/lz_agn'][:]
+        f.close()
+
+        if ivol == 0:
+            lms = lms1; lusfr = lusfr1; lzsfr = lzsfr1
+            if AGN: luagn = luagn1; lzagn = lzagn1
+        else:
+            lms = np.append(lms,lms1,axis=0)
+            lusfr = np.append(lusfr,lusfr1,axis=0)
+            lzsfr = np.append(lzsfr,lzsfr1,axis=0)            
+            if AGN:
+                luagn = np.append(luagn,luagn1,axis=0)
+                lzagn = np.append(lzagn,lzagn1,axis=0)            
+            
+        # Check number of galaxies within model limits
+        if (len(lusfr) != len(lzsfr)):
+            print('WARNING plots.umz, SFR: different length arrays U and Z')
+        if AGN:
+            if (len(luagn) != len(lzagn)):
+                print('WARNING plots.umz, AGN: different length arrays U and Z')
+
+        # Loop over components 
+        for i in range(ncomp):
+            u = lusfr[:,i]
+            z = lzsfr[:,i]
+            tots[i] = tots[i] + len(u)
+            ind = np.where((u>=minUs) & (u<=maxUs) &
+                           (z>=minZs) & (z<=maxZs))
+            ins[i] = ins[i] + np.shape(ind)[1]
+            
+            if AGN:
+                u = luagn[:,i]
+                z = lzagn[:,i]
+                tota[i] = tota[i] + len(u)
+                ind = np.where((u>=minUa) & (u<=maxUa) &
+                               (z>=minZa) & (z<=maxZa))
+                ina[i] = ina[i] + np.shape(ind)[1]
+
+    # Set limits for the mass
+    
+    # Bins for percentiles
+    dx = 0.2
+
+    zbins = np.arange(zmin, (zmax + dx), dx)
+    zhist = zbins + dx * 0.5
+
+    mmin = max(np.log10(mp),np.min(lms[lms>0]))
+    mmax = np.max(lms[lms>0])
+    mbins = np.arange(mmin, (mmax + dx), dx)
+    mhist = mbins + dx * 0.5
+    axam.set_xlim(mmin, mmax)
+    
+    # Find percentages within photoionisation model limits
+    for i in range(ncomp):
+        col = np.array([plt.cm.tab20(float(i)/ncomp)])
+        
+        leg = "{} components {}, {:.1f}% in".format(int(tots[i]),i,
+                                                 ins[i]*100./tots[i])
+        m = lms[:,i]
+        u = lusfr[:,i]
+        z = lzsfr[:,i]
+
+        ind = np.where((u>const.notnum) & (z>const.notnum))
+        if (np.shape(ind)[1]>len(zbins)):
+            for isub in range(2):
+                arr = z[ind]
+                if isub == 1: arr = m[ind]
+
+                med = perc_2arrays(zbins, arr, u[ind], 0.5)        
+                upq = perc_2arrays(zbins, arr, u[ind], 0.84)
+                low = perc_2arrays(zbins, arr, u[ind], 0.16)
+                jnd = np.where(med>const.notnum)
+                if (np.shape(jnd)[1]>1):
+                    el = med[jnd] - low[jnd]
+                    eh = upq[jnd] - med[jnd]
+                    if isub == 0:
+                        axsz.errorbar(zhist[jnd],med[jnd],
+                                      yerr=[el,eh],c=col,label=leg)
+                    elif isub == 1:
+                        axsm.errorbar(mhist[jnd],med[jnd],yerr=[el,eh],c=col)
+        else:
+            axsz.scatter(z[ind],u[ind],c=col,label=leg)
+            axsm.scatter(m[ind],u[ind],c=col)                
+            
+        if AGN:
+            leg = "{} components {}, {:.1f}% in".format(int(tota[i]),i,
+                                                     ina[i]*100./tota[i])
+            u = luagn[:,i]
+            z = lzagn[:,i]
+
+            ind = np.where((u>const.notnum) & (z>const.notnum))
+            if (np.shape(ind)[1]>len(zbins)):
+                for isub in range(2):
+                    arr = z[ind]
+                    if isub == 1: arr = m[ind]
+
+                    med = perc_2arrays(zbins, arr, u[ind], 0.5)        
+                    upq = perc_2arrays(zbins, arr, u[ind], 0.84)
+                    low = perc_2arrays(zbins, arr, u[ind], 0.16)
+                    jnd = np.where(med>const.notnum)
+                    if (np.shape(jnd)[1]>1):
+                        el = med[jnd] - low[jnd]
+                        eh = upq[jnd] - med[jnd]
+                        if isub == 0:
+                            axaz.errorbar(zhist[jnd],med[jnd],
+                                          yerr=[el,eh],c=col,label=leg)
+                        elif isub == 1:
+                            axam.errorbar(mhist[jnd],med[jnd],
+                                          yerr=[el,eh],c=col)
+            else:
+                axaz.scatter(z[ind],u[ind],c=col,label=leg)
+                axam.scatter(m[ind],u[ind],c=col)                
+            
+
+    # Legend
+    leg = axsz.legend(loc=1); leg.draw_frame(False)
+    leg = axaz.legend(loc=1); leg.draw_frame(False)
+   
     # Output
     pltpath = io.get_plotpath(root)
     plotnom = pltpath+'umz.pdf'
-    #plt.savefig(plotnom)
+    plt.savefig(plotnom)
     if verbose:
          print(f'* U plots: {plotnom}')
     
@@ -1193,7 +1149,7 @@ def test_bpts(root, subvols=1, outpath=None, verbose=True):
             chatot = np.append(chatot,cha)
 
     # Add colorbar
-    sm = ScalarMappable(cmap=cmap) # Create ScalarMappable
+    sm = cm.ScalarMappable(cmap=cmap) # Create ScalarMappable
     sm.set_array(chatot)    
     cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
     if AGN:
@@ -1262,7 +1218,7 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
 
     # Get output file for BPT plot
-    #umz = test_umz(root,subvols=subvols,verbose=verbose)
+    umz = test_umz(root,subvols=subvols,verbose=verbose)
     
     # Get output file for BPT plot
     bpt = test_bpts(root,subvols=subvols,verbose=verbose)
