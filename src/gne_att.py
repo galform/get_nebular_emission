@@ -103,7 +103,7 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, c
     Al_Av = cardelli(wavelength)
     sectheta = 1./costheta
 
-    mean_col_dens_disc_log = (np.log10(Mcold_disc*h0) + np.log10(const.Msun_to_kg) - 
+    mean_col_dens_disc_log = (np.log10(Mcold_disc*h0) + np.log10(const.Msun) - 
     np.log10(1.4*const.mp*np.pi)-2.*np.log10(a_disc*rhalf_mass_disc*h0*const.Mpc_to_cm))
     
     tau_disc = np.log10(Al_Av) + np.log10((Z_disc/const.zsun)**s) + mean_col_dens_disc_log - np.log10(2.1e21)

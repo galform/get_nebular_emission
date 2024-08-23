@@ -129,14 +129,14 @@ def alpha_B(T):
 
 def surface_density(x,M,reff,profile='exponential',verbose=True):
     '''
-    Given the mass of the desired component of the galaxy, the disk effective radius
-    and a distance to the center, it calculates the surface density at that distance.
+    Given the mass of a disk, M, its effective radius, reff,
+    the surface density is calculated at a given distance from the center, x.
 
     Parameters
     ----------
-    x : floats
+    x : array of floats
      Distance to the center in which surface density is going to be calculated (Mpc).
-    M : floats
+    M : array of floats
      Mass of the desired component of the galaxy (Msun).
     reff : floats
      Effective radius of the galaxy (Mpc)
@@ -187,7 +187,7 @@ def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
     surf_den : floats
     '''
     
-    profiles = ['exponential']
+    profiles = [profile]
     
     if profile not in profiles:
         if verbose:
@@ -195,7 +195,7 @@ def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
-        ind = np.where((M>1e-5)&(reff>1e-5))[0]
+        ind = np.where((M>1e-5)&(reff>1e-5))[0]  ###here limitis to 0
         mass_enclosed = np.zeros(M.shape)
         if len(x) > 1:
             mass_enclosed[ind] = (M[ind]/reff[ind])*(reff[ind] - np.exp(-x[ind]/reff[ind])*reff[ind] - x[ind]*np.exp(-x[ind]/reff[ind]))
@@ -237,12 +237,12 @@ def enclosed_mass_sphere(x,M,reff,profile='exponential',verbose=True):
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
-        ind = np.where((M>1e-5)&(reff>1e-5))[0]
+        ind = np.where((M>1e-5)&(reff>1e-5))[0] ###here limits, shouldn't be 0?
         mass_enclosed = np.zeros(M.shape)
         if len(x) > 1:
             mass_enclosed[ind] = (M[ind]/(2*reff[ind]**3))*(2*reff[ind]**3 - np.exp(-x[ind]/reff[ind])*reff[ind]*(2**reff[ind]**2 + 2*reff[ind]*x[ind] + x[ind]**2))
         else:
-            mass_enclosed[ind] = (M[ind]/(2*reff[ind]**3))*(2*reff[ind]**3 - np.exp(-x[0]/reff[ind])*reff[ind]*(2**reff[ind]**2 + 2*reff[ind]*x[0] + x[0]**2))
+            mass_enclosed[ind] = (M[ind]/(2*reff[ind]**3))*(2*reff[ind]**3 - np.exp(-x[0]/reff[ind])*reff[ind]*(2**reff[ind]**2 + 2*reff[ind]*x[0] + x[0]**2)) ###here different eqs from mine
         
         return mass_enclosed
 
@@ -301,7 +301,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
-        reff = const.halfmass_to_reff*r_hm # GALFORM
+        reff = const.halfmass_to_reff*r_hm # GALFORM ###here not to be hardwired
         
         if bulge:
             M_enclosed = enclosed_mass_sphere(x,M,reff,profile=profile,verbose=verbose)
@@ -536,7 +536,7 @@ def calculate_epsilon(epsilon_param,max_r,filenom,nH=const.nH_AGN,
     if epsilon_param.shape[0] == 2: #2
         Mg, r = epsilon_param
         # Mg = Mg + Mg_bulge
-        ind_epsilon = np.where((Mg>5e-5)&(r>5e-5))
+        ind_epsilon = np.where((Mg>5e-5)&(r>5e-5)) ###here why this arbitrary values?
         epsilon = np.zeros(Mg.shape)
         ng = np.zeros(Mg.shape)
         if len(max_r) > 1:
@@ -750,13 +750,13 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     cte = np.zeros(np.shape(lssfr))
     
     for comp in range(len(Q[0])):
-        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                               ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
         
         if ng_ratio != None:
             epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
         
-        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c)    
+        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c_cm)    
     
     lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
@@ -804,7 +804,7 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
     
     if (np.shape(ind)[1]>1):
         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
-        lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma / const.c)
+        lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma / const.c_cm)
         
     ind = np.where((lssfr > const.notnum) &
                    (lms > 0) &
@@ -821,13 +821,13 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
     cte = np.zeros(np.shape(lssfr))
     
     for comp in range(len(Q[0])):
-        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                               ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
         
         if ng_ratio != None:
             epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
         
-        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c)    
+        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c_cm)    
     
     lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
     
@@ -939,13 +939,13 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
             lu, lne, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
-                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                                       ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
                 
                 if ng_ratio != None:
                     epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
-                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c)    
+                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c_cm)    
             
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
@@ -957,7 +957,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
                 
                 epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
                 
-                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*const.c)) 
+                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*const.c_cm)) 
                  * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
                 
             cte[cte==0] = 1e-50

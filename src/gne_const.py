@@ -1,37 +1,34 @@
 import numpy as np
-#from astroML.cosmology import Cosmology
-
-#--------------------------------------------
-#   Conversion factors:
-#--------------------------------------------
-kg_to_Msun=1./(1.989e30)
-Msun_to_kg=1.989e30
-Mpc_to_cm=3.086e24
-yr_to_s=3.154e7
-#--------------------------------------------
 
 notnum = -999.
 testlimit = 50
 
-mp = 1.67e-27 # Proton mass, kg
-c = 2.998e10 # Light velocity, cm/s
+mp   = 1.67e-27            # Proton mass, kg
+c    = 2.998e8             # Light velocity, m/s
+c_cm = 2.998e10            # Light velocity, cm/s
 planck = 4.135e-15*1.6e-12 # Planck constant, erg*s
-boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
 G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
 nH_gal = 100  # cm^-3
 
 zsun = 0.0134 # Asplund 2009
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
-Lbolsun = 3.826e33 # egr/s
+Lbolsun = 3.826e33 # erg/s
+Msun    = 1.989e30 # kg
+pc      = 3.086e16 # m
 
 #--------------------------------------------
-#   Orsi et. al. 2014
+#   Conversion factors:
 #--------------------------------------------
-Z0_orsi = 0.012
-q0_orsi = 2.8e7 # cm/s
+kg_to_Msun= 1./Msun
+Mpc_to_cm = pc*1e8
+yr_to_s   = 365*24*60*60
 #--------------------------------------------
+boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
 
+#--------------------------------------------
+#   Possible models:
+#--------------------------------------------
 photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
            'feltre16': r"data/nebular_data/feltre16_tables/limits_feltre.txt"}
@@ -42,9 +39,16 @@ attmods = ['ratios', 'cardelli89']
 
 inputformats = ['txt','hdf5']
 
+#--------------------------------------------
+#   Orsi et. al. 2014
+#--------------------------------------------
+Z0_orsi = 0.012
+q0_orsi = 2.8e7 # cm/s
+#--------------------------------------------
 
-######### IMF transformations (Lacey et al. 2016) 
-
+#--------------------------------------------
+#   IMF transformations (Lacey et al. 2016) 
+#--------------------------------------------
 # M1 = (IMF_M2/IMF_M1) * M2 
 IMF_M = {'Kennicut': 1, 'Salpeter': 0.47, 'Kroupa': 0.74, 'Chabrier': 0.81, 
             'Baldry&Glazebrook': 0.85, 'Top-heavy': 1.11}
@@ -135,12 +139,17 @@ fbh = 0.005 # Fraction of the mass of stars formed in a starburst accreted onto 
 beta = 1 - alpha_adaf/0.55
 acc_rate_crit_visc = 0.001*(lambda_adaf/0.0005)*((1-beta)/beta)*alpha_adaf**2 
 # Boundary between the two adaf regimes
-
 spin_bh = 0.67 # 0, 0.3, 0.5, 0.67, 0.9, 0.95, 1
 
-# Lagos et. al 2008:
-kappa_agn = 5.44e-4#2.46e-4 3.17e-4 5.44e-4
-kappa_agn_exp = 0.597 #0.624 #0.460 0.597
+# From Table 1 in McCarthy+16
+e_r_agn = 0.1
+e_f_agn = 0.15
+
+# Fit of GP20 data to equation 1 in Henriques et al. 2016: 
+kagn = 5.44e-4 
+kagn_exp = 0.597
+
+#Lagos et. al 2008:
 # 1e-4  # Efficiency of cold gas accretion onto the BH during gas cooling (1e-4 in Lagos et. al)
 
 # Lacey et. al 2016
@@ -272,11 +281,6 @@ def coef_att_line_model_func(z=0):
 #------------------------------------------
 #   GALFORM:
 #------------------------------------------
-#vol_pm = 542.16**3. # Volume of the P-Millenium simulation
-#vol_sage = 1000**3  # Volume of the UNITSIM1
-
-# GALFORM tables have [0,1,3,5,6,7,8] of the gutkin16 model.
-
 reff_to_scale_high = 0.0875
 halfmass_to_reff = 1/1.67
 

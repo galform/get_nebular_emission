@@ -124,23 +124,24 @@ mg_r50 = [6,11,19,12]
 # The way of obtaining Lagn is indicated in AGNinputs.
 # The calcultions require different black hole (BH) parameters.
 # AGNinputs='Lagn' if Lagn in input
-#            Lagn_params=[Lagn] in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
-# AGNinputs='acc_rate' for a calculation from
+#            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
+#            Lagn_params=[Lagn, Mbh] 
+# AGNinputs='Mdot_hh' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]  
-# AGNinputs='acc_stb' for a calculation from
+#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
+# AGNinputs='Mdot_stb_hh' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh,Mspin] or [Mdot_stb,Mdot_hh,Mbh] 
+#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
 # AGNinputs='radio_mode' for a calculation from
 #            the mass of the hot gas, Mhot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mhot,Mbh,Mspin] or [Mhot,Mbh] 
+#            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
 # AGNinputs='quasar_mode' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
@@ -156,8 +157,13 @@ mg_r50 = [6,11,19,12]
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-AGNinputs = 'Lagn'
-Lagn_params=[17,21]
+#AGNinputs = 'Lagn'; Lagn_params=[17,21]
+#AGNinputs = 'Mdot_hh'; Lagn_params=[16,21]
+#AGNinputs = 'Mdot_stb_hh'; Lagn_params=[15,16,21]
+AGNinputs = 'radio_mode'; Lagn_params=[9,21]
+#AGNinputs = 'quasar_mode'; Lagn_params=[25,12,?,21]
+#AGNinputs = 'complete'; Lagn_params=[25,12,?,9,21]
+
 
 # AGN emission calculation is done assuming that the available metallicity 
     # value is the one corresponding to the NLR, i.e. the metallicity
@@ -213,8 +219,8 @@ att_params= [11,6,4]
 ####################################################
 
 # Include other parameters in the output files
-extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','magK','magR','magR_SDSS','magI',
-                      'Mdot_stb','Mdot_hh','Mhot','Lagn']
+extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','magK','magR',
+                      'magR_SDSS','magI','Mdot_stb','Mdot_hh','Mhot','Lagn']
 extra_params_labels = ['Gal. type (central = 0)',
                        r'Black hole mass ($M_\odot \ h^{-1}$)',
                        r'Halo mass ($M_\odot \ h^{-1}$)',
