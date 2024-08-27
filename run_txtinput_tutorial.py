@@ -158,11 +158,11 @@ mg_r50 = [6,11,19,12]
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
 #AGNinputs = 'Lagn'; Lagn_params=[17,21]
-#AGNinputs = 'Mdot_hh'; Lagn_params=[16,21]
-#AGNinputs = 'Mdot_stb_hh'; Lagn_params=[15,16,21]
-AGNinputs = 'radio_mode'; Lagn_params=[9,21]
-#AGNinputs = 'quasar_mode'; Lagn_params=[25,12,?,21]
-#AGNinputs = 'complete'; Lagn_params=[25,12,?,9,21]
+#AGNinputs = 'Mdot_hh'; Lagn_params=[16,8,21]
+#AGNinputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
+AGNinputs = 'radio_mode'; Lagn_params=[9,8]
+#AGNinputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
+#AGNinputs = 'complete'; Lagn_params=[25,12,14,9,21]
 
 
 # AGN emission calculation is done assuming that the available metallicity 
