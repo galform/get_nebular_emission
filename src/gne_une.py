@@ -8,7 +8,6 @@ import numpy as np
 import h5py
 import src.gne_const as c
 from src.gne_stats import perc_2arrays
-from src.gne_Z import get_Zagn
     
 def alpha_B(T):
     '''
@@ -907,22 +906,17 @@ def get_une(lms_o, lssfr_o, lzgas_o,filenom,
             ng_ratio = c.high_to_low
         else:
             ng_ratio = 1.
-                    
-    if Z_central and origin=='agn':
-        lzgas = get_Zagn(lms_o,lzgas_o)
-    else:
-        lzgas = np.copy(lzgas_o)
-    
+                        
     if unemod not in c.unemods:
         if verbose:
             print('STOP (gne_une): Unrecognised model to get U and ne.')
             print('                Possible unemod= {}'.format(c.unemods))
         sys.exit()
     elif (unemod == 'kashino20'):
-        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas,T,ng_ratio,IMF)
+        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
     elif (unemod == 'orsi14'):
-        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas,T,q0,z0,gamma,ng_ratio)
+        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
     elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas,T,epsilon,ng_ratio,origin,IMF)
+        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,origin,IMF)
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio

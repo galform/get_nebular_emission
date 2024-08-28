@@ -164,16 +164,12 @@ AGNinputs = 'Lagn'; Lagn_params=[17,21]
 #AGNinputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
 #AGNinputs = 'complete'; Lagn_params=[25,12,14,9,21]
 
-
-# AGN emission calculation is done assuming that the available metallicity 
-    # value is the one corresponding to the NLR, i.e. the metallicity
-    # around the center of the galaxy.
 # Z_central=True indicates that the given Zgas is that for the NLR or
 #                at the center of the gal.
 # Z_central=False indicates that the given Zgas is not central,
 #           Z-gradients from the literature (f(M*_gal)) are used to estimate
 #           the Zgas at the galactic center
-Z_central=True
+Z_central=False
 
 ####################################################
 ########  Redshift evolution parameters  ###########

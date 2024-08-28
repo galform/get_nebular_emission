@@ -7,7 +7,7 @@ import time
 import numpy as np
 import src.gne_io as io
 from src.gne_une import get_une
-from src.gne_Z import get_Ztremonti, get_Ztremonti2
+from src.gne_Z import get_Zagn, get_Ztremonti, get_Ztremonti2
 from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as c
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
@@ -304,6 +304,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         h0=h0,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
+
+        if not Z_central:
+            lzgas = get_Zagn(lms,lzgas)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
             get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
