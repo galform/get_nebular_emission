@@ -212,10 +212,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         
     Q_sfr, lu_sfr, lne_sfr, lzgas_sfr, epsilon_sfr, ng_ratio = \
         get_une_sfr(lms, lssfr, lzgas, outfile,
-                q0=q0, z0=z0, T=T,
+                q0=q0, z0=z0,gamma=gamma, T=T,
                 epsilon_param_z0=epsilon_param_z0,
-                origin='sfr', unemod=unemod_sfr,
-                gamma=gamma, verbose=verbose)
+                unemod=unemod_sfr,verbose=verbose)
 
     if verbose:
         print('SF:')
@@ -307,11 +306,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             lzgas = correct_Zagn(lms,lzgas)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
-            get_une_agn(lms,lssfr, lzgas, outfile,
-                    Lagn=Lagn, T=T,
-                    epsilon_param=epsilon_param,
-                    origin='agn',
-                    unemod=unemod_agn, verbose=verbose)
+            get_une_agn(lms,lssfr,lzgas, outfile,
+                        Lagn=Lagn, T=T,
+                        epsilon_param=epsilon_param,
+                        unemod=unemod_agn, verbose=verbose)
 
         if verbose:
             print('AGN:')

@@ -832,7 +832,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
             q0=c.q0_orsi, z0=c.Z0_orsi, ng_ratio=None,
             gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            unemod='kashino20', origin='sfr', verbose=True):
+            unemod='kashino20',verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -865,8 +865,6 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
      Assumed IMF for the input data of each component.
     unemod : string
      Model to go from galaxy properties to U and ne.
-    origin : string
-     Source of the ionizing photons.
     verbose : boolean
      Yes = print out messages.
 
@@ -882,14 +880,10 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,origin=origin)
+    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,origin='sfr')
     
     epsilon = None
-    if origin=='agn' and epsilon_param is not None:
-        epsilon = calculate_epsilon(epsilon_param,[c.radius_NLR],
-                                    filenom,nH=c.nH_AGN,
-                                    profile='exponential',verbose=verbose)
-    if origin=='sfr' and epsilon_param_z0 is not None:
+    if epsilon_param_z0 is not None:
         # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
         # epsilon = ng/c.nH_gal
         # epsilon[epsilon>1] = 1
@@ -904,17 +898,17 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
         else:
             ng_ratio = 1.
                         
-    if unemod not in c.unemods:
+    if unemod not in c.unemod_sfr:
         if verbose:
-            print('STOP (gne_une): Unrecognised model to get U and ne.')
-            print('                Possible unemod= {}'.format(c.unemods))
+            print('STOP (gne_une_sfr): Unrecognised model to get U and ne.')
+            print('                  Possible unemod= {}'.format(c.unemod_sfr))
         sys.exit()
     elif (unemod == 'kashino20'):
         lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
     elif (unemod == 'orsi14'):
         lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
     elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,origin,IMF)
+        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio
 
@@ -923,7 +917,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
             Lagn=None, ng_ratio=None,
             T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            unemod='panuzzo03', origin='agn', verbose=True):
+            unemod='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -952,8 +946,6 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
      Assumed IMF for the input data of each component.
     unemod : string
      Model to go from galaxy properties to U and ne.
-    origin : string
-     Source of the ionizing photons.
     verbose : boolean
      Yes = print out messages.
 
@@ -969,38 +961,20 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin=origin)
+    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin='agn')
     
     epsilon = None
-    if origin=='agn' and epsilon_param is not None:
+    if epsilon_param is not None:
         epsilon = calculate_epsilon(epsilon_param,[c.radius_NLR],
                                     filenom,nH=c.nH_AGN,
                                     profile='exponential',verbose=verbose)
-    if origin=='sfr' and epsilon_param_z0 is not None:
-        # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
-        # epsilon = ng/c.nH_gal
-        # epsilon[epsilon>1] = 1
-            
-        
-        # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
-        # ng_ratio = n_ratio(ng,ng_z0)
-        if redshift==0.8:
-            ng_ratio = c.med_to_low
-        elif redshift==1.5:
-            ng_ratio = c.high_to_low
-        else:
-            ng_ratio = 1.
-                        
-    if unemod not in c.unemods:
+
+    if unemod not in c.unemod_agn:
         if verbose:
-            print('STOP (gne_une): Unrecognised model to get U and ne.')
-            print('                Possible unemod= {}'.format(c.unemods))
+            print('STOP (gne_une_agn): Unrecognised model to get U and ne.')
+            print('                  Possible unemod= {}'.format(c.unemod_agn))
         sys.exit()
-    elif (unemod == 'kashino20'):
-        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
-    elif (unemod == 'orsi14'):
-        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
     elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,origin,IMF)
+        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF)
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio
