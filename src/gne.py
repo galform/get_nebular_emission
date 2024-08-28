@@ -307,11 +307,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             lzgas = correct_Zagn(lms,lzgas)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
-            get_une_agn(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
+            get_une_agn(lms,lssfr, lzgas, outfile,
                     Lagn=Lagn, T=T,
                     epsilon_param=epsilon_param,
                     origin='agn',
-                    unemod=unemod_agn, gamma=gamma, verbose=verbose)
+                    unemod=unemod_agn, verbose=verbose)
 
         if verbose:
             print('AGN:')

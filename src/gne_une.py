@@ -853,8 +853,6 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     gamma : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    Lagn : floats
-     Bolometric luminosity of the AGNs (erg/s).
     T : float
      Typical temperature of ionizing regions.
     epsilon_param : floats
@@ -922,10 +920,10 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
-            q0=c.q0_orsi, z0=c.Z0_orsi, Lagn=None, ng_ratio=None,
-            gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
+            Lagn=None, ng_ratio=None,
+            T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            unemod='kashino20', origin='sfr', verbose=True):
+            unemod='panuzzo03', origin='agn', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -940,12 +938,6 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z)).
-    q0 : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    z0 : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    gamma : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     Lagn : floats
      Bolometric luminosity of the AGNs (erg/s).
     T : float
