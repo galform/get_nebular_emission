@@ -495,7 +495,7 @@ def n_ratio(n,n_z0):
     
 
 
-def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
+def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
     get the rate of ionizing photons in photon per second.
@@ -512,32 +512,22 @@ def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
      Assumed IMF for the input data of each component.
     Lagn : floats
      Bolometric luminosity of the AGN (Lsun).
-    origin : string
-     Source of the emission (star-forming region or AGN)
      
     Returns
     -------
     Q : floats
     '''
     
-    if origin=='sfr':
-        Q = np.zeros(np.shape(lssfr))
-        for comp in range(Q.shape[1]):
-            ###here ref. missing
-            Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn
-            # lssfr[:,comp] = np.log10(Q[:,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[:,comp]
-            
-    if origin=='agn':
-        Q = np.zeros(np.shape(lssfr))
-        ind = np.where(Lagn>0)[0]
-        # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
-        Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
-        # This implies that Lion = Lbol/5 aprox.
-            
+    Q = np.zeros(np.shape(lssfr))
+    for comp in range(Q.shape[1]):
+        ###here ref. missing
+        Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn
+        # lssfr[:,comp] = np.log10(Q[:,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[:,comp]
+                        
     return Q
 
 
-def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
+def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
     get the rate of ionizing photons in photon per second.
@@ -554,27 +544,16 @@ def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
      Assumed IMF for the input data of each component.
     Lagn : floats
      Bolometric luminosity of the AGN (Lsun).
-    origin : string
-     Source of the emission (star-forming region or AGN)
      
     Returns
     -------
     Q : floats
     '''
-    
-    if origin=='sfr':
-        Q = np.zeros(np.shape(lssfr))
-        for comp in range(Q.shape[1]):
-            ###here ref. missing
-            Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn
-            # lssfr[:,comp] = np.log10(Q[:,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[:,comp]
-            
-    if origin=='agn':
-        Q = np.zeros(np.shape(lssfr))
-        ind = np.where(Lagn>0)[0]
-        # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
-        Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
-        # This implies that Lion = Lbol/5 aprox.
+    Q = np.zeros(np.shape(lssfr))
+    ind = np.where(Lagn>0)[0]
+    # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
+    Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
+    # This implies that Lion = Lbol/5 aprox.
             
     return Q
 
@@ -922,7 +901,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,origin='sfr')
+    Q = phot_rate_sfr(lssfr=lssfr_o,lms=lms_o,IMF=IMF)
     
     epsilon = None
     if epsilon_param_z0 is not None:
@@ -956,7 +935,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
-            Lagn=None, ng_ratio=None,
+                Lagn=None, ng_ratio=None,IMF=['Kennicut','Kennicut'],
             T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,unemod='panuzzo03', verbose=True):
     '''
@@ -1000,7 +979,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=['Kennicut','Kennicut'],Lagn=Lagn,origin='agn')
+    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
     
     epsilon = None
     if epsilon_param is not None:
@@ -1014,6 +993,6 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
             print('                  Possible unemod= {}'.format(c.unemod_agn))
         sys.exit()
     elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=['Kennicut','Kennicut'])
+        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio
