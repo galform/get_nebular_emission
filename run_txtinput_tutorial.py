@@ -157,23 +157,23 @@ mg_r50 = [6,11,19,12]
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-#AGNinputs = 'Lagn'; Lagn_params=[17,21]
+AGNinputs = 'Lagn'; Lagn_params=[17,21]
 #AGNinputs = 'Mdot_hh'; Lagn_params=[16,8,21]
 #AGNinputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
-AGNinputs = 'radio_mode'; Lagn_params=[9,8]
+#AGNinputs = 'radio_mode'; Lagn_params=[9,8]
 #AGNinputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
 #AGNinputs = 'complete'; Lagn_params=[25,12,14,9,21]
 
 
 # AGN emission calculation is done assuming that the available metallicity 
     # value is the one corresponding to the NLR, i.e. the metallicity
-    # around the center of the galaxy. 
-# If Z_central_cor is True, the code estimates the value of metallicity around 
-    # the center of the galaxy from the mean value, following the function
-    # Zagn from the gne_une module.
-# If Z_central_cor is False, it is assumed that the metallicity is 
-    # approximatelly uniform in the galaxy.
-Z_central_cor=True
+    # around the center of the galaxy.
+# Z_central=True indicates that the given Zgas is that for the NLR or
+#                at the center of the gal.
+# Z_central=False indicates that the given Zgas is not central,
+#           Z-gradients from the literature (f(M*_gal)) are used to estimate
+#           the Zgas at the galactic center
+Z_central=True
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -269,7 +269,7 @@ for ivol in range(subvols):
             unemod_agn=unemod_agn, photmod_agn=photmod_agn,
             mg_r50=mg_r50,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_central_cor=Z_central_cor,
+            Z_central=Z_central,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,

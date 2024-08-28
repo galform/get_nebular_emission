@@ -6,9 +6,10 @@
 import time
 import numpy as np
 import src.gne_io as io
-from src.gne_une import get_une, calculate_ng_hydro_eq, Z_blanc, get_Ztremonti, get_Ztremonti2, n_ratio
+from src.gne_une import get_une
+from src.gne_Z import get_Ztremonti, get_Ztremonti2
 from src.gne_Lagn import bursttobulge,get_Lagn
-import src.gne_const as const
+import src.gne_const as c
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
 from src.gne_att import attenuation
 from src.gne_plots import make_testplots
@@ -17,7 +18,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
         unemod_sfr='kashino19',photmod_sfr='gutkin16',
-        q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
+        q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3,
         T=10000,xid_sfr=0.3,co_sfr=1,
         m_sfr_z=[None],mtot2mdisk=True,LC2sfr=False,
         inoh=False,
@@ -26,7 +27,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         unemod_agn='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         mg_r50=[None],AGNinputs='Lagn', Lagn_params=[None],
-        Z_central_cor=False,flag=0,
+        Z_central=False,flag=0,
         infile_z0=None,
         att=False,attmod='cardelli89',
         att_params=[None], att_ratio_lines=[None],
@@ -98,7 +99,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Inputs for AGN's bolometric luminosity calculations.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    Z_central_correction : boolean
+    Z_centralrection : boolean
      If False, the code supposes the central metallicity of the galaxy to be the mean one.
      If True, the code estimates the central metallicity of the galaxy from the mean one.
     mg_r50 : list
@@ -238,7 +239,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         sfr = np.zeros(shape=np.shape(lssfr))
         for comp in range(ncomp):
             sfr[:,comp] = 10**(lms[:,comp]+lssfr[:,comp])
-            nebline_sfr[comp] = nebline_sfr[comp]*const.Lbolsun*sfr[:,comp]
+            nebline_sfr[comp] = nebline_sfr[comp]*c.Lbolsun*sfr[:,comp]
 
     if verbose:
         print(' Emission calculated.')
@@ -306,7 +307,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
             get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
-                    Z_central_cor=Z_central_cor,Lagn=Lagn, T=T,
+                    Z_central=Z_central,Lagn=Lagn, T=T,
                     epsilon_param=epsilon_param,
                     origin='agn',
                     unemod=unemod_agn, gamma=gamma, verbose=verbose)
