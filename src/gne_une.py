@@ -829,7 +829,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
 
 
 def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
-            q0=c.q0_orsi, z0=c.Z0_orsi, Lagn=None, ng_ratio=None,
+            q0=c.q0_orsi, z0=c.Z0_orsi, ng_ratio=None,
             gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,IMF=['Kennicut','Kennicut'],
             unemod='kashino20', origin='sfr', verbose=True):
@@ -884,7 +884,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin=origin)
+    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,origin=origin)
     
     epsilon = None
     if origin=='agn' and epsilon_param is not None:
