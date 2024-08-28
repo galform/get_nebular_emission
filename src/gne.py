@@ -6,8 +6,8 @@
 import time
 import numpy as np
 import src.gne_io as io
-from src.gne_une import get_une
-from src.gne_Z import correct_Zagn, get_Ztremonti, get_Ztremonti2
+from src.gne_une import get_une_sfr, get_une_agn
+from src.gne_Z import correct_Z, correct_Zagn
 from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as c
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
@@ -208,9 +208,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if zeq is not None:
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
         lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
+        ###here this does not work due to Lagn_param, need to change this dependency
         
     Q_sfr, lu_sfr, lne_sfr, lzgas_sfr, epsilon_sfr, ng_ratio = \
-        get_une(lms, lssfr, lzgas, outfile,
+        get_une_sfr(lms, lssfr, lzgas, outfile,
                 q0=q0, z0=z0, T=T,
                 epsilon_param_z0=epsilon_param_z0,
                 origin='sfr', unemod=unemod_sfr,
@@ -306,8 +307,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             lzgas = correct_Zagn(lms,lzgas)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
-            get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
-                    Z_central=Z_central,Lagn=Lagn, T=T,
+            get_une_agn(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
+                    Lagn=Lagn, T=T,
                     epsilon_param=epsilon_param,
                     origin='agn',
                     unemod=unemod_agn, gamma=gamma, verbose=verbose)

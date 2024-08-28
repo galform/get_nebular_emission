@@ -828,9 +828,101 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     return lu, lne, lzgas
 
 
-def get_une(lms_o, lssfr_o, lzgas_o,filenom,
+def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
             q0=c.q0_orsi, z0=c.Z0_orsi, Lagn=None, ng_ratio=None,
-            Z_central=False,
+            gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
+            epsilon=0.01,IMF=['Kennicut','Kennicut'],
+            unemod='kashino20', origin='sfr', verbose=True):
+    '''
+    Given the global properties of a galaxy or a region
+    (log10(Mstar), log10(sSFR) and 12+log(O/H)),
+    get the characteristics of the ionising region
+    (ionizing parameter, U, and the electron density, ne).
+
+    Parameters
+    ----------
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z)).
+    q0 : float
+     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+    z0 : float
+     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+    gamma : float
+     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+    Lagn : floats
+     Bolometric luminosity of the AGNs (erg/s).
+    T : float
+     Typical temperature of ionizing regions.
+    epsilon_param : floats
+     Parameters for epsilon calculation.
+    epsilon_param_z0 : floats
+     Parameters for epsilon calculation in the sample of galaxies at redshift 0.
+    epsilon : floats
+     Volume filling-factor of the galaxy.
+    IMF : array of strings
+     Assumed IMF for the input data of each component.
+    unemod : string
+     Model to go from galaxy properties to U and ne.
+    origin : string
+     Source of the ionizing photons.
+    verbose : boolean
+     Yes = print out messages.
+
+    Returns
+    -------
+    Q, lu, lne, lzgas : floats
+    '''
+
+    # Read redshift
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    redshift = header.attrs['redshift']
+    f.close()
+    
+    # ncomp = len(lms[0])
+    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin=origin)
+    
+    epsilon = None
+    if origin=='agn' and epsilon_param is not None:
+        epsilon = calculate_epsilon(epsilon_param,[c.radius_NLR],
+                                    filenom,nH=c.nH_AGN,
+                                    profile='exponential',verbose=verbose)
+    if origin=='sfr' and epsilon_param_z0 is not None:
+        # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
+        # epsilon = ng/c.nH_gal
+        # epsilon[epsilon>1] = 1
+            
+        
+        # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
+        # ng_ratio = n_ratio(ng,ng_z0)
+        if redshift==0.8:
+            ng_ratio = c.med_to_low
+        elif redshift==1.5:
+            ng_ratio = c.high_to_low
+        else:
+            ng_ratio = 1.
+                        
+    if unemod not in c.unemods:
+        if verbose:
+            print('STOP (gne_une): Unrecognised model to get U and ne.')
+            print('                Possible unemod= {}'.format(c.unemods))
+        sys.exit()
+    elif (unemod == 'kashino20'):
+        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
+    elif (unemod == 'orsi14'):
+        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
+    elif (unemod == 'panuzzo03'):
+        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,origin,IMF)
+        
+    return Q, lu, lne, lzgas, epsilon, ng_ratio
+
+
+def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
+            q0=c.q0_orsi, z0=c.Z0_orsi, Lagn=None, ng_ratio=None,
             gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,IMF=['Kennicut','Kennicut'],
             unemod='kashino20', origin='sfr', verbose=True):
