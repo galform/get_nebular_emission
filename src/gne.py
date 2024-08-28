@@ -7,7 +7,7 @@ import time
 import numpy as np
 import src.gne_io as io
 from src.gne_une import get_une
-from src.gne_Z import get_Zagn, get_Ztremonti, get_Ztremonti2
+from src.gne_Z import correct_Zagn, get_Ztremonti, get_Ztremonti2
 from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as c
 from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
@@ -27,7 +27,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         unemod_agn='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         mg_r50=[None],AGNinputs='Lagn', Lagn_params=[None],
-        Z_central=False,flag=0,
+        Z_central=True,zeq=None,
         infile_z0=None,
         att=False,attmod='cardelli89',
         att_params=[None], att_ratio_lines=[None],
@@ -204,14 +204,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                testing=testing,
                                verbose=verbose)
     
-    # Modification of the stellar mass-metallicity relation
-    # 0 for no correction
-    if flag==1:
-        lzgas = get_Ztremonti(lms,lzgas,Lagn_param)[1]
-    elif flag==2:
+    # Modification of the stellar mass-metallicity relation    
+    if zeq is not None:
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
-        lzgas = get_Ztremonti2(lms,lzgas,minZ,maxZ,Lagn_param)
-            
+        lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
+        
     Q_sfr, lu_sfr, lne_sfr, lzgas_sfr, epsilon_sfr, ng_ratio = \
         get_une(lms, lssfr, lzgas, outfile,
                 q0=q0, z0=z0, T=T,
@@ -306,7 +303,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         testing=testing,verbose=verbose)
 
         if not Z_central:
-            lzgas = get_Zagn(lms,lzgas)
+            lzgas = correct_Zagn(lms,lzgas)
         
         Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
             get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,

@@ -39,6 +39,8 @@ attmods = ['ratios', 'cardelli89']
 
 inputformats = ['txt','hdf5']
 
+zeq = ['tremonti2004','tremonti2004b','leblanc']
+
 #--------------------------------------------
 #   Orsi et. al. 2014
 #--------------------------------------------
