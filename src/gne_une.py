@@ -495,7 +495,49 @@ def n_ratio(n,n_z0):
     
 
 
-def phot_rate(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
+def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
+    '''
+    Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
+    get the rate of ionizing photons in photon per second.
+
+    Parameters
+    ----------
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z)).
+    IMF : array of strings
+     Assumed IMF for the input data of each component.
+    Lagn : floats
+     Bolometric luminosity of the AGN (Lsun).
+    origin : string
+     Source of the emission (star-forming region or AGN)
+     
+    Returns
+    -------
+    Q : floats
+    '''
+    
+    if origin=='sfr':
+        Q = np.zeros(np.shape(lssfr))
+        for comp in range(Q.shape[1]):
+            ###here ref. missing
+            Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn
+            # lssfr[:,comp] = np.log10(Q[:,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[:,comp]
+            
+    if origin=='agn':
+        Q = np.zeros(np.shape(lssfr))
+        ind = np.where(Lagn>0)[0]
+        # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
+        Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
+        # This implies that Lion = Lbol/5 aprox.
+            
+    return Q
+
+
+def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
     get the rate of ionizing photons in photon per second.
@@ -880,7 +922,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,origin='sfr')
+    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,origin='sfr')
     
     epsilon = None
     if epsilon_param_z0 is not None:
@@ -916,8 +958,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
             Lagn=None, ng_ratio=None,
             T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-            epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            unemod='panuzzo03', verbose=True):
+            epsilon=0.01,unemod='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -942,8 +983,6 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
      Parameters for epsilon calculation in the sample of galaxies at redshift 0.
     epsilon : floats
      Volume filling-factor of the galaxy.
-    IMF : array of strings
-     Assumed IMF for the input data of each component.
     unemod : string
      Model to go from galaxy properties to U and ne.
     verbose : boolean
@@ -961,7 +1000,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin='agn')
+    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=['Kennicut','Kennicut'],Lagn=Lagn,origin='agn')
     
     epsilon = None
     if epsilon_param is not None:
@@ -975,6 +1014,6 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
             print('                  Possible unemod= {}'.format(c.unemod_agn))
         sys.exit()
     elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF)
+        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=['Kennicut','Kennicut'])
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio
