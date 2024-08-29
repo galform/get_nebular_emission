@@ -95,21 +95,21 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 # All available nebular models can be seen in gne_const module.
 # nH: number density calculated assuming a profile for the gas
+#     This is used to calculate the filling factor, using agn_nH_params.
+#     If une_agn_nH=None, a constant filling factor will be assumed.
+une_agn_nH   = None #'exponential' 
 # spec: model for the spectral distribution of the AGN
-# U: model to calculate the ionising parameter
-une_agn_nH   = 'exponential'
 une_agn_spec = 'feltre16'
+# U: model to calculate the ionising parameter
 une_agn_U    = 'panuzzo03'
 # PHOTOIONIZATION model for AGN regions to get line luminosities
 photmod_agn = 'feltre16'
 
-# mg_r50 has the location of the following parameters:
+# agn_nH_params has the location of the following parameters:
 # Cold gas mass (Mg).
 # Baryonic half-mass radius (R50).
-# mg_r50 is a list of lists with either the column number
-# for each parameters or the name of the HDF5 variable.
-# For bulge and disk:
-mg_r50 = ['data/mgas_disk','data/rhm_disk',
+# For disk and bulge: agn_nH_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
+agn_nH_params = ['data/mgas_disk','data/rhm_disk',
           'data/mgas_bulge','data/rhm_bulge']
     
 # The AGNs bolometric luminosity, Lagn, is needed.
@@ -248,7 +248,7 @@ for ivol in range(subvols):
             inoh=inoh,IMF = IMF,
             AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
             une_agn_U=une_agn_U,photmod_agn=photmod_agn,
-            mg_r50=mg_r50,
+            agn_nH_params=agn_nH_params,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central=Z_central,
             infile_z0=infile_z0, 

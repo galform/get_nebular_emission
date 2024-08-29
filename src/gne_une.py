@@ -952,8 +952,8 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
                 Lagn=None, ng_ratio=None,IMF=['Kennicut','Kennicut'],
                 T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-                epsilon=0.03,une_agn_nH='exponential',
-                une_agn_spec='feltre16',une_agn_U='panuzzo03', verbose=True):
+                une_agn_nH=None,une_agn_spec='feltre16',
+                une_agn_U='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),

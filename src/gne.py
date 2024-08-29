@@ -27,7 +27,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         AGN=False,une_agn_nH='exponential',une_agn_spec='feltre16',
         une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
-        mg_r50=[None],AGNinputs='Lagn', Lagn_params=[None],
+        agn_nH_params=[None],AGNinputs='Lagn', Lagn_params=[None],
         Z_central=True,zeq=None,
         infile_z0=None,
         att=False,attmod='cardelli89',
@@ -103,7 +103,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     Z_centralrection : boolean
      If False, the code supposes the central metallicity of the galaxy to be the mean one.
      If True, the code estimates the central metallicity of the galaxy from the mean one.
-    mg_r50 : list
+    agn_nH_params : list
      Inputs for the calculation of the volume-filling factor.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
@@ -204,7 +204,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if infile_z0 is not None:
         epsilon_param_z0 = io.read_data(infile_z0,cut,
                                         inputformat=inputformat,
-                                        params=mg_r50,
+                                        params=agn_nH_params,
                                         testing=testing,
                                         verbose=verbose)
 
@@ -291,7 +291,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
-        epsilon_param = io.get_agndata(infile,mg_r50,selection=cut,
+        epsilon_param = io.get_agndata(infile,agn_nH_params,selection=cut,
                                        h0=h0,units_h0=units_h0,
                                        inputformat=inputformat,IMF=IMF,
                                        testing=testing,verbose=verbose)
