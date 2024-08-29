@@ -63,8 +63,10 @@ units_L40h2=False
 ####################################################
 
 # All available models can be seen in gne_const module.
-# NEBULAR model connecting global properties to nebular parameters
-unemod_sfr='kashino20'
+# NEBULAR model connecting global properties to ionising properties:
+# nH: number density of Hydrogen (or electrons); U: ionising parameter
+une_sfr_nH='kashino20'
+une_sfr_U='kashino20'
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
@@ -104,10 +106,13 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
-
-# All available models can be seen in gne_const module.
-# NEBULAR model connecting global properties to nebular parameters
-unemod_agn = 'panuzzo03'
+# All available nebular models can be seen in gne_const module.
+# nH: number density calculated assuming a profile for the gas
+# spec: model for the spectral distribution of the AGN
+# U: model to calculate the ionising parameter
+une_agn_nH   = 'exponential'
+une_agn_spec = 'feltre16'
+une_agn_U    = 'panuzzo03'
 # PHOTOIONIZATION model for AGN regions to get line luminosities
 photmod_agn = 'feltre16'
 
@@ -258,11 +263,12 @@ for ivol in range(subvols):
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
-            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
+            une_sfr_nH=une_sfr_nH, une_sfr_U=une_sfr_U,
+            photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,
-            unemod_agn=unemod_agn, photmod_agn=photmod_agn,
+            AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
+            une_agn_U=une_agn_U,photmod_agn=photmod_agn,
             mg_r50=mg_r50,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Z_central=Z_central,

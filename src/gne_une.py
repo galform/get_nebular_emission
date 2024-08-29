@@ -853,7 +853,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
             q0=c.q0_orsi, z0=c.Z0_orsi, ng_ratio=None,
             gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
             epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            unemod='kashino20',verbose=True):
+            une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -884,8 +884,10 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
      Volume filling-factor of the galaxy.
     IMF : array of strings
      Assumed IMF for the input data of each component.
-    unemod : string
-     Model to go from galaxy properties to U and ne.
+    une_sfr_nH : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    une_sfr_U : string
+        Model to go from galaxy properties to ionising parameter.
     verbose : boolean
      Yes = print out messages.
 
@@ -919,17 +921,30 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
         else:
             ng_ratio = 1.
                         
-    if unemod not in c.unemod_sfr:
+    if une_sfr_nH not in c.une_sfr_nH:
         if verbose:
-            print('STOP (gne_une_sfr): Unrecognised model to get U and ne.')
-            print('                  Possible unemod= {}'.format(c.unemod_sfr))
+            print('STOP (gne_une): Unrecognised model to get nH (HII).')
+            print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
-    elif (unemod == 'kashino20'):
+    elif (une_sfr_nH == 'kashino20'):
         lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
-    elif (unemod == 'orsi14'):
+    elif (une_sfr_nH == 'orsi14'):
         lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
-    #elif (unemod == 'panuzzo03'):
-    #    lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
+    elif (une_sfr_nH == 'panuzzo03_sfr'):
+        lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
+
+                        
+    if une_sfr_U not in c.une_sfr_U:
+        if verbose:
+            print('STOP (gne_une): Unrecognised model to get U (HII).')
+            print('                Possible options= {}'.format(c.une_sfr_nH))
+        sys.exit()
+    elif (une_sfr_U == 'kashino20'):
+        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
+    elif (une_sfr_U == 'orsi14'):
+        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
+    elif (une_sfr_U == 'panuzzo03_sfr'):
+        lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio
 
@@ -937,7 +952,8 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
                 Lagn=None, ng_ratio=None,IMF=['Kennicut','Kennicut'],
                 T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-                epsilon=0.03,unemod='panuzzo03', verbose=True):
+                epsilon=0.03,une_agn_nH='exponential',
+                une_agn_spec='feltre16',une_agn_U='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -962,8 +978,10 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
      Parameters for epsilon calculation in the sample of galaxies at redshift 0.
     epsilon : floats
      Volume filling-factor of the galaxy.
-    unemod : string
-     Model to go from galaxy properties to U and ne.
+    une_agn_nH : string
+        Profile assumed for the distribution of gas around NLR AGN.
+    une_agn_spec : string
+        Model for the spectral distribution for AGNs.
     verbose : boolean
      Yes = print out messages.
 
@@ -987,12 +1005,12 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
                                     filenom,nH=c.nH_AGN,
                                     profile='exponential',verbose=verbose)
 
-    if unemod not in c.unemod_agn:
+    if une_agn_U not in c.une_agn_U:
         if verbose:
-            print('STOP (gne_une_agn): Unrecognised model to get U and ne.')
-            print('                  Possible unemod= {}'.format(c.unemod_agn))
+            print('STOP (gne_une): Unrecognised model to get U (AGN).')
+            print('                Possible options= {}'.format(c.une_agn_U))
         sys.exit()
-    elif (unemod == 'panuzzo03'):
+    elif (une_agn_U == 'panuzzo03'):
         lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
     return Q, lu, lne, epsilon, ng_ratio

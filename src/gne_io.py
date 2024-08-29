@@ -763,8 +763,10 @@ def get_agndata(infile,cols,selection=None,
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
                     units_h0=False,outpath=None,
-                    unemod_sfr=None, unemod_agn=None,
-                    photmod_sfr=None, photmod_agn=None,
+                    une_sfr_nH=None, une_sfr_U=None,
+                    photmod_sfr=None,
+                    une_agn_nH=None, une_agn_spec=None,
+                    une_agn_U=None, photmod_agn=None,
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -793,12 +795,18 @@ def generate_header(infile,redshift,snap,
         True if input units with h    
     outpath : string
         Path to output
-    unemod_sfr : string
-        Model to go from galaxy properties to U and ne.
-    unemod_agn : string
-        Model to go from galaxy properties to U and ne.
+    une_sfr_nH : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    une_sfr_U : string
+        Model to go from galaxy properties to ionising parameter.
     photmod_sfr : string
         Photoionisation model to be used for look up tables.
+    une_agn_nH : string
+        Profile assumed for the distribution of gas around NLR AGN.
+    une_agn_spec : string
+        Model for the spectral distribution for AGNs.
+    une_sfr_U : string
+        Model to go from galaxy properties to AGN ionising parameter.
     photmod_agn : string
         Photoionisation model to be used for look up tables.
     attmod : string
@@ -834,9 +842,12 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'vol_Mpc3'] = vol
     head.attrs[u'mp_Msun'] = mp
 
-    if unemod_sfr is not None: head.attrs[u'unemod_sfr'] = unemod_sfr
-    if unemod_agn is not None: head.attrs[u'unemod_agn'] = unemod_agn
+    if une_sfr_nH is not None: head.attrs[u'une_sfr_nH'] = une_sfr_nH
+    if une_sfr_U is not None: head.attrs[u'une_sfr_U'] = une_sfr_U    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
+    if une_agn_nH is not None: head.attrs[u'une_agn_nH'] = une_agn_nH
+    if une_agn_spec is not None: head.attrs[u'une_agn_spec'] = une_agn_spec
+    if une_agn_U is not None: head.attrs[u'une_agn_U'] = une_agn_U
     if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
     if attmod is not None: head.attrs[u'attmod'] = attmod
     hf.close()
@@ -877,12 +888,6 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
      Names of the datasets in the output files for the extra parameters.
     extra_params_labels : strings
      Description labels of the datasets in the output files for the extra parameters.
-    attmod : string
-      Attenuation model.
-    unemod_sfr : string
-      Model to go from galaxy properties to U and ne.
-    photmod_sfr : string
-      Photoionisation model to be used for look up tables.
     '''
 
     # Read information on models

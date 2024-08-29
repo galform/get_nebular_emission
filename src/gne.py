@@ -17,14 +17,15 @@ from src.gne_plots import make_testplots
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
-        unemod_sfr='kashino19',photmod_sfr='gutkin16',
-        q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3,
+        une_sfr_nH='kashino19',une_sfr_U='kashino19',
+        photmod_sfr='gutkin16',
+        q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
         T=10000,xid_sfr=0.3,co_sfr=1,
         m_sfr_z=[None],mtot2mdisk=True,LC2sfr=False,
         inoh=False,
         IMF=['Kennicut','Kennicut'],imf_cut_sfr=100,
-        AGN=False,
-        unemod_agn='panuzzo03',photmod_agn='feltre16',
+        AGN=False,une_agn_nH='exponential',une_agn_spec='feltre16',
+        une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         mg_r50=[None],AGNinputs='Lagn', Lagn_params=[None],
         Z_central=True,zeq=None,
@@ -116,10 +117,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Description labels of the datasets in the output files for the extra parameters.
     attmod : string
      Attenuation model.
-    unemod_sfr : string
-     Model to go from galaxy properties to U and ne.
-    unemod_agn : string
-     Model to go from galaxy properties to U and ne.
+    une_sfr_nH : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    une_sfr_U : string
+        Model to go from galaxy properties to ionising parameter.
+    une_agn_nH : string
+        Profile assumed for the distribution of gas around NLR AGN.
+    une_agn_spec : string
+        Model for the spectral distribution for AGNs.
+    une_sfr_U : string
+        Model to go from galaxy properties to AGN ionising parameter.
     photmod_sfr : string
      Photoionisation model to be used for look up tables.
     photmod_agn : string
@@ -164,8 +171,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
-                                 unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
+                                 une_sfr_nH=une_sfr_nH,une_sfr_U=une_sfr_U,
                                  photmod_sfr=photmod_sfr,
+                                 une_agn_nH=une_agn_nH,
+                                 une_agn_spec=une_agn_spec,
+                                 une_agn_U=une_agn_U,
                                  photmod_agn=photmod_agn,
                                  attmod=attmod,verbose=verbose)
 
@@ -214,7 +224,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         get_une_sfr(lms, lssfr, lzgas, outfile,
                 q0=q0, z0=z0,gamma=gamma, T=T,
                 epsilon_param_z0=epsilon_param_z0,
-                unemod=unemod_sfr,verbose=verbose)
+                une_sfr_nH=une_sfr_nH,une_sfr_U=une_sfr_U,verbose=verbose)
 
     if verbose:
         print('SF:')
@@ -311,7 +321,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             get_une_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
                         epsilon_param=epsilon_param,
-                        unemod=unemod_agn, verbose=verbose)
+                        une_agn_nH=une_agn_nH,
+                        une_agn_spec=une_agn_spec,
+                        une_agn_U=une_agn_U,verbose=verbose)
 
         if verbose:
             print('AGN:')

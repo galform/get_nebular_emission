@@ -27,26 +27,31 @@ yr_to_s   = 365*24*60*60
 boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
 
 #--------------------------------------------
-#   Possible models:
+#   Possible options and models:
 #--------------------------------------------
+inputformats = ['txt','hdf5']
+
+zeq = ['tremonti2004','tremonti2004b','leblanc']
+
+une_sfr_nH = ['kashino20']
+une_sfr_U  = ['kashino20', 'orsi14', 'panuzzo03_sfr']
+
+une_agn_nH   = ['exponential']
+une_agn_spec = ['feltre16']
+une_agn_U    = ['panuzzo03']
+
 photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
            'feltre16': r"data/nebular_data/feltre16_tables/limits_feltre.txt"}
 
-unemod_sfr = ['kashino20', 'orsi14', 'panuzzo03']
-unemod_agn = ['panuzzo03']
-
 attmods = ['ratios', 'cardelli89']
-
-inputformats = ['txt','hdf5']
-
-zeq = ['tremonti2004','tremonti2004b','leblanc']
 
 #--------------------------------------------
 #   Orsi et. al. 2014
 #--------------------------------------------
 Z0_orsi = 0.012
 q0_orsi = 2.8e7 # cm/s
+gamma_orsi = 1.3
 #--------------------------------------------
 
 #--------------------------------------------
