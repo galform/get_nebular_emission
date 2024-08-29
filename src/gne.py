@@ -27,7 +27,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         AGN=False,une_agn_nH='exponential',une_agn_spec='feltre16',
         une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
-        agn_nH_params=[None],AGNinputs='Lagn', Lagn_params=[None],
+        agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
         Z_central=True,zeq=None,
         infile_z0=None,
         att=False,attmod='cardelli89',
@@ -291,11 +291,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     del nebline_sfr, nebline_sfr_att
         
     if AGN:
-        epsilon_param = io.get_agndata(infile,agn_nH_params,selection=cut,
-                                       h0=h0,units_h0=units_h0,
-                                       inputformat=inputformat,IMF=IMF,
-                                       testing=testing,verbose=verbose)
-        
         ###here to be removed from here
         Lagn_param = io.read_data(infile,cut,
                                   inputformat=inputformat,
@@ -305,22 +300,30 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
         ###here to be removed until here (affecting to tremonti aprox)
+        if Z_central:
+            lzgas_agn = np.copy(lzgas)
+        else:
+            lzgas_agn = correct_Zagn(lms,lzgas)
+
+        agn_nH_param = None
+        if une_agn_nH is not None:
+            agn_nH_param = io.get_agndata(infile,agn_nH_params,selection=cut,
+                                           h0=h0,units_h0=units_h0,
+                                           inputformat=inputformat,IMF=IMF,
+                                           testing=testing,verbose=verbose)
         
+
+            
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,AGNinputs=AGNinputs,
                         h0=h0,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
-
-        if Z_central:
-            lzgas_agn = np.copy(lzgas)
-        else:
-            lzgas_agn = correct_Zagn(lms,lzgas)
         
         Q_agn, lu_agn, lne_agn, epsilon_agn, ng_ratio = \
             get_une_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
-                        epsilon_param=epsilon_param,
+                        agn_nH_param=agn_nH_param,
                         une_agn_nH=une_agn_nH,
                         une_agn_spec=une_agn_spec,
                         une_agn_U=une_agn_U,verbose=verbose)

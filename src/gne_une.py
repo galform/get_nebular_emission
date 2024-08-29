@@ -951,7 +951,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
                 Lagn=None, ng_ratio=None,IMF=['Kennicut','Kennicut'],
-                T=10000, epsilon_param=[None], epsilon_param_z0=[None],
+                T=10000, agn_nH_param=None, epsilon_param_z0=[None],
                 une_agn_nH=None,une_agn_spec='feltre16',
                 une_agn_U='panuzzo03', verbose=True):
     '''
@@ -972,7 +972,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
      Bolometric luminosity of the AGNs (erg/s).
     T : float
      Typical temperature of ionizing regions.
-    epsilon_param : floats
+    agn_nH_param : floats
      Parameters for epsilon calculation.
     epsilon_param_z0 : floats
      Parameters for epsilon calculation in the sample of galaxies at redshift 0.
@@ -999,11 +999,11 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     # ncomp = len(lms[0])
     Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
     
-    epsilon = None
-    if epsilon_param is not None:
-        epsilon = calculate_epsilon(epsilon_param,[c.radius_NLR],
+    epsilon = np.full(np.shape(lzgas_o)[0],c.eNGC1976)
+    if une_agn_nH is not None:
+        epsilon = calculate_epsilon(agn_nH_param_param,[c.radius_NLR],
                                     filenom,nH=c.nH_AGN,
-                                    profile='exponential',verbose=verbose)
+                                    profile=une_agn_nH,verbose=verbose)
 
     if une_agn_U not in c.une_agn_U:
         if verbose:
