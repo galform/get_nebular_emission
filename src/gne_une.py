@@ -928,16 +928,16 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
         lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
     elif (unemod == 'orsi14'):
         lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
-    elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
+    #elif (unemod == 'panuzzo03'):
+    #    lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
         
     return Q, lu, lne, lzgas, epsilon, ng_ratio
 
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
                 Lagn=None, ng_ratio=None,IMF=['Kennicut','Kennicut'],
-            T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-            epsilon=0.01,unemod='panuzzo03', verbose=True):
+                T=10000, epsilon_param=[None], epsilon_param_z0=[None],
+                epsilon=0.03,unemod='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -995,4 +995,4 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     elif (unemod == 'panuzzo03'):
         lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
-    return Q, lu, lne, lzgas, epsilon, ng_ratio
+    return Q, lu, lne, epsilon, ng_ratio

@@ -302,11 +302,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
 
-        if not Z_central:
-            lzgas = correct_Zagn(lms,lzgas)
+        if Z_central:
+            lzgas_agn = np.copy(lzgas)
+        else:
+            lzgas_agn = correct_Zagn(lms,lzgas)
         
-        Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
-            get_une_agn(lms,lssfr,lzgas, outfile,
+        Q_agn, lu_agn, lne_agn, epsilon_agn, ng_ratio = \
+            get_une_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
                         epsilon_param=epsilon_param,
                         unemod=unemod_agn, verbose=verbose)
