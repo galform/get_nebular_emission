@@ -54,11 +54,12 @@ units_L40h2=False
 ####################################################
 
 # All available models can be seen in gne_const module.
-# NEBULAR model connecting global properties to nebular parameters
-unemod_sfr='kashino20'
+# NEBULAR model connecting global properties to ionising properties:
+# nH: number density of Hydrogen (or electrons); U: ionising parameter
+une_sfr_nH='kashino20'
+une_sfr_U='kashino20'
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
-
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
@@ -92,13 +93,15 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
-
-# All available models can be seen in gne_const module.
-# NEBULAR model connecting global properties to nebular parameters
-unemod_agn = 'panuzzo03'
+# All available nebular models can be seen in gne_const module.
+# nH: number density calculated assuming a profile for the gas
+# spec: model for the spectral distribution of the AGN
+# U: model to calculate the ionising parameter
+une_agn_nH   = 'exponential'
+une_agn_spec = 'feltre16'
+une_agn_U    = 'panuzzo03'
 # PHOTOIONIZATION model for AGN regions to get line luminosities
 photmod_agn = 'feltre16'
-
 
 # mg_r50 has the location of the following parameters:
 # Cold gas mass (Mg).
@@ -114,23 +117,24 @@ mg_r50 = ['data/mgas_disk','data/rhm_disk',
 # The way of obtaining Lagn is indicated in AGNinputs.
 # The calcultions require different black hole (BH) parameters.
 # AGNinputs='Lagn' if Lagn in input
-#            Lagn_params=[Lagn] in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
-# AGNinputs='acc_rate' for a calculation from
+#            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
+#            Lagn_params=[Lagn, Mbh] 
+# AGNinputs='Mdot_hh' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]  
-# AGNinputs='acc_stb' for a calculation from
+#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
+# AGNinputs='Mdot_stb_hh' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh,Mspin] or [Mdot_stb,Mdot_hh,Mbh] 
+#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
 # AGNinputs='radio_mode' for a calculation from
 #            the mass of the hot gas, Mhot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mhot,Mbh,Mspin] or [Mhot,Mbh] 
+#            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
 # AGNinputs='quasar_mode' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
@@ -146,18 +150,14 @@ mg_r50 = ['data/mgas_disk','data/rhm_disk',
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-AGNinputs = 'Lagn'
-Lagn_params=['data/lagn','data/mstar_bulge']
+AGNinputs = 'Lagn'; Lagn_params=['data/lagn','data/mstar_bulge']
 
-# AGN emission calculation is done assuming that the available metallicity 
-    # value is the one corresponding to the NLR, i.e. the metallicity
-    # around the center of the galaxy. 
-# If Z_central_cor is True, the code estimates the value of metallicity around 
-    # the center of the galaxy from the mean value, following the function
-    # Zagn from the gne_une module.
-# If Z_central_cor is False, it is assumed that the metallicity is 
-    # approximatelly uniform in the galaxy.
-Z_central_cor=True
+# Z_central=True indicates that the given Zgas is that for the NLR or
+#                at the center of the gal.
+# Z_central=False indicates that the given Zgas is not central,
+#           Z-gradients from the literature (f(M*_gal)) are used to estimate
+#           the Zgas at the galactic center
+Z_central=False
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -242,14 +242,15 @@ for ivol in range(subvols):
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
-            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
+            une_sfr_nH=une_sfr_nH, une_sfr_U=une_sfr_U,
+            photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,
-            unemod_agn=unemod_agn, photmod_agn=photmod_agn,
+            AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
+            une_agn_U=une_agn_U,photmod_agn=photmod_agn,
             mg_r50=mg_r50,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_central_cor=Z_central_cor,
+            Z_central=Z_central,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,
