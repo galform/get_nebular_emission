@@ -113,7 +113,7 @@ IMF = ['Kennicut','Kennicut']
 #     but otherwise this can be estimated from either the effective or
 #     half-mass radius ('reff') or simply the radius of the component ('r').
 #     If une_agn_nH=None, a constant filling factor will be assumed.
-une_agn_nH   = ['exponential','reff'] 
+une_agn_nH   = ['exponential','rscale'] 
 # If une_age_nH is not None, agn_nH_params should specify
 # the location of the cold gas mass (Mg) and a radius.
 # agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
