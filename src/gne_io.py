@@ -721,10 +721,10 @@ def get_sfrdata(infile,cols,selection=None,
     return lms,lssfr,lzgas
 
 
-def get_agndata(infile,cols,selection=None,
-                h0=None,units_h0=False,inputformat='hdf5',
-                IMF=['Kennicut','Kennicut'],
-                testing=False,verbose=False):
+def get_data_agnnH(infile,rtype,cols,selection=None,
+                   h0=None,units_h0=False,inputformat='hdf5',
+                   IMF=['Kennicut','Kennicut'],
+                   testing=False,verbose=False):
     '''
     Get Mgas and R50 in the adecuate units.
 
@@ -754,7 +754,13 @@ def get_agndata(infile,cols,selection=None,
     if units_h0:
         vals = vals/h0
 
-    outparams = vals
+    outparams = vals        
+    if rtype == 'reff':
+        # Transform  reff (exponential): rscale = reff/1.678
+        print('tbd')
+    elif rtype == 'r':
+        # Transform  r: rscale = r/2./1.678
+        print('tbd')
     
     return outparams
 
@@ -801,8 +807,8 @@ def generate_header(infile,redshift,snap,
         Model to go from galaxy properties to ionising parameter.
     photmod_sfr : string
         Photoionisation model to be used for look up tables.
-    une_agn_nH : string
-        Profile assumed for the distribution of gas around NLR AGN.
+    une_agn_nH : list of 2 strings
+        Profile assumed for the gas around NLR AGN and type of radii.
     une_agn_spec : string
         Model for the spectral distribution for AGNs.
     une_sfr_U : string
@@ -845,7 +851,7 @@ def generate_header(infile,redshift,snap,
     if une_sfr_nH is not None: head.attrs[u'une_sfr_nH'] = une_sfr_nH
     if une_sfr_U is not None: head.attrs[u'une_sfr_U'] = une_sfr_U    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
-    if une_agn_nH is not None: head.attrs[u'une_agn_nH'] = une_agn_nH
+    if une_agn_nH is not None: head.attrs[u'une_agn_nH'] = une_agn_nH[0]
     if une_agn_spec is not None: head.attrs[u'une_agn_spec'] = une_agn_spec
     if une_agn_U is not None: head.attrs[u'une_agn_U'] = une_agn_U
     if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn

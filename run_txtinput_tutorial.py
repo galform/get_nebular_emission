@@ -106,23 +106,26 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
-# All available nebular models can be seen in gne_const module.
-# nH: number density calculated assuming a profile for the gas
+# nH: number density calculated assuming a profile for the gas ('exponential')
+#     and given a radius for the component.
 #     This is used to calculate the filling factor, using agn_nH_params.
+#     Ideally the scale radius of the bulge and/or disk ('rscale') is given,
+#     but otherwise this can be estimated from either the effective or
+#     half-mass radius ('reff') or simply the radius of the component ('r').
 #     If une_agn_nH=None, a constant filling factor will be assumed.
-une_agn_nH   = None #'exponential' 
+une_agn_nH   = ['exponential','reff'] 
+# If une_age_nH is not None, agn_nH_params should specify
+# the location of the cold gas mass (Mg) and a radius.
+# agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
+agn_nH_params = [6,11,19,12]
 # spec: model for the spectral distribution of the AGN
 une_agn_spec = 'feltre16'
 # U: model to calculate the ionising parameter
 une_agn_U    = 'panuzzo03'
+
 # PHOTOIONIZATION model for AGN regions to get line luminosities
 photmod_agn = 'feltre16'
 
-# agn_nH_params has the location of the following parameters:
-# Cold gas mass (Mg).
-# Baryonic half-mass radius (R50).
-# For disk and bulge: agn_nH_params = [Mg_disk, Rhm_disk, Mg_bulge, Rhm_bulge]
-agn_nH_params = [6,11,19,12]
     
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.

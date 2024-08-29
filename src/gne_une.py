@@ -748,6 +748,107 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
 #     return lu, lne, lzgas
 
 
+def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
+    '''
+    Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
+    the assumed temperature for the ionizing regions, the volume filling-factor
+    and the assumed IMF,
+    get the ionizing parameter, logU, and the electron density, logne,
+    using the model from Panuzzo 2003.
+
+    Parameters
+    ----------
+    Q : floats
+     Rate of ionizing photons (phot/s)
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z)).
+    T : float
+     Typical temperature of ionizing regions.
+    epsilon0 : floats
+     Volume filling-factor of the galaxies.
+    ng_ratio : floats
+     Ratio between the mean particle number density of the cold gas of the 
+     input sample and the sample at redshift 0.
+    origin : string
+     Source of the ionizing photons.
+    IMF : array of strings
+     Assumed IMF for the input data of each component.
+
+    Returns
+    -------
+    lu, lne, lzgas : floats
+    '''
+    
+    lzgas_all = np.copy(lzgas)
+    
+    lu, lne, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
+
+    ind = np.where((lssfr > c.notnum) &
+                   (lms > 0) &
+                   (lzgas_all > c.notnum) &
+                   (Q > 0))
+    
+    # ind1 = np.where((lssfr[:,0] > c.notnum) &
+    #                (lms[:,0] > 0) &
+    #                (lzgas[:,0] > c.notnum) &
+    #                (Q[:,0] > 0))[0]
+    # ind2 = np.where((lssfr[:,1] > c.notnum) &
+    #                (lms[:,1] > 0) &
+    #                (lzgas[:,1] > c.notnum) &
+    #                (Q[:,1] > 0))[0]
+    
+    # ind_comp = [ind1,ind2]
+    
+    ind_comp = []   
+    for comp in range(len(Q[0])):
+        ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+                       (lms[:,comp] > 0) &
+                       (lzgas_all[:,comp] > c.notnum) &
+                       (Q[:,comp] > 0))[0])
+    
+    if (np.shape(ind)[1]>1):
+        
+        epsilon = np.full(np.shape(lssfr),c.notnum)
+        cte = np.zeros(np.shape(lssfr))
+        
+        if origin=='sfr':
+            # lu, lne, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lne, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            
+            for comp in range(len(Q[0])):
+                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+                
+                if ng_ratio != None:
+                    epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+                
+                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+            
+            lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+        
+        if origin=='agn':
+            lne[ind] = 3
+            lzgas[ind] = lzgas_all[ind]
+            
+            for comp in range(len(Q[0])):
+                
+                epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
+                
+                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
+                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
+                
+            cte[cte==0] = 1e-50
+            lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
+            lu[cte==1e-50] = c.notnum
+    
+
+    return lu, lne, lzgas
+
+
 def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     '''
     Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
@@ -1001,7 +1102,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     
     epsilon = np.full(np.shape(lzgas_o)[0],c.eNGC1976)
     if une_agn_nH is not None:
-        epsilon = calculate_epsilon(agn_nH_param_param,[c.radius_NLR],
+        epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
                                     filenom,nH=c.nH_AGN,
                                     profile=une_agn_nH,verbose=verbose)
 

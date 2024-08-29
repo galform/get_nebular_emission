@@ -24,7 +24,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         m_sfr_z=[None],mtot2mdisk=True,LC2sfr=False,
         inoh=False,
         IMF=['Kennicut','Kennicut'],imf_cut_sfr=100,
-        AGN=False,une_agn_nH='exponential',une_agn_spec='feltre16',
+        AGN=False,une_agn_nH=None,une_agn_spec='feltre16',
         une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
@@ -121,8 +121,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         Model to go from galaxy properties to Hydrogen (or e) number density.
     une_sfr_U : string
         Model to go from galaxy properties to ionising parameter.
-    une_agn_nH : string
-        Profile assumed for the distribution of gas around NLR AGN.
+    une_agn_nH : list of 2 strings
+        Profile assumed for the gas around NLR AGN and provided radii.
     une_agn_spec : string
         Model for the spectral distribution for AGNs.
     une_sfr_U : string
@@ -307,12 +307,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         agn_nH_param = None
         if une_agn_nH is not None:
-            agn_nH_param = io.get_agndata(infile,agn_nH_params,selection=cut,
-                                           h0=h0,units_h0=units_h0,
-                                           inputformat=inputformat,IMF=IMF,
-                                           testing=testing,verbose=verbose)
-        
-
+            agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
+                                             agn_nH_params,selection=cut,
+                                             h0=h0,units_h0=units_h0,
+                                             inputformat=inputformat,IMF=IMF,
+                                             testing=testing,verbose=verbose)
             
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,AGNinputs=AGNinputs,

@@ -4,6 +4,9 @@ import shutil
 import unittest
 import src.gne_io as io
 
+txtfile = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.txt'
+hf5file = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.hdf5'
+
 class TestStringMethods(unittest.TestCase):
 
     def test_outroot(self):
@@ -29,16 +32,16 @@ class TestStringMethods(unittest.TestCase):
         #self.assertEqual(io.get_outnom('example.txt',39,ftype='plots'),
         #                 'output/iz39/plots/bpt_example.pdf')
 
-#    def test_isupper(self):
-#        self.assertTrue('FOO'.isupper())
-#        self.assertFalse('Foo'.isupper())
-#
-#    def test_split(self):
-#        s = 'hello world'
-#        self.assertEqual(s.split(), ['hello', 'world'])
-#        # check that s.split fails when the separator is not a string
-#        with self.assertRaises(TypeError):
-#            s.split(2)
+    def test_get_data_agnnH(self):
+        incols = [True, 6, 11, 19, 12]
+        self.assertEqual(io.get_data_agnnH(txtfile,incols,inputformat='txt'),
+                         [6, 11, 19, 12])
 
+        incols = [True, 'data/mgas_disk','data/rhm_disk',
+          'data/mgas_bulge','data/rhm_bulge']
+        self.assertEqual(io.get_data_agnnH(hf5file,incols),
+                         ['data/mgas_disk','data/rhm_disk',
+          'data/mgas_bulge','data/rhm_bulge'])
+        
 if __name__ == '__main__':
     unittest.main()
