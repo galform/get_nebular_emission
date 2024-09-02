@@ -113,7 +113,7 @@ IMF = ['Kennicut','Kennicut']
 #     but otherwise this can be estimated from either the effective or
 #     half-mass radius ('reff') or simply the radius of the component ('r').
 #     If une_agn_nH=None, a constant filling factor will be assumed.
-une_agn_nH   = ['exponential','rscale'] 
+une_agn_nH   = ['exponential','reff'] 
 # If une_age_nH is not None, agn_nH_params should specify
 # the location of the cold gas mass (Mg) and a radius.
 # agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
@@ -125,7 +125,6 @@ une_agn_U    = 'panuzzo03'
 
 # PHOTOIONIZATION model for AGN regions to get line luminosities
 photmod_agn = 'feltre16'
-
     
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
