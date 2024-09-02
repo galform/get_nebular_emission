@@ -106,6 +106,10 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
+# PHOTOIONIZATION model for AGN NLR to get line luminosities
+photmod_agn = 'feltre16'
+
+# Connecting global properties to AGN NLR characteristics:
 # nH: number density calculated assuming a profile for the gas ('exponential')
 #     and given a radius for the component.
 #     This is used to calculate the filling factor, using agn_nH_params.
@@ -123,9 +127,13 @@ une_agn_spec = 'feltre16'
 # U: model to calculate the ionising parameter
 une_agn_U    = 'panuzzo03'
 
-# PHOTOIONIZATION model for AGN regions to get line luminosities
-photmod_agn = 'feltre16'
-    
+# Z_central=True indicates that the given Zgas is that for the NLR or
+#                at the center of the gal.
+# Z_central=False indicates that the given Zgas is not central,
+#           Z-gradients from the literature (f(M*_gal)) are used to estimate
+#           the Zgas at the galactic center
+Z_central=False
+
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
 # The way of obtaining Lagn is indicated in AGNinputs.
@@ -170,13 +178,6 @@ AGNinputs = 'Lagn'; Lagn_params=[17,21]
 #AGNinputs = 'radio_mode'; Lagn_params=[9,8]
 #AGNinputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
 #AGNinputs = 'complete'; Lagn_params=[25,12,14,9,21]
-
-# Z_central=True indicates that the given Zgas is that for the NLR or
-#                at the center of the gal.
-# Z_central=False indicates that the given Zgas is not central,
-#           Z-gradients from the literature (f(M*_gal)) are used to estimate
-#           the Zgas at the galactic center
-Z_central=False
 
 ####################################################
 ########  Redshift evolution parameters  ###########
