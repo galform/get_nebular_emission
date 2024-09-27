@@ -677,14 +677,13 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
     lu, lne, lzgas : floats
     '''
     
-    lu, lne = [np.full(np.shape(lms), c.notnum) for i in range(2)]
+    lu = np.full(np.shape(lms), c.notnum)
 
     ind = np.where((lssfr > c.notnum) &
                    (lms > 0) &
                    (lzgas > c.notnum))
     
     if (np.shape(ind)[1]>1):
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
         lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma / c.c_cm)
         
     ind = np.where((lssfr > c.notnum) &
@@ -713,7 +712,7 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
     lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
     
 
-    return lu, lne, lzgas
+    return lu
 
 # def get_une_carton17(lms, lssfr, lzgas):
 #     '''
@@ -1022,6 +1021,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
         else:
             ng_ratio = 1.
                         
+
     if une_sfr_nH not in c.une_sfr_nH:
         if verbose:
             print('STOP (gne_une): Unrecognised model to get nH (HII).')
@@ -1038,7 +1038,8 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     elif (une_sfr_U == 'kashino20'):
         lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
     elif (une_sfr_U == 'orsi14'):
-        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
+        lzgas = lzgas_o
+        lu = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
     elif (une_sfr_U == 'panuzzo03_sfr'):
         lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
         
