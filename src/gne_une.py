@@ -957,9 +957,9 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
             une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
     '''
     Given the global properties of a galaxy or a region
-    (log10(Mstar), log10(sSFR) and 12+log(O/H)),
-    get the characteristics of the ionising region
-    (ionizing parameter, U, and the electron density, ne).
+    (log10(Mstar), log10(sSFR) and log10(Zgas)),
+    characterise the HII region with its
+    ionising parameter, U, and electron density, ne.
 
     Parameters
     ----------
@@ -1029,11 +1029,6 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
         sys.exit()
     elif (une_sfr_nH == 'kashino20'):
         lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
-    elif (une_sfr_nH == 'orsi14'):
-        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
-    elif (une_sfr_nH == 'panuzzo03_sfr'):
-        lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
-
                         
     if une_sfr_U not in c.une_sfr_U:
         if verbose:

@@ -24,7 +24,7 @@ AGN = True
 ###############################################################
 ### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
-# Stellar mass (M*) of the galaxy (or disc or buldge).
+# Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
 root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
@@ -76,7 +76,7 @@ photmod_sfr='gutkin16'
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
 # Each list correspond to a different component: 
-# m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_bulge,SFR_bulge,Zgas_bulge]]
+# m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
 # For a single component: m_sfr_z = [[M*,SFR,Zgas]]
 # For a HDF5 input file: m_sfr_z = [['Mstellar','SFR','Zgas']]
 
