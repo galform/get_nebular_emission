@@ -584,11 +584,11 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
 
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu, lne : floats
     '''
 
     ###here missing transformation to the IMF assumed by Kashino
-    lu, lne = [np.full(np.shape(lms), c.notnum) for i in range(2)]
+    lu, lne, loh12 = [np.full(np.shape(lms), c.notnum) for i in range(3)]
     
     lssfr_new = np.full(np.shape(lssfr),c.notnum)
     for comp in range(lssfr.shape[1]):
@@ -606,15 +606,15 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     
     if (np.shape(ind)[1]>1):
         # Transform the metallicity into log10(O/H)+12
-        lzgas[ind] = lzgas[ind] + c.ohsun - np.log10(c.zsun)
+        loh12[ind] = lzgas[ind] + c.ohsun - np.log10(c.zsun)
 
         # Apply equation
         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr_new[ind] + 9.)
 
         # Eq. 12 from Kashino & Inoue 2019 ####here esta eq está mal
-        lu[ind] =  -2.316 - 0.360*(lzgas[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
+        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
         # lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)
-        lzgas[ind] = lzgas[ind] - c.ohsun + np.log10(c.zsun) # We leave it in log(Z)
+        #lzgas[ind] = lzgas[ind] - c.ohsun + np.log10(c.zsun) # We leave it in log(Z)
         
     ind = np.where((lssfr > c.notnum) &
                    (lms > 0) &
@@ -641,7 +641,7 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     
     lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
-    return lu, lne, lzgas
+    return lu, lne
 
 
 def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
@@ -674,7 +674,7 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
 
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu : floats
     '''
     
     lu = np.full(np.shape(lms), c.notnum)
@@ -710,7 +710,6 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
         cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
     
     lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
-    
 
     return lu
 
@@ -1021,14 +1020,14 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
         else:
             ng_ratio = 1.
                         
-
+    lzgas = lzgas_o
     if une_sfr_nH not in c.une_sfr_nH:
         if verbose:
             print('STOP (gne_une): Unrecognised model to get nH (HII).')
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_nH == 'kashino20'):
-        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
+        lu, lne = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
                         
     if une_sfr_U not in c.une_sfr_U:
         if verbose:
@@ -1036,9 +1035,8 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_U == 'kashino20'):
-        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
+        lu, lne = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
     elif (une_sfr_U == 'orsi14'):
-        lzgas = lzgas_o
         lu = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
     elif (une_sfr_U == 'panuzzo03_sfr'):
         lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
