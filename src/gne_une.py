@@ -644,72 +644,57 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     return lu, lne
 
 
-def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
+def get_une_orsi14(lzgas, q0, z0, gamma):
     '''
-    Given log10(Mstar), log10(sSFR), log10(Z) and the values for the free parameters,
-    get the ionizing parameter, logU, and the electron density, logne,
-    using the model from Orsi 2014.
+    Given log10(Zgas) and the values for the free parameters,
+    get the ionizing parameter, logU, using the model from Orsi 2014.
 
     Parameters
     ----------
-    Q : floats
-     Rate of ionizing photons (phot/s).
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z)).
-    T : float
-     Typical temperature of ionizing regions.
     q0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     z0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     gamma : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    ng_ratio : floats
-     Ratio between the mean particle number density of the cold gas of the 
-     input sample and the sample at redshift 0.
 
     Returns
     -------
     lu : floats
     '''
     
-    lu = np.full(np.shape(lms), c.notnum)
+    lu = np.full(np.shape(lzgas), c.notnum)
 
-    ind = np.where((lssfr > c.notnum) &
-                   (lms > 0) &
-                   (lzgas > c.notnum))
-    
-    if (np.shape(ind)[1]>1):
-        lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma / c.c_cm)
-        
-    ind = np.where((lssfr > c.notnum) &
-                   (lms > 0) &
-                   (lzgas > c.notnum))
-    
-    ind_comp = []   
-    for comp in range(len(Q[0])):
-        ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
-                       (lms[:,comp] > 0) &
-                       (lzgas[:,comp] > c.notnum) &
-                       (Q[:,comp] > 0))[0])
-        
-    epsilon = np.full(np.shape(lssfr),c.notnum)
-    cte = np.zeros(np.shape(lssfr))
-    
-    for comp in range(len(Q[0])):
-        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                              ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
-        
-        if ng_ratio != None:
-            epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
-        
-        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
-    
-    lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+    ind = np.where(lzgas > c.notnum)
+    if (np.shape(ind)[1]>0):
+        lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma /c.c_cm)
+
+    # Evolution part to be done externally
+    #ind = np.where((lssfr > c.notnum) &
+    #               (lms > 0) &
+    #               (lzgas > c.notnum))
+    #ind_comp = []   
+    #for comp in range(len(Q[0])):
+    #    ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+    #                   (lms[:,comp] > 0) &
+    #                   (lzgas[:,comp] > c.notnum) &
+    #                   (Q[:,comp] > 0))[0])
+    #    
+    #epsilon = np.full(np.shape(lssfr),c.notnum)
+    #cte = np.zeros(np.shape(lssfr))
+    #
+    #for comp in range(len(Q[0])):
+    #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+    #    
+    #    if ng_ratio != None:
+    #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+    #    
+    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #
+    #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
     return lu
 
@@ -1037,7 +1022,7 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     elif (une_sfr_U == 'kashino20'):
         lu, lne = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
     elif (une_sfr_U == 'orsi14'):
-        lu = get_une_orsi14(Q,lms_o,lssfr_o,lzgas_o,T,q0,z0,gamma,ng_ratio)
+        lu = get_une_orsi14(lzgas_o,q0,z0,gamma)
     elif (une_sfr_U == 'panuzzo03_sfr'):
         lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
         
