@@ -669,7 +669,7 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
 
     ind = np.where(lzgas > c.notnum)
     if (np.shape(ind)[1]>0):
-        lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma /c.c_cm)
+        lu[ind] = np.log10((q0*((10**lzgas[ind])/z0)**-gamma) /c.c_cm)
 
     # Evolution part to be done externally
     #ind = np.where((lssfr > c.notnum) &
