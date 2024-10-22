@@ -698,13 +698,12 @@ def get_sfrdata(infile,cols,selection=None,
     else:
         lsfr = lssfr + lms
 
-    # Obtain Z=MZcold/Mcold        
+    # Obtain log10(Zgas=MZcold/Mcold)        
     lzgas = np.zeros(zgas.shape); lzgas.fill(c.notnum)
-    if inoh: ####here
-        # Obtain Z=MZcold/Mcold from 12+log10(O/H)
-        ind = np.where(zgas>0)
-        lzgas[ind] = np.log10(zgas[ind]) + c.ohsun - np.log10(c.zsun)
-    else: #Julen's version to be checked ####here
+    if inoh: 
+        # Obtain log10(Zgas) from an input of 12+log10(O/H)
+        lzgas = np.log10(c.zsun) - c.ohsun + zgas
+    else: 
         ind = np.where(zgas>0)
         lzgas[ind] = np.log10(zgas[ind])
 

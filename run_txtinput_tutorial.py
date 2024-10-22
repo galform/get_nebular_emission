@@ -66,7 +66,7 @@ units_L40h2=False
 # NEBULAR model connecting global properties to ionising properties:
 # nH: number density of Hydrogen (or electrons); U: ionising parameter
 une_sfr_nH='kashino20'
-une_sfr_U='orsi14' #'kashino20'
+une_sfr_U='kashino20'  #'orsi14'
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
