@@ -588,8 +588,9 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     '''
 
     ###here missing transformation to the IMF assumed by Kashino
-    lu, lne, loh12 = [np.full(np.shape(lms), c.notnum) for i in range(3)]
-    
+    lu, lne, loh4 = [np.full(np.shape(lms), c.notnum) for i in range(3)]
+
+    ###here why do we need this?
     lssfr_new = np.full(np.shape(lssfr),c.notnum)
     for comp in range(lssfr.shape[1]):
         for i in range(lssfr.shape[0]):
@@ -605,41 +606,39 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     
     
     if (np.shape(ind)[1]>1):
-        # Transform the metallicity into log10(O/H)+12
-        loh12[ind] = lzgas[ind] + c.ohsun - np.log10(c.zsun)
+        # Transform log10(Zgas) into 4+log10(O/H)
+        loh4[ind] = lzgas[ind] - np.log10(c.zsunK20) + c.ohsun - 8. 
 
-        # Apply equation
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr_new[ind] + 9.)
+        # Apply equation Table 2
+        lne[ind] = 2.066 + 0.310*(lms[ind]-10.) + 0.492*(lssfr_new[ind] + 9.)
 
-        # Eq. 12 from Kashino & Inoue 2019 ####here esta eq está mal
-        lu[ind] =  -2.316 - 0.360*(loh12[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
-        # lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)
-        #lzgas[ind] = lzgas[ind] - c.ohsun + np.log10(c.zsun) # We leave it in log(Z)
-        
-    ind = np.where((lssfr > c.notnum) &
-                   (lms > 0) &
-                   (lzgas > c.notnum))
-    
-    ind_comp = []   
-    for comp in range(len(Q[0])):
-        ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
-                       (lms[:,comp] > 0) &
-                       (lzgas[:,comp] > c.notnum) &
-                       (Q[:,comp] > 0))[0])
-        
-    epsilon = np.full(np.shape(lssfr),c.notnum)
-    cte = np.zeros(np.shape(lssfr))
-    
-    for comp in range(len(Q[0])):
-        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                              ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
-        
-        if ng_ratio != None:
-            epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
-        
-        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
-    
-    lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+        # Eq. 12 (and Table 2) from Kashino & Inoue 2019
+        lu[ind] =  -2.316 - 0.360*loh4[ind] - 0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
+
+    ###here this is an application of Panuzzo, not Kashino
+    #ind = np.where((lssfr > c.notnum) &
+    #               (lms > 0) &
+    #               (lzgas > c.notnum))
+      #ind_comp = []   
+      #for comp in range(len(Q[0])):
+      #    ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+      #                   (lms[:,comp] > 0) &
+      #                   (lzgas[:,comp] > c.notnum) &
+      #                   (Q[:,comp] > 0))[0])
+      #    
+      #epsilon = np.full(np.shape(lssfr),c.notnum)
+      #cte = np.zeros(np.shape(lssfr))
+      #
+      #for comp in range(len(Q[0])):
+      #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+      #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+      #    
+      #    if ng_ratio != None:
+      #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+      #    
+      #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+      #
+      #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
     return lu, lne
 

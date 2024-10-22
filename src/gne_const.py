@@ -11,6 +11,7 @@ G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
 nH_gal = 100  # cm^-3
 
 zsun = 0.0134 # Asplund 2009
+zsunK20 = 0.014 # Kashino 2020
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 Lbolsun = 3.826e33 # erg/s
