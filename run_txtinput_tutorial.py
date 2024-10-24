@@ -101,7 +101,7 @@ inoh = False
 ### INITIAL MASS FUNCTIONs
 # Specify the assumed IMFs for each galaxy component in the input data.
 # Example for two components: IMF = ['Kennicut','Kennicut']
-IMF = ['Kroupa','Kroupa'] #['Kennicut','Kennicut']
+IMF = ['Kennicut','Kennicut']
 
 ####################################################
 #####  Emission from AGN narrow line regions #######

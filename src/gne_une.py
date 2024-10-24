@@ -559,7 +559,7 @@ def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
     return Q
 
 
-def get_une_kashino20(lms1, lssfr1, lzgas, IMF,nhout=True):
+def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     '''
     Characterise the SF ionising region from global galactic properties,
     using the model from
@@ -599,10 +599,7 @@ def get_une_kashino20(lms1, lssfr1, lzgas, IMF,nhout=True):
             lms[ind,i] = np.log10(c.IMF_M[iimf]/c.IMF_M['Kroupa']) + lms1[ind,i]
             lssfr[ind,i] = lssfr1[ind,i] + \
                 np.log10(c.IMF_SFR[iimf]*c.IMF_M['Kroupa']/c.IMF_SFR['Kroupa']/c.IMF_M[iimf])
-    ###print(lms1/lms)
-    ###print(lms)
-    ###print(lssfr1/lssfr)
-    ###print(lssfr); exit()
+
     # Perform calculation where there is adequate input data
     ind = np.where((lssfr > c.notnum)&(lms > c.notnum)&(lzgas > c.notnum))
     if (np.shape(ind)[1]>1):
@@ -938,7 +935,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
 def get_une_sfr(lms, lssfr, lzgas,filenom,
                 q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3, T=10000,
                 ng_ratio=None, epsilon_param=[None], epsilon_param_z0=[None],epsilon=0.01,
-                IMF=['Kennicut','Kennicut'],
+                IMF=['Kroupa','Kroupa'],
                 une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
     '''
     Given the global properties of a galaxy or a region
@@ -1031,7 +1028,7 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
 
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
-                Lagn=None, ng_ratio=None,IMF=['Kennicut','Kennicut'],
+                Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
                 T=10000, agn_nH_param=None, epsilon_param_z0=[None],
                 une_agn_nH=None,une_agn_spec='feltre16',
                 une_agn_U='panuzzo03', verbose=True):
