@@ -550,9 +550,8 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
 
 def get_sfrdata(infile,cols,selection=None,
                 h0=None,units_h0=False, units_Gyr=False,
-                inputformat='hdf5',IMF=['Kennicut','Kennicut'],
                 inoh = False, LC2sfr=False, mtot2mdisk=True, 
-                testing=False,verbose=False):
+                inputformat='hdf5',testing=False,verbose=False):
     '''
     Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
 
@@ -581,8 +580,6 @@ def get_sfrdata(infile,cols,selection=None,
      Attenuation model.
     inoh : boolean
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
-    IMF : array of strings
-       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
     units_h0 : bool
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
@@ -607,8 +604,6 @@ def get_sfrdata(infile,cols,selection=None,
         sfr = sfr/h0
     if units_Gyr:
         sfr = sfr/1e9
-
-    ###here TODO transform quantities using IMF
     
     # Set to a default value if negative stellar masses
     ind = np.where((ms<=1.) | (sfr<0) | (zgas<=0))
@@ -724,7 +719,6 @@ def get_sfrdata(infile,cols,selection=None,
 
 def get_data_agnnH(infile,rtype,cols,selection=None,
                    h0=None,units_h0=False,inputformat='hdf5',
-                   IMF=['Kennicut','Kennicut'],
                    testing=False,verbose=False):
     '''
     Get Mgas and R50 in the adecuate units.
@@ -737,8 +731,6 @@ def get_data_agnnH(infile,rtype,cols,selection=None,
      Format of the input file.
     cols : list
       Expected : component1 = total or disk, component2 = bulge
-    IMF : array of strings
-       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
     units_h0 : bool
     verbose : boolean
       If True print out messages

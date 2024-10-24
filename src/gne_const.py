@@ -57,19 +57,22 @@ q0_orsi = 2.8e7 # cm/s
 gamma_orsi = 1.3
 #--------------------------------------------
 
-#--------------------------------------------
-#   IMF transformations (Lacey et al. 2016) 
-#--------------------------------------------
-# M1 = (IMF_M2/IMF_M1) * M2 
+#--------------------------------------------------------------
+#   IMF transformations (Tables B1 and B2 in Lacey et al. 2016) 
+#--------------------------------------------------------------
+# log10(M1) = log10(IMF_M2/IMF_M1) + log10(M2) 
 IMF_M = {'Kennicut': 1, 'Salpeter': 0.47, 'Kroupa': 0.74, 'Chabrier': 0.81, 
             'Baldry&Glazebrook': 0.85, 'Top-heavy': 1.11}
 
-# SFR1 = (IMF_SFR2/IMF_SFR1) * SFR2 
-IMF_SFR = {'Kennicut': 1, 'Salpeter': 0.94, 'Kroupa': 1.49, 'Chabrier': 1.57, 
-            'Baldry&Glazebrook': 2.26, 'Top-heavy': 3.13}
+# # log10(SFR1) = log10(IMF_SFR2/IMF_SFR1) + log10(SFR2)
+IMF_SFR = {'Kennicut': 1, 'Salpeter': 0.79, 'Kroupa': 1.19,
+           'Chabrier': 1.26,'Baldry&Glazebrook': 1.56,
+           'Top-heavy': 1.89}
+IMF_SFRins = {'Kennicut': 1, 'Salpeter': 0.94, 'Kroupa': 1.49,
+              'Chabrier': 1.57, 'Baldry&Glazebrook': 2.26,
+              'Top-heavy': 3.13}
 
 phot_to_sfr_kenn = 9.85e52 # phot/s
-
 
 # FOR CONVERSION FROM LYMANN CONTINUUM PHOTONS TO SFR
 # It is assumed that a SFR of 1 Msun/yr produces 9.85 · 10^52 photons/s for Kennicut IMF.

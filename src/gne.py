@@ -196,9 +196,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lms, lssfr, lzgas = io.get_sfrdata(infile,m_sfr_z,selection=cut,
                                        h0=h0,units_h0=units_h0,
                                        units_Gyr=units_Gyr,
-                                       inputformat=inputformat,IMF=IMF,
-                                       inoh = inoh,
-                                       LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
+                                       inoh = inoh,LC2sfr=LC2sfr,
+                                       mtot2mdisk=mtot2mdisk,
+                                       inputformat=inputformat,
                                        testing=testing,verbose=verbose)
 
     epsilon_param_z0 = [None]
@@ -218,7 +218,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lu_sfr, lne_sfr = get_une_sfr(lms, lssfr, lzgas, outfile,
                                   q0=q0, z0=z0,gamma=gamma, T=T,
                                   epsilon_param_z0=epsilon_param_z0,
-                                  une_sfr_nH=une_sfr_nH,
+                                  IMF=IMF,une_sfr_nH=une_sfr_nH,
                                   une_sfr_U=une_sfr_U,verbose=verbose)
     
     if verbose:
@@ -315,7 +315,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
                                              agn_nH_params,selection=cut,
                                              h0=h0,units_h0=units_h0,
-                                             inputformat=inputformat,IMF=IMF,
+                                             inputformat=inputformat,
                                              testing=testing,verbose=verbose)
             
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,

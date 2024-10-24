@@ -8,7 +8,8 @@ import numpy as np
 import h5py
 import src.gne_const as c
 from src.gne_stats import perc_2arrays
-    
+from src.gne_io import get_ncomponents
+
 def alpha_B(T):
     '''
     Given the temperature of the ionizing region, it interpolates from Osterbrock & Ferland 2006
@@ -558,7 +559,7 @@ def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
     return Q
 
 
-def get_une_kashino20(lms, lssfr, lzgas, IMF,nhout=True):
+def get_une_kashino20(lms1, lssfr1, lzgas, IMF,nhout=True):
     '''
     Characterise the SF ionising region from global galactic properties,
     using the model from
@@ -582,16 +583,28 @@ def get_une_kashino20(lms, lssfr, lzgas, IMF,nhout=True):
     
     Returns
     -------
-    lu, lne : floats
+    lu or lne : floats
     '''
 
-    ###here missing transformation to the IMF assumed by Kashino
-    lu, lne, loh4 = [np.full(np.shape(lms), c.notnum) for i in range(3)]
+    # Initialise vectors
+    lms, lssfr, lu, lne, loh4 = [np.full(np.shape(lms1), c.notnum) for i in range(5)]
 
-    ind = np.where((lssfr > c.notnum) &
-                   (lms > 0) &
-                   (lzgas > c.notnum))
-    
+    # In Kashino+2020 a Kroupa IMF is assumed
+    ncomp = get_ncomponents(lms1.T)
+    for i in range(ncomp):
+        iimf = IMF[i]
+        
+        ind = np.where((lms1[:,i]>c.notnum) & (lssfr1[:,i]>c.notnum))
+        if (np.shape(ind)[1]>1):
+            lms[ind,i] = np.log10(c.IMF_M[iimf]/c.IMF_M['Kroupa']) + lms1[ind,i]
+            lssfr[ind,i] = lssfr1[ind,i] + \
+                np.log10(c.IMF_SFR[iimf]*c.IMF_M['Kroupa']/c.IMF_SFR['Kroupa']/c.IMF_M[iimf])
+    ###print(lms1/lms)
+    ###print(lms)
+    ###print(lssfr1/lssfr)
+    ###print(lssfr); exit()
+    # Perform calculation where there is adequate input data
+    ind = np.where((lssfr > c.notnum)&(lms > c.notnum)&(lzgas > c.notnum))
     if (np.shape(ind)[1]>1):
         # Transform log10(Zgas) into 4+log10(O/H)
         loh4[ind] = lzgas[ind] - np.log10(c.zsunK20) + c.ohsun - 8. 
@@ -658,9 +671,9 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
 
     ind = np.where(lzgas > c.notnum)
     if (np.shape(ind)[1]>0):
-        lu[ind] = np.log10((q0*((10**lzgas[ind])/z0)**-gamma) /c.c_cm)
+        lu[ind] = np.log10((q0*((10**lzgas[ind])/z0)**(-gamma)) /c.c_cm)
 
-    # Evolution part to be done externally
+    ###here Evolution part to be done externally
     #ind = np.where((lssfr > c.notnum) &
     #               (lms > 0) &
     #               (lzgas > c.notnum))
@@ -976,7 +989,7 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
+    
     #epsilon = None
     #if epsilon_param_z0 is not None:
     #    # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
@@ -1011,6 +1024,7 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
     elif (une_sfr_U == 'orsi14'):
         lu = get_une_orsi14(lzgas,q0,z0,gamma)
     elif (une_sfr_U == 'panuzzo03_sfr'):
+        Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
         lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
         
     return lu, lne # epsilon, ng_ratio
