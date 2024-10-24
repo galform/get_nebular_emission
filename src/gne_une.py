@@ -583,11 +583,11 @@ def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     
     Returns
     -------
-    lu or lne : floats
+    lu or lnH : floats
     '''
 
     # Initialise vectors
-    lms, lssfr, lu, lne, loh4 = [np.full(np.shape(lms1), c.notnum) for i in range(5)]
+    lms, lssfr, lu, lnH, loh4 = [np.full(np.shape(lms1), c.notnum) for i in range(5)]
 
     # In Kashino+2020 a Kroupa IMF is assumed
     ncomp = get_ncomponents(lms1.T)
@@ -607,10 +607,10 @@ def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
         loh4[ind] = lzgas[ind] - np.log10(c.zsunK20) + c.ohsun - 8. 
 
         # Apply equation Table 2
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10.) + 0.492*(lssfr[ind] + 9.)
+        lnH[ind] = 2.066 + 0.310*(lms[ind]-10.) + 0.492*(lssfr[ind] + 9.)
 
         # Eq. 12 (and Table 2) from Kashino & Inoue 2019
-        lu[ind] =  -2.316 - 0.360*loh4[ind] - 0.292*lne[ind] + 0.428*(lssfr[ind] + 9.)
+        lu[ind] =  -2.316 - 0.360*loh4[ind] - 0.292*lnH[ind] + 0.428*(lssfr[ind] + 9.)
 
     ###here EV: this is an application of Panuzzo, not Kashino
     #ind = np.where((lssfr > c.notnum) &
@@ -628,17 +628,18 @@ def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     #
     #for comp in range(len(Q[0])):
     #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
     #    
     #    if ng_ratio != None:
     #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
     #    
-    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
     #
     #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
     output = lu
-    if nhout: output = lne
+    # As nothing is stated in the paper, we assume this is U(Rs)
+    if nhout: output = lnH
     
     return output
 
@@ -662,6 +663,7 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
     Returns
     -------
     lu : floats
+       As nothing is stated in the paper, we assume this is U(Rs)
     '''
     
     lu = np.full(np.shape(lzgas), c.notnum)
@@ -686,12 +688,12 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
     #
     #for comp in range(len(Q[0])):
     #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
     #    
     #    if ng_ratio != None:
     #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
     #    
-    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
     #
     #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
@@ -714,20 +716,20 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
 
 #     Returns
 #     -------
-#     lu, lne, lzgas : floats
+#     lu, lnH, lzgas : floats
 #     '''
     
-#     lu, lne = [np.full(np.shape(lms), c.notnum) for i in range(2)]
+#     lu, lnH = [np.full(np.shape(lms), c.notnum) for i in range(2)]
 
 #     ind = np.where((lssfr > c.notnum) &
 #                    (lms > 0) &
 #                    (lzgas > c.notnum))
     
 #     if (np.shape(ind)[1]>1):
-#         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
+#         lnH[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
 #         lu[ind] = -0.8*np.log10(10**lzgas[ind]/c.zsun) - 3.58   
 
-#     return lu, lne, lzgas
+#     return lu, lnH, lzgas
 
 
 def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
@@ -762,12 +764,12 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
 
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu, lnH, lzgas : floats
     '''
     
     lzgas_all = np.copy(lzgas)
     
-    lu, lne, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
+    lu, lnH, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
 
     ind = np.where((lssfr > c.notnum) &
                    (lms > 0) &
@@ -798,22 +800,22 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            # lu, lne, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
-            lu, lne, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            # lu, lnH, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lnH, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
                 epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
                 
                 if ng_ratio != None:
                     epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
-                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
             
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
         if origin=='agn':
-            lne[ind] = 3
+            lnH[ind] = 3
             lzgas[ind] = lzgas_all[ind]
             
             for comp in range(len(Q[0])):
@@ -821,14 +823,14 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
                 epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
                 
                 cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
-                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
+                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
                 
             cte[cte==0] = 1e-50
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
             lu[cte==1e-50] = c.notnum
     
 
-    return lu, lne, lzgas
+    return lu, lnH, lzgas
 
 
 def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
@@ -863,12 +865,12 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
 
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu, lnH, lzgas : floats
     '''
     
     lzgas_all = np.copy(lzgas)
     
-    lu, lne, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
+    lu, lnH, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
 
     ind = np.where((lssfr > c.notnum) &
                    (lms > 0) &
@@ -899,22 +901,22 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            # lu, lne, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
-            lu, lne, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            # lu, lnH, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lnH, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
                 epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
                 
                 if ng_ratio != None:
                     epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
-                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
             
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
         if origin=='agn':
-            lne[ind] = 3
+            lnH[ind] = 3
             lzgas[ind] = lzgas_all[ind]
             
             for comp in range(len(Q[0])):
@@ -922,14 +924,14 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
                 epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
                 
                 cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
-                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
+                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
                 
             cte[cte==0] = 1e-50
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
             lu[cte==1e-50] = c.notnum
     
 
-    return lu, lne, lzgas
+    return lu, lnH, lzgas
 
 
 def get_une_sfr(lms, lssfr, lzgas,filenom,
@@ -976,7 +978,7 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
 
     Returns
     -------
-    lu, lne : floats
+    lu, lnH : floats
     '''
 
     # Read redshift
@@ -1009,7 +1011,7 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_nH == 'kashino20'):
-        lne = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=True)
+        lnH = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=True)
 
     if une_sfr_U not in c.une_sfr_U:
         if verbose:
@@ -1022,9 +1024,9 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
         lu = get_une_orsi14(lzgas,q0,z0,gamma)
     elif (une_sfr_U == 'panuzzo03_sfr'):
         Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
-        lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
+        lu, lnH, lzgas = get_une_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
         
-    return lu, lne # epsilon, ng_ratio
+    return lu, lnH # epsilon, ng_ratio
 
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
@@ -1065,7 +1067,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
 
     Returns
     -------
-    Q, lu, lne, lzgas : floats
+    Q, lu, lnH, lzgas : floats
     '''
 
     # Read redshift
@@ -1089,6 +1091,6 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
             print('                Possible options= {}'.format(c.une_agn_U))
         sys.exit()
     elif (une_agn_U == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
+        lu, lnH, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
-    return Q, lu, lne, epsilon, ng_ratio
+    return Q, lu, lnH, epsilon, ng_ratio

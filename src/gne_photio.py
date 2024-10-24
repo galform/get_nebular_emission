@@ -6,7 +6,7 @@
 import h5py
 import numpy as np
 import src.gne_io as io
-import src.gne_const as const
+import src.gne_const as c
 from src.gne_io import check_file
 import sys
 import warnings
@@ -70,22 +70,22 @@ def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True
     lms,lssfr,lu,lne,lzgas : floats
     '''
 
-    minU, maxU = get_limits(propname='U', photmod=photmod)
+    minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
 
     limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(lzgas[:,0]>np.log10(minZ))&(lzgas[:,0]<np.log10(maxZ))&
-                      (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=const.notnum))[0]
+                      (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=c.notnum))[0]
     
     for i in range(lu.shape[1]):        
-        lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != const.notnum)] = maxU
-        lu[:,i][(lu[:,i] < minU)&(lu[:,i] != const.notnum)] = minU
+        lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != c.notnum)] = maxU
+        lu[:,i][(lu[:,i] < minU)&(lu[:,i] != c.notnum)] = minU
         
-        lne[:,i][(lne[:,i] > np.log10(maxnH))&(lne[:,i] != const.notnum)] = np.log10(maxnH)
-        lne[:,i][(lne[:,i] < np.log10(minnH))&(lne[:,i] != const.notnum)] = np.log10(minnH)
+        lne[:,i][(lne[:,i] > np.log10(maxnH))&(lne[:,i] != c.notnum)] = np.log10(maxnH)
+        lne[:,i][(lne[:,i] < np.log10(minnH))&(lne[:,i] != c.notnum)] = np.log10(minnH)
         
-        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != const.notnum)] = np.log10(maxZ)
-        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != const.notnum)] = np.log10(minZ)
+        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != c.notnum)] = np.log10(maxZ)
+        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != c.notnum)] = np.log10(minZ)
                 
     return lms, lssfr, lu, lne, lzgas
 
@@ -121,10 +121,11 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
     '''
 
     try:
-        infile = const.mod_lim[photmod]
+        infile = c.mod_lim[photmod]
     except KeyError:
-        print('STOP (gne_photio): the {}'.format(photmod) + ' model is an unrecognised model in the dictionary mod_lim')
-        print('                  Possible photmod= {}'.format(const.mod_lim.keys()))
+        print('STOP (gne_photio.get_limits): the {}'.format(photmod) +
+              ' model is an unrecognised model in the dictionary mod_lim')
+        print('                  Possible photmod= {}'.format(c.mod_lim.keys()))
         sys.exit()
 
     # Check if the limits file exists:
@@ -134,8 +135,8 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
     if propname not in prop:
-        print('STOP (gne_photio): property {} '.format(propname)+'not found in the limits file {}'.format(infile))
-        print('                   In the limits file we must find the properties written as: U, Z and nH')
+        print('STOP (gne_photio.get_limits): property {} '.format(propname)+
+              'not found in the limits file {}'.format(infile))
         sys.exit()
     else:
         ind = prop.index(propname)
@@ -200,7 +201,7 @@ def calculate_flux(nebline,filenom,origin='sfr'):
 
 
 
-def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
+def get_lines_feltre16(lu, lne, lzgas, xid_phot=0.5,
                      alpha_phot=-1.7,verbose=True):
     '''
     Get the interpolations for the emission lines,
@@ -225,13 +226,13 @@ def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
     '''
 
     photmod = 'feltre16'
-    minU, maxU = get_limits(propname='U', photmod=photmod)
+    minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
     minZ, maxZ = np.log10(minZ), np.log10(maxZ)
     
-    zmet_str = const.zmet_str[photmod]
-    zmets = np.full(len(zmet_str),const.notnum)
+    zmet_str = c.zmet_str[photmod]
+    zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
 
     logubins = [-5., -4.5, -4., -3.5, -3., -2.5, -2., -1.5, -1.]
@@ -300,7 +301,7 @@ def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
 
     # log metallicity bins ready for interpolation:
 
-    lzmets = np.full(len(zmets), const.notnum)
+    lzmets = np.full(len(zmets), c.notnum)
     ind = np.where(zmets > 0.)
     if (np.shape(ind)[1] > 0):
         lzmets[ind] = np.log10(zmets[ind])
@@ -311,7 +312,7 @@ def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
     
     for comp in range(ncomp):
         
-        ind = np.where(lu[:,comp] != const.notnum)[0]
+        ind = np.where(lu[:,comp] != c.notnum)[0]
 
         emline_int1 = np.zeros((nemline,ndat))
         emline_int2 = np.zeros((nemline, ndat))
@@ -401,7 +402,7 @@ def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
     return nebline
 
 
-def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
+def get_lines_gutkin16(lu, lne, lzgas, xid_phot=0.3,
                      co_phot=1,imf_cut_phot=100,verbose=True):
     '''
     Get the interpolations for the emission lines,
@@ -433,13 +434,13 @@ def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
     '''
 
     photmod = 'gutkin16'
-    minU, maxU = get_limits(propname='U', photmod=photmod)
+    minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
     minZ, maxZ = np.log10(minZ), np.log10(maxZ)
     
-    zmet_str = const.zmet_str[photmod]
-    zmets = np.full(len(zmet_str),const.notnum)
+    zmet_str = c.zmet_str[photmod]
+    zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
 
     logubins = [-4., -3.5, -3., -2.5, -2., -1.5, -1.]
@@ -451,7 +452,7 @@ def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
     nzmet = 14
     nu = 7
     nzmet_reduced = 4
-    zmets_reduced = const.zmet_reduced[photmod]
+    zmets_reduced = c.zmet_reduced[photmod]
 
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline)) # From slower to faster
     emline_grid2 = np.zeros((nzmet,nu,nemline))
@@ -521,13 +522,13 @@ def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
         ff.close()
 
     # log metallicity bins ready for interpolation:
-    lzmets_reduced = np.full(len(zmets_reduced), const.notnum)
+    lzmets_reduced = np.full(len(zmets_reduced), c.notnum)
     ind = np.where(zmets_reduced > 0.)
     if (np.shape(ind)[1]) > 0:
         lzmets_reduced[ind] = np.log10(zmets_reduced[ind])
 
 
-    lzmets = np.full(len(zmets), const.notnum)
+    lzmets = np.full(len(zmets), c.notnum)
     ind = np.where(zmets > 0.)
     if (np.shape(ind)[1] > 0):
         lzmets[ind] = np.log10(zmets[ind])
@@ -539,7 +540,7 @@ def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
     
     for comp in range(ncomp):
         
-        ind = np.where(lu[:,comp] != const.notnum)[0]
+        ind = np.where(lu[:,comp] != c.notnum)[0]
 
         emline_int1 = np.zeros((nemline,ndat))
         emline_int2 = np.zeros((nemline, ndat))
@@ -702,16 +703,16 @@ def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
         Units depend on the photoionisation model.
     '''
 
-    if photmod not in const.photmods:
+    if photmod not in c.photmods:
         if verbose:
             print('STOP (gne_photio.get_lines): Unrecognised model to get emission lines.')
-            print('                Possible photmod= {}'.format(const.photmods))
+            print('                Possible photmod= {}'.format(c.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_Gutkin(lu,lne,lzgas,xid_phot=xid_phot,co_phot=co_phot,
+        nebline = get_lines_gutkin16(lu,lne,lzgas,xid_phot=xid_phot,co_phot=co_phot,
                                    imf_cut_phot=imf_cut_phot,verbose=verbose)
     elif (photmod == 'feltre16'):
-        nebline = get_lines_Feltre(lu,lne,lzgas,xid_phot=xid_phot,
+        nebline = get_lines_feltre16(lu,lne,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 
     return nebline

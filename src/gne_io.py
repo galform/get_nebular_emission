@@ -553,7 +553,7 @@ def get_sfrdata(infile,cols,selection=None,
                 inoh = False, LC2sfr=False, mtot2mdisk=True, 
                 inputformat='hdf5',testing=False,verbose=False):
     '''
-    Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
+    Get Mstars, sSFR and Z in the adecuate units.
 
     Parameters
     ----------
