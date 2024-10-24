@@ -932,11 +932,11 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     return lu, lne, lzgas
 
 
-def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
-            q0=c.q0_orsi, z0=c.Z0_orsi, ng_ratio=None,
-            gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-            epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
+def get_une_sfr(lms, lssfr, lzgas,filenom,
+                q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3, T=10000,
+                ng_ratio=None, epsilon_param=[None], epsilon_param_z0=[None],epsilon=0.01,
+                IMF=['Kennicut','Kennicut'],
+                une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and log10(Zgas)),
@@ -945,20 +945,20 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
 
     Parameters
     ----------
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
+    lms : array of floats
+        Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : array of floats
+        sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : array of floats
+        Metallicity of the galaxies per component (log10(Z)).
     q0 : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+        Ionization parameter constant for Orsi 2014 model: q=q0(z/z0)^-gamma
     z0 : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+        Metallicity constant for Orsi 2014 model: q=q0(z/z0)^-gamma
     gamma : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
+        Exponent for Orsi 2014 model: q=q0(z/z0)^-gamma
     T : float
-     Typical temperature of ionizing regions.
+        Typical temperature of HII ionizing regions.
     epsilon_param : floats
      Parameters for epsilon calculation.
     epsilon_param_z0 : floats
@@ -972,11 +972,11 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     une_sfr_U : string
         Model to go from galaxy properties to ionising parameter.
     verbose : boolean
-     Yes = print out messages.
+        True for printing out messages.
 
     Returns
     -------
-    Q, lu, lne, lzgas : floats
+    lu, lne : floats
     '''
 
     # Read redshift
@@ -986,32 +986,30 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate_sfr(lssfr=lssfr_o,lms=lms_o,IMF=IMF)
-    
-    epsilon = None
-    if epsilon_param_z0 is not None:
-        # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
-        # epsilon = ng/c.nH_gal
-        # epsilon[epsilon>1] = 1
-            
-        
-        # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
-        # ng_ratio = n_ratio(ng,ng_z0)
-        if redshift==0.8:
-            ng_ratio = c.med_to_low
-        elif redshift==1.5:
-            ng_ratio = c.high_to_low
-        else:
-            ng_ratio = 1.
+    Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
+    #epsilon = None
+    #if epsilon_param_z0 is not None:
+    #    # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
+    #    # epsilon = ng/c.nH_gal
+    #    # epsilon[epsilon>1] = 1
+    #        
+    #    
+    #    # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
+    #    # ng_ratio = n_ratio(ng,ng_z0)
+    #    if redshift==0.8:
+    #        ng_ratio = c.med_to_low
+    #    elif redshift==1.5:
+    #        ng_ratio = c.high_to_low
+    #    else:
+    #        ng_ratio = 1.
                         
-    lzgas = lzgas_o
     if une_sfr_nH not in c.une_sfr_nH:
         if verbose:
             print('STOP (gne_une): Unrecognised model to get nH (HII).')
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_nH == 'kashino20'):
-        lu, lne = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
+        lu, lne = get_une_kashino20(Q,lms,lssfr,lzgas,T,ng_ratio,IMF)
                         
     if une_sfr_U not in c.une_sfr_U:
         if verbose:
@@ -1019,13 +1017,13 @@ def get_une_sfr(lms_o, lssfr_o, lzgas_o,filenom,
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_U == 'kashino20'):
-        lu, lne = get_une_kashino20(Q,lms_o,lssfr_o,lzgas_o,T,ng_ratio,IMF)
+        lu, lne = get_une_kashino20(Q,lms,lssfr,lzgas,T,ng_ratio,IMF)
     elif (une_sfr_U == 'orsi14'):
-        lu = get_une_orsi14(lzgas_o,q0,z0,gamma)
+        lu = get_une_orsi14(lzgas,q0,z0,gamma)
     elif (une_sfr_U == 'panuzzo03_sfr'):
-        lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'sfr',IMF)
+        lu, lne, lzgas = get_une_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
         
-    return Q, lu, lne, lzgas, epsilon, ng_ratio
+    return lu, lne # epsilon, ng_ratio
 
 
 def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
