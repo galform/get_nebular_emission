@@ -558,7 +558,7 @@ def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
     return Q
 
 
-def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
+def get_une_kashino20(lms, lssfr, lzgas, IMF,nhout=True):
     '''
     Characterise the SF ionising region from global galactic properties,
     using the model from
@@ -566,22 +566,20 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
 
     Parameters
     ----------
-    Q : floats
-     Rate of ionizing photons (phot/s).
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    T : float
-     Typical temperature of ionizing regions.
+    lms : array of floats
+        Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : array of floats
+        sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : array of floats
+        Metallicity of the galaxies per component (log10(Z)).
     ng_ratio : floats
      Ratio between the mean particle number density of the cold gas of the 
      input sample and the sample at redshift 0.
     IMF : array of strings
-     Assumed IMF for the input data of each component.
-
+        Assumed IMF for the input data of each component.
+    nhout : bool
+        True to output the hydrogen number density, False for the ionising parameter
+    
     Returns
     -------
     lu, lne : floats
@@ -590,57 +588,49 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
     ###here missing transformation to the IMF assumed by Kashino
     lu, lne, loh4 = [np.full(np.shape(lms), c.notnum) for i in range(3)]
 
-    ###here why do we need this?
-    lssfr_new = np.full(np.shape(lssfr),c.notnum)
-    for comp in range(lssfr.shape[1]):
-        for i in range(lssfr.shape[0]):
-            if Q[i,comp] == 0:
-                continue
-            else:
-                ###here why do we need this?
-                lssfr_new[i,comp] = np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
-
-    ind = np.where((lssfr_new > c.notnum) &
+    ind = np.where((lssfr > c.notnum) &
                    (lms > 0) &
                    (lzgas > c.notnum))
-    
     
     if (np.shape(ind)[1]>1):
         # Transform log10(Zgas) into 4+log10(O/H)
         loh4[ind] = lzgas[ind] - np.log10(c.zsunK20) + c.ohsun - 8. 
 
         # Apply equation Table 2
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10.) + 0.492*(lssfr_new[ind] + 9.)
+        lne[ind] = 2.066 + 0.310*(lms[ind]-10.) + 0.492*(lssfr[ind] + 9.)
 
         # Eq. 12 (and Table 2) from Kashino & Inoue 2019
-        lu[ind] =  -2.316 - 0.360*loh4[ind] - 0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
+        lu[ind] =  -2.316 - 0.360*loh4[ind] - 0.292*lne[ind] + 0.428*(lssfr[ind] + 9.)
 
-    ###here this is an application of Panuzzo, not Kashino
+    ###here EV: this is an application of Panuzzo, not Kashino
     #ind = np.where((lssfr > c.notnum) &
     #               (lms > 0) &
     #               (lzgas > c.notnum))
-      #ind_comp = []   
-      #for comp in range(len(Q[0])):
-      #    ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
-      #                   (lms[:,comp] > 0) &
-      #                   (lzgas[:,comp] > c.notnum) &
-      #                   (Q[:,comp] > 0))[0])
-      #    
-      #epsilon = np.full(np.shape(lssfr),c.notnum)
-      #cte = np.zeros(np.shape(lssfr))
-      #
-      #for comp in range(len(Q[0])):
-      #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-      #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
-      #    
-      #    if ng_ratio != None:
-      #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
-      #    
-      #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
-      #
-      #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+    #ind_comp = []   
+    #for comp in range(len(Q[0])):
+    #    ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+    #                   (lms[:,comp] > 0) &
+    #                   (lzgas[:,comp] > c.notnum) &
+    #                   (Q[:,comp] > 0))[0])
+    #    
+    #epsilon = np.full(np.shape(lssfr),c.notnum)
+    #cte = np.zeros(np.shape(lssfr))
+    #
+    #for comp in range(len(Q[0])):
+    #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+    #    
+    #    if ng_ratio != None:
+    #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+    #    
+    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #
+    #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
-    return lu, lne
+    output = lu
+    if nhout: output = lne
+    
+    return output
 
 
 def get_une_orsi14(lzgas, q0, z0, gamma):
@@ -1009,15 +999,15 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_nH == 'kashino20'):
-        lu, lne = get_une_kashino20(Q,lms,lssfr,lzgas,T,ng_ratio,IMF)
-                        
+        lne = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=True)
+
     if une_sfr_U not in c.une_sfr_U:
         if verbose:
             print('STOP (gne_une): Unrecognised model to get U (HII).')
             print('                Possible options= {}'.format(c.une_sfr_nH))
         sys.exit()
     elif (une_sfr_U == 'kashino20'):
-        lu, lne = get_une_kashino20(Q,lms,lssfr,lzgas,T,ng_ratio,IMF)
+        lu = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=False)
     elif (une_sfr_U == 'orsi14'):
         lu = get_une_orsi14(lzgas,q0,z0,gamma)
     elif (une_sfr_U == 'panuzzo03_sfr'):

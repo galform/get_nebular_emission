@@ -620,6 +620,7 @@ def get_sfrdata(infile,cols,selection=None,
     #if LC2sfr: # Avoid positive magnitudes of LC photons
     #    ind = np.where(lssfr>0)
     #    lssfr[ind] = c.notnum ; lzgas[ind] = c.notnum
+    # np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
 
     ncomp = get_ncomponents(cols)
         
