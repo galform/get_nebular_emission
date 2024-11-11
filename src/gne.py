@@ -215,7 +215,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
         ###here this does not work due to Lagn_param, need to change this dependency
     # Characterise the HII regions from galaxy global properties
-    lu_sfr, lne_sfr = get_une_sfr(lms, lssfr, lzgas, outfile,
+    lu_sfr, lnH_sfr = get_une_sfr(lms, lssfr, lzgas, outfile,
                                   q0=q0, z0=z0,gamma=gamma, T=T,
                                   epsilon_param_z0=epsilon_param_z0,
                                   IMF=IMF,une_sfr_nH=une_sfr_nH,
@@ -223,16 +223,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     
     if verbose:
         print('SF:')
-        print(' U and ne calculated.')
+        print(' U and nH calculated.')
             
     lu_o_sfr = np.copy(lu_sfr)
-    lne_o_sfr = np.copy(lne_sfr)
+    lnH_o_sfr = np.copy(lnH_sfr)
     lzgas_o_sfr = np.copy(lzgas)
     ###here why do we need to clean_photarray?
-    clean_photarray(lms, lssfr, lu_sfr, lne_sfr, lzgas, photmod=photmod_sfr)
+    clean_photarray(lms, lssfr, lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
 
     # Obtain spectral emission lines from HII regions
-    nebline_sfr = get_lines(lu_sfr,lne_sfr,lzgas,photmod=photmod_sfr,
+    nebline_sfr = get_lines(lu_sfr,lnH_sfr,lzgas,photmod=photmod_sfr,
                             xid_phot=xid_sfr, co_phot=co_sfr,
                             imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
@@ -282,7 +282,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                testing=testing,
                                verbose=verbose)
         
-    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lne_o_sfr,lzgas_o_sfr,
+    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
                       nebline_sfr,nebline_sfr_att,
                       fluxes_sfr,fluxes_sfr_att,
                       extra_param=extra_param,
@@ -290,8 +290,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                       extra_params_labels=extra_params_labels,
                       verbose=verbose)
     
-    del lu_sfr, lne_sfr
-    del lu_o_sfr, lne_o_sfr, lzgas_o_sfr
+    del lu_sfr, lnH_sfr
+    del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
     del nebline_sfr, nebline_sfr_att
 
     #----------------NLR AGN calculation------------------------
@@ -324,7 +324,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
         
-        Q_agn, lu_agn, lne_agn, epsilon_agn, ng_ratio = \
+        Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
             get_une_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
                         agn_nH_param=agn_nH_param,
@@ -334,14 +334,14 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         if verbose:
             print('AGN:')
-            print(' U and ne calculated.')
+            print(' U and nH calculated.')
         
         lu_o_agn = np.copy(lu_agn)
-        lne_o_agn = np.copy(lne_agn)
+        lnH_o_agn = np.copy(lnH_agn)
         lzgas_o_agn = np.copy(lzgas_agn) 
         ###here it doesn't make sense that nebline_agn has several components
-        clean_photarray(lms, lssfr, lu_agn, lne_agn, lzgas_agn, photmod=photmod_agn)            
-        nebline_agn = get_lines(lu_agn,lne_agn,lzgas_agn,photmod=photmod_agn,
+        clean_photarray(lms, lssfr, lu_agn, lnH_agn, lzgas_agn, photmod=photmod_agn)            
+        nebline_agn = get_lines(lu_agn,lnH_agn,lzgas_agn,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
         
@@ -372,13 +372,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn = np.array(None)
             fluxes_agn_att = np.array(None)
 
-        io.write_agn_data(outfile,lu_o_agn,lne_o_agn,lzgas_o_agn,
+        io.write_agn_data(outfile,lu_o_agn,lnH_o_agn,lzgas_o_agn,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn,
                           verbose=verbose)             
-        del lu_agn, lne_agn, lzgas_agn 
-        del lu_o_agn, lne_o_agn, lzgas_o_agn
+        del lu_agn, lnH_agn, lzgas_agn 
+        del lu_o_agn, lnH_o_agn, lzgas_o_agn
         del nebline_agn, nebline_agn_att
 
 

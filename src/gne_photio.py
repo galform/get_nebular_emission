@@ -42,7 +42,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
     return zfile
 
 
-def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True):
+def clean_photarray(lms, lssfr, lu, lnH, lzgas, photmod='gutkin16', verbose=True):
 
     '''
     Given the model, take the values outside the limits and give them the apropriate
@@ -56,7 +56,7 @@ def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lu : floats
      U of the galaxies per component.
-    lne : floats
+    lnH : floats
      ne of the galaxies per component (cm^-3).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z)).
@@ -67,7 +67,7 @@ def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True
 
     Returns
     -------
-    lms,lssfr,lu,lne,lzgas : floats
+    lms,lssfr,lu,lnH,lzgas : floats
     '''
 
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
@@ -75,19 +75,19 @@ def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
 
     limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(lzgas[:,0]>np.log10(minZ))&(lzgas[:,0]<np.log10(maxZ))&
-                      (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=c.notnum))[0]
+                      (lnH[:,0]>np.log10(minnH))&(lnH[:,0]<np.log10(maxnH))&(lu[:,0]!=c.notnum))[0]
     
     for i in range(lu.shape[1]):        
         lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != c.notnum)] = maxU
         lu[:,i][(lu[:,i] < minU)&(lu[:,i] != c.notnum)] = minU
         
-        lne[:,i][(lne[:,i] > np.log10(maxnH))&(lne[:,i] != c.notnum)] = np.log10(maxnH)
-        lne[:,i][(lne[:,i] < np.log10(minnH))&(lne[:,i] != c.notnum)] = np.log10(minnH)
+        lnH[:,i][(lnH[:,i] > np.log10(maxnH))&(lnH[:,i] != c.notnum)] = np.log10(maxnH)
+        lnH[:,i][(lnH[:,i] < np.log10(minnH))&(lnH[:,i] != c.notnum)] = np.log10(minnH)
         
         lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != c.notnum)] = np.log10(maxZ)
         lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != c.notnum)] = np.log10(minZ)
                 
-    return lms, lssfr, lu, lne, lzgas
+    return lms, lssfr, lu, lnH, lzgas
 
 
 def get_limits(propname, photmod='gutkin16',verbose=True):
@@ -124,7 +124,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         infile = c.mod_lim[photmod]
     except KeyError:
         print('STOP (gne_photio.get_limits): the {}'.format(photmod) +
-              ' model is an unrecognised model in the dictionary mod_lim')
+              ' is an unrecognised model in the dictionary mod_lim')
         print('                  Possible photmod= {}'.format(c.mod_lim.keys()))
         sys.exit()
 
@@ -201,13 +201,13 @@ def calculate_flux(nebline,filenom,origin='sfr'):
 
 
 
-def get_lines_feltre16(lu, lne, lzgas, xid_phot=0.5,
+def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                      alpha_phot=-1.7,verbose=True):
     '''
     Get the interpolations for the emission lines,
-    using the tables
-    from Feltre et al. (2016) (https://arxiv.org/pdf/1511.08217utkingalaxies per component.
-    lne : floats
+    using the tables from Feltre+2016 (https://arxiv.org/pdf/1511.08217)
+    
+    lnH : floats
      ne of the galaxies per component (cm^-3).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z))
@@ -379,30 +379,30 @@ def get_lines_feltre16(lu, lne, lzgas, xid_phot=0.5,
         # Interpolate over ne
         # use gas density in disk logned
         for n in ind:
-            if (lne[:,comp][n] > 2. and lne[:,comp][n] <= 3.):
-                dn = (lne[:,comp][n] -2.)/(3. - 2.)
+            if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
+                dn = (lnH[:,comp][n] -2.)/(3. - 2.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
     
-            elif (lne[:,comp][n] > 3. and lne[:,comp][n] <= 4.):
-                dn = (lne[:,comp][n] - 3.)/(4. - 3.)
+            elif (lnH[:,comp][n] > 3. and lnH[:,comp][n] <= 4.):
+                dn = (lnH[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int2[k][n] + (dn) * emline_int3[k][n]
                 # print('hay mayor que 3')
     
-            elif (lne[:,comp][n] <= 2.):
+            elif (lnH[:,comp][n] <= 2.):
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int1[k][n]
-            elif (lne[:,comp][n] > 4.):
+            elif (lnH[:,comp][n] > 4.):
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int3[k][n]
             else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lne[:,comp][n]))
+                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lnH[:,comp][n]))
                 
     return nebline
 
 
-def get_lines_gutkin16(lu, lne, lzgas, xid_phot=0.3,
+def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                      co_phot=1,imf_cut_phot=100,verbose=True):
     '''
     Get the interpolations for the emission lines,
@@ -413,7 +413,7 @@ def get_lines_gutkin16(lu, lne, lzgas, xid_phot=0.3,
     ----------
     lu : floats
      U of the galaxies per component.
-    lne : floats
+    lnH : floats
      ne of the galaxies per component (cm^-3).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z))
@@ -642,35 +642,35 @@ def get_lines_gutkin16(lu, lne, lzgas, xid_phot=0.3,
         # Interpolate over ne
         # use gas density in disk logned
         for n in ind:
-            if (lne[:,comp][n] > 2. and lne[:,comp][n] <= 3.):
-                dn = (lne[:,comp][n] -2.)/(3. - 2.)
+            if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
+                dn = (lnH[:,comp][n] -2.)/(3. - 2.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int2[k][n] + (dn)*emline_int3[k][n]
     
-            elif (lne[:,comp][n] > 1. and lne[:,comp][n] <= 2.):
-                dn = (lne[:,comp][n] -1.)/(2. - 1.)
+            elif (lnH[:,comp][n] > 1. and lnH[:,comp][n] <= 2.):
+                dn = (lnH[:,comp][n] -1.)/(2. - 1.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
     
-            elif (lne[:,comp][n] > 3. and lne[:,comp][n]<=4.):
-                dn = (lne[:,comp][n] - 3.)/(4. - 3.)
+            elif (lnH[:,comp][n] > 3. and lnH[:,comp][n]<=4.):
+                dn = (lnH[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
                 # print('hay mayor que 3')
     
-            elif (lne[:,comp][n] <= 1.):
+            elif (lnH[:,comp][n] <= 1.):
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int1[k][n]
-            elif (lne[:,comp][n] > 4.):
+            elif (lnH[:,comp][n] > 4.):
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int4[k][n]
             else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lne[:,comp][n]))
+                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lnH[:,comp][n]))
 
     return nebline
 
 
-def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
+def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
               co_phot=1,imf_cut_phot=100,alpha_phot=-1.7, verbose=True):
     '''
     Get the emission lines
@@ -679,7 +679,7 @@ def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
     ----------
     lu : floats
        U of the galaxies per component.
-    lne : floats
+    lnH : floats
        ne of the galaxies per component (cm^-3).
     lzgas : floats
        Metallicity of the galaxies per component (log10(Z))
@@ -709,10 +709,10 @@ def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
             print('                Possible photmod= {}'.format(c.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_gutkin16(lu,lne,lzgas,xid_phot=xid_phot,co_phot=co_phot,
+        nebline = get_lines_gutkin16(lu,lnH,lzgas,xid_phot=xid_phot,co_phot=co_phot,
                                    imf_cut_phot=imf_cut_phot,verbose=verbose)
     elif (photmod == 'feltre16'):
-        nebline = get_lines_feltre16(lu,lne,lzgas,xid_phot=xid_phot,
+        nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 
     return nebline
