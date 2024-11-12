@@ -824,7 +824,8 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
                 
                 cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
                  * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
-                
+
+            # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
             cte[cte==0] = 1e-50
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
             lu[cte==1e-50] = c.notnum
@@ -925,7 +926,8 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
                 
                 cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
                  * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
-                
+
+            # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
             cte[cte==0] = 1e-50
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
             lu[cte==1e-50] = c.notnum

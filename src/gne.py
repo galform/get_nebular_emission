@@ -209,11 +209,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                         testing=testing,
                                         verbose=verbose)
     
-    # Modification of the stellar mass-metallicity relation    
+    # Modification of the stellar mass-metallicity relation
     if zeq is not None:
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
-        lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
         ###here this does not work due to Lagn_param, need to change this dependency
+        lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
+
     # Characterise the HII regions from galaxy global properties
     lu_sfr, lnH_sfr = get_une_sfr(lms, lssfr, lzgas, outfile,
                                   q0=q0, z0=z0,gamma=gamma, T=T,

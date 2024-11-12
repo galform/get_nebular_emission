@@ -73,9 +73,6 @@ def clean_photarray(lms, lssfr, lu, lnH, lzgas, photmod='gutkin16', verbose=True
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-
-    limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(lzgas[:,0]>np.log10(minZ))&(lzgas[:,0]<np.log10(maxZ))&
-                      (lnH[:,0]>np.log10(minnH))&(lnH[:,0]<np.log10(maxnH))&(lu[:,0]!=c.notnum))[0]
     
     for i in range(lu.shape[1]):        
         lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != c.notnum)] = maxU

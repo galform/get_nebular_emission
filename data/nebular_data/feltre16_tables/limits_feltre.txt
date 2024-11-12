@@ -1,6 +1,6 @@
 # Table 1 of Feltre+2016 (https://arxiv.org/pdf/1511.08217.pdf)
 # Property      Lower_limit     Upper_limit
-Z               0.0001          0.070
+Z               0.0001          0.040
 logUs          -5.0            -1.0
 xid             0.1             0.5
 nH              100              10000
