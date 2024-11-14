@@ -217,7 +217,7 @@ zmet_str_reduced = {
     "gutkin16" : np.array(['0001','002','014','030']),
 }
 
-lines_model = {
+line_names = {
     "gutkin16" : np.array(['OII3727','Hbeta','OIII4959','OIII5007',
                            'NII6548','Halpha','NII6584','SII6717',
                            'SII6731','NV1240','CIV1548','CIV1551',
@@ -230,7 +230,7 @@ lines_model = {
                            'SiIII1888', 'CIII1907','CIII1910'])
     }
 
-wavelength_model = {
+line_wavelength = {
     "gutkin16" : np.array([3727,4861,4959,5007,6548,6563,6584,
                            6717,6731,1240,1548,1551,1640,1661,
                            1666,1883,1888,1908]),
@@ -243,8 +243,8 @@ def coef_att_line_model_func(z=0):
     line_att_coef = line_att_coef_func(z)
 
     coef_att_line_model = {
-        "gutkin16" : np.array([line_att_coef[line] for line in lines_model["gutkin16"]]),
-        "feltre16" : np.array([line_att_coef[line] for line in lines_model["feltre16"]])
+        "gutkin16" : np.array([line_att_coef[line] for line in line_names["gutkin16"]]),
+        "feltre16" : np.array([line_att_coef[line] for line in line_names["feltre16"]])
         }
 
     return coef_att_line_model

@@ -3,13 +3,13 @@
 """
 Created on Wed Apr 12 14:36:13 2023
 
-@author: expox7, vgp
+@Author: expox7, vgp
 """
 
 import h5py
 import numpy as np
 import src.gne_io as io
-import src.gne_const as const
+import src.gne_const as c
 from src.gne_io import check_file
 import sys
 import warnings
@@ -103,10 +103,10 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, c
     Al_Av = cardelli(wavelength)
     sectheta = 1./costheta
 
-    mean_col_dens_disc_log = (np.log10(Mcold_disc*h0) + np.log10(const.Msun) - 
-    np.log10(1.4*const.mp*np.pi)-2.*np.log10(a_disc*rhalf_mass_disc*h0*const.Mpc_to_cm))
+    mean_col_dens_disc_log = (np.log10(Mcold_disc*h0) + np.log10(c.Msun) - 
+    np.log10(1.4*c.mp*np.pi)-2.*np.log10(a_disc*rhalf_mass_disc*h0*c.Mpc_to_cm))
     
-    tau_disc = np.log10(Al_Av) + np.log10((Z_disc/const.zsun)**s) + mean_col_dens_disc_log - np.log10(2.1e21)
+    tau_disc = np.log10(Al_Av) + np.log10((Z_disc/c.zsun)**s) + mean_col_dens_disc_log - np.log10(2.1e21)
     tau_disc = 10.**tau_disc
     
     al_disc = (np.sqrt(1.-albedo))*tau_disc
@@ -153,16 +153,16 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     '''
     
     ncomp = len(nebline)
-    coef_att = np.full(nebline.shape,const.notnum)
+    coef_att = np.full(nebline.shape,c.notnum)
     
     if att_param[0][0] != None:
-        if attmod not in const.attmods:
+        if attmod not in c.attmods:
             if verbose:
                 print('STOP (gne_photio.attenuation): Unrecognised model for attenuation.')
-                print('                Possible attmod= {}'.format(const.attmods))
+                print('                Possible attmod= {}'.format(c.attmods))
             sys.exit()
         elif attmod=='ratios':
-            for i, line in enumerate(const.lines_model[photmod]):
+            for i, line in enumerate(c.line_names[photmod]):
                 if line in att_ratio_lines:
                     ind = np.where(np.array(att_ratio_lines)==line)[0]
                 else:
@@ -170,32 +170,32 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
                 
                 for comp in range(ncomp):
                     if comp==0:
-                        coef_att[comp,i] = att_param[ind] * const.line_att_coef_all(redshift)
+                        coef_att[comp,i] = att_param[ind] * c.line_att_coef_all(redshift)
                     else:
                         if origin=='sfr':
                             coef_att[comp,i] = coef_att[0,i]
                         else:
                             coef_att[comp,i] = 1.
-            coef_att[(coef_att!=coef_att)&(coef_att!=const.notnum)] = 1.
+            coef_att[(coef_att!=coef_att)&(coef_att!=c.notnum)] = 1.
         elif attmod=='cardelli89':
             Rhm = att_param[0]
             Mcold_disc = att_param[1]
             Z_disc = att_param[2]
                 
-            coef_att = np.full(nebline.shape,const.notnum)
+            coef_att = np.full(nebline.shape,c.notnum)
             for comp in range(ncomp):
-                for i, line in enumerate(const.lines_model[photmod]):
+                for i, line in enumerate(c.line_names[photmod]):
                     if comp==0:
-                        coef_att[comp,i] = coef_att_cardelli(const.wavelength_model[photmod][i], 
+                        coef_att[comp,i] = coef_att_cardelli(c.line_wavelength[photmod][i], 
                                     Mcold_disc=Mcold_disc, rhalf_mass_disc=Rhm, 
                                                              Z_disc=Z_disc, h0=h0,
-                                                             costheta=0.3, albedo=0.56) * const.line_att_coef_all(redshift)
+                                                             costheta=0.3, albedo=0.56) * c.line_att_coef_all(redshift)
                     else:
                         coef_att[comp,i] = coef_att[0,i]
-            coef_att[(coef_att!=coef_att)&(coef_att!=const.notnum)] = 1.
+            coef_att[(coef_att!=coef_att)&(coef_att!=c.notnum)] = 1.
     
-    nebline_att = np.full(nebline.shape,const.notnum)
-    ind = np.where((coef_att!=const.notnum))
+    nebline_att = np.full(nebline.shape,c.notnum)
+    ind = np.where((coef_att!=c.notnum))
     nebline_att[ind] = nebline[ind]*coef_att[ind]
     
     return nebline_att, coef_att
@@ -240,7 +240,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     
 #     ncomp = len(cols_notatt)
         
-#     lines = const.lines_model[photmod]
+#     lines = c.line_names[photmod]
 #     numlines = len(lines)
     
 #     cols_att = np.array(cols_att)
@@ -252,7 +252,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 #             hf = f['data']
             
 #             coef_att = np.empty((ncomp,numlines,len(hf[cols_notatt[0,0]])))
-#             coef_att.fill(const.notnum)
+#             coef_att.fill(c.notnum)
             
 #             for i in range(len(cols_photmod)):
 #                 for comp in range(ncomp):
@@ -265,7 +265,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 #         X = np.loadtxt(infile,skiprows=ih).T
         
 #         coef_att = np.empty((ncomp,numlines,len(X[0])))
-#         coef_att.fill(const.notnum)
+#         coef_att.fill(c.notnum)
         
 #         for i in range(len(cols_photmod)):
 #             for comp in range(ncomp):
