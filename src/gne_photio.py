@@ -5,11 +5,11 @@
 """
 import h5py
 import numpy as np
+import sys
+#import warnings
 import src.gne_io as io
 import src.gne_const as c
-from src.gne_io import check_file
-import sys
-import warnings
+from src.gne_stats import locate_interval
 from src.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
 
 
@@ -35,7 +35,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
         zmet_str = zmet_str+'0'
     zfile = root + zmet_str + '.txt'
     # Si son 2 numeros que le añada un cero
-    file_fine = check_file(zfile)
+    file_fine = io.check_file(zfile)
     if (not file_fine):
         zfile = None
 
@@ -111,10 +111,8 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
 
     Examples
     -------
-    >>> get_limits(propname = 'Z', photmod = 'gutkin16')
-        0.0001 0.04
     >>> get_limits(propname = 'nH', photmod = 'gutkin16')
-        1  4
+        10  10000
     '''
 
     try:
@@ -126,7 +124,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
         sys.exit()
 
     # Check if the limits file exists:
-    check_file(infile, verbose=verbose)
+    io.check_file(infile, verbose=verbose)
     # print(infile)
 
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
@@ -226,8 +224,9 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    minZ, maxZ = np.log10(minZ), np.log10(maxZ)
-    
+
+    minZ = np.log10(minZ); maxZ = np.log10(maxZ)
+
     zmet_str = c.zmet_str[photmod]
     zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
@@ -248,7 +247,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     l = 0
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
-        check_file(infile,verbose=True)
+        io.check_file(infile,verbose=True)
         #print(k,infile)
         ih = io.get_nheader(infile)
 
@@ -319,7 +318,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         du = []
         j = []
         for logu in lu[:,comp]:
-            j1 = io.locate_interval(logu,logubins)
+            j1 = locate_interval(logu,logubins)
             if logu<minU:
                 du.append(0.0)
                 j.append(0)
@@ -339,7 +338,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         i = []
     
         for logz in lzgas[:,comp]:
-            i1 = io.locate_interval(logz, lzmets)
+            i1 = locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0
@@ -434,13 +433,14 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    minZ, maxZ = np.log10(minZ), np.log10(maxZ)
-    
+
+    minZ = np.log10(minZ); maxZ = np.log10(maxZ)
+
     zmet_str = c.zmet_str[photmod]
     zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
 
-    logubins = [-4., -3.5, -3., -2.5, -2., -1.5, -1.]
+    logubins = c.lus_bins[photmod]
     
     nemline = 18
     ndat = lu.shape[0]
@@ -462,7 +462,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
-        check_file(infile,verbose=True)
+        io.check_file(infile,verbose=True)
         ih = io.get_nheader(infile)
 
         with open(infile,'r') as ff:
@@ -548,7 +548,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         du = []
         j = []
         for logu in lu[:,comp]:
-            j1 = io.locate_interval(logu,logubins)
+            j1 = locate_interval(logu,logubins)
             if logu<minU:
                 du.append(0.0)
                 j.append(0)
@@ -568,7 +568,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         dz = []
         i = []
         for logz in lzgas[:,comp]:
-            i1 = io.locate_interval(logz,lzmets_reduced)
+            i1 = locate_interval(logz,lzmets_reduced)
     
             if logz<minZ:
                 dz.append(0.0)
@@ -607,7 +607,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         i = []
     
         for logz in lzgas[:,comp]:
-            i1 = io.locate_interval(logz, lzmets)
+            i1 = locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0
@@ -662,7 +662,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int4[k][n]
             else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lnH[:,comp][n]))
+                print('log(nH)disk out of limits','log(nH)disk = {}'.format(lnH[:,comp][n]))
 
     return nebline
 

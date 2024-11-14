@@ -11,7 +11,7 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
-import src.gne_const as const
+import src.gne_const as c
 
 
 def percentiles(val, data, weights=None):
@@ -198,6 +198,47 @@ def get_interval(val, low, high):
                 ind = common[0]
 
     return ind
+
+
+def locate_interval(val, edges):
+    '''
+    Get the index, i, of the interval with edges.
+
+    Parameters
+    ----------
+    val : int or float
+        Value
+    edges : array of int or floats
+        Array of the edges of the intervals
+        
+    Returns
+    -------
+    ind : integer
+        Index of the interval. If outside: index of the limits
+    '''
+
+    ind = c.notnum
+    low = np.asarray(edges[:-1])
+    high = np.asarray(edges[1:])
+
+    if (val >= high[-1] and val >= low[-1]):
+        ind = len(high)
+    elif (val<=low[0]):
+        ind = 0
+    else:
+        linds = np.where(val >= low)
+        hinds = np.where(val < high)
+
+        if (np.shape(linds)[1] > 0 and np.shape(hinds)[1] > 0):
+            lind = linds[0]
+            hind = hinds[0]
+            common = list(set(lind).intersection(hind))
+
+            if (len(common) == 1):
+                ind = common[0]
+
+    return ind
+
 
 
 def chi2(obs, model, err2):
