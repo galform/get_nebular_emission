@@ -331,16 +331,13 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         j = []
         for logu in lu[:,comp]:
             jl = locate_interval(logu,logubins)
-            #if logu<minU:
-            if jl<0:
+            if jl<0: # Use first value in the grid
                 du.append(0.0)
                 j.append(0)
-                #du = 0.0
                 jl = 0
-            elif jl == nu - 1:
+            elif jl > nu - 2: # Use last value in the grid
                 du.append(1.0)
                 j.append(nu-2)
-                #du = 1.0
                 jl = nu - 2
             else:
                 d = (logu - logubins[jl]) / (logubins[jl + 1] - logubins[jl])
