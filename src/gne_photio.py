@@ -325,25 +325,25 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int2 = np.zeros((nemline, ndat))
         emline_int3 = np.zeros((nemline, ndat))
         emline_int4 = np.zeros((nemline, ndat))
-    
-        # Interpolate over ionisation parameter
-        du = []
-        j = []
+
+        # Calculate the weights on u: ud = (u-u1)/(u2-u1)
+        ud = []
+        iu = []
         for logu in lu[:,comp]:
             jl = locate_interval(logu,logubins)
             if jl<0: # Use first value in the grid
-                du.append(0.0)
-                j.append(0)
+                ud.append(0.0)
+
                 jl = 0
             elif jl > nu - 2: # Use last value in the grid
-                du.append(1.0)
-                j.append(nu-2)
+                ud.append(1.0)
+
                 jl = nu - 2
             else:
                 d = (logu - logubins[jl]) / (logubins[jl + 1] - logubins[jl])
-                du.append(d)
-                j.append(jl)
-
+                ud.append(d)
+            iu.append(jl)
+        
         # Interpolate over disk gas metallicity lzgas[comp]
         dz = []
         i = []
@@ -364,28 +364,22 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 d = (logz - lzmets_reduced[i1])/(lzmets_reduced[i1+1]-lzmets_reduced[i1])
                 dz.append(d)
                 i.append(i1)
-    
-    
+        
         for k in range(nemline):
             for ii in ind:
-                #emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))
-                #print(emline_grid1[i[ii]][j[ii]][k])
-                emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid1[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid1[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid1[i[ii]+1][j[ii]+1][k]
+                emline_int1[k][ii] = (1.-dz[ii])*(1.-ud[ii])*emline_grid1[i[ii]][iu[ii]][k]+\
+                                     dz[ii]*(1-ud[ii])*emline_grid1[i[ii]+1][iu[ii]][k]+\
+                                     (1.-dz[ii])*ud[ii]*emline_grid1[i[ii]][iu[ii]+1][k]+\
+                                     dz[ii]*ud[ii]*emline_grid1[i[ii]+1][iu[ii]+1][k]
     
-                emline_int4[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid4[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid4[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid4[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid4[i[ii]+1][j[ii]+1][k]
-    
+                emline_int4[k][ii] = (1.-dz[ii])*(1.-ud[ii])*emline_grid4[i[ii]][iu[ii]][k]+\
+                                     dz[ii]*(1-ud[ii])*emline_grid4[i[ii]+1][iu[ii]][k]+\
+                                     (1.-dz[ii])*ud[ii]*emline_grid4[i[ii]][iu[ii]+1][k]+\
+                                     dz[ii]*ud[ii]*emline_grid4[i[ii]+1][iu[ii]+1][k]
     
         # full metallicity grid for emlines_grid2 ne=100 and emlines_grid3 ne=1000
-    
         dz = []
         i = []
-    
         for logz in lzgas[:,comp]:
             i1 = locate_interval(logz, lzmets)
             if logz<minZ:
@@ -403,18 +397,17 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 dz.append(d)
                 i.append(i1)
     
-    
         for k in range(nemline):
             for ii in ind:
-                emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid2[i[ii]+1][j[ii]+1][k]
+                emline_int2[k][ii] = (1.-dz[ii])*(1.-ud[ii])*emline_grid2[i[ii]][iu[ii]][k]+\
+                                     dz[ii]*(1-ud[ii])*emline_grid2[i[ii]+1][iu[ii]][k]+\
+                                     (1.-dz[ii])*ud[ii]*emline_grid2[i[ii]][iu[ii]+1][k]+\
+                                     dz[ii]*ud[ii]*emline_grid2[i[ii]+1][iu[ii]+1][k]
     
-                emline_int3[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid3[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid3[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid3[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid3[i[ii]+1][j[ii]+1][k]
+                emline_int3[k][ii] = (1.-dz[ii])*(1.-ud[ii])*emline_grid3[i[ii]][iu[ii]][k]+\
+                                     dz[ii]*(1-ud[ii])*emline_grid3[i[ii]+1][iu[ii]][k]+\
+                                     (1.-dz[ii])*ud[ii]*emline_grid3[i[ii]][iu[ii]+1][k]+\
+                                     dz[ii]*ud[ii]*emline_grid3[i[ii]+1][iu[ii]+1][k]
     
         # Interpolate over ne
         # use gas density in disk logned
