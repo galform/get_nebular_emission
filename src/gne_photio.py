@@ -254,15 +254,26 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
 
+    lzmets_reduced = np.full(len(zmets_reduced), c.notnum)
+    ind = np.where(zmets_reduced > 0.)
+    if (np.shape(ind)[1]) > 0:
+        lzmets_reduced[ind] = np.log10(zmets_reduced[ind])
+
+    lzmets = np.full(len(zmets), c.notnum)
+    ind = np.where(zmets > 0.)
+    if (np.shape(ind)[1] > 0):
+        lzmets[ind] = np.log10(zmets[ind])
+
+    # Initialize the matrix to store the emission lines
+    nebline = np.zeros((ncomp,nemline,ndat))
+    
     # Store grids for different nH values (different Z grids)
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
     emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
 
-    l = 0
-    kred = 0
-    nn = 0
+    l = 0; kred = 0; nn = 0
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
         io.check_file(infile,verbose=True)
@@ -286,7 +297,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                     l = np.where(logubins==u)[0][0]
 
                     if nH==10 or nH==100 or nH==1000 or nH==10000:
-
                         if nH==10 or nH==10000:
                             if k==0:
                                 kred = 0
@@ -307,24 +317,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                                 emline_grid4[kred,l,j] = float(data[j+5])
         ff.close()
 
-    # log metallicity bins ready for interpolation:
-    lzmets_reduced = np.full(len(zmets_reduced), c.notnum)
-    ind = np.where(zmets_reduced > 0.)
-    if (np.shape(ind)[1]) > 0:
-        lzmets_reduced[ind] = np.log10(zmets_reduced[ind])
-
-
-    lzmets = np.full(len(zmets), c.notnum)
-    ind = np.where(zmets > 0.)
-    if (np.shape(ind)[1] > 0):
-        lzmets[ind] = np.log10(zmets[ind])
-
-    nebline = np.zeros((ncomp,nemline,ndat))
-
-    # Interpolate in all three ne grids,
-    # starting with u-grid first (same for all grids)
+    # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
-        
         ind = np.where(lu[:,comp] != c.notnum)[0]
 
         emline_int1 = np.zeros((nemline,ndat))
@@ -336,21 +330,22 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         du = []
         j = []
         for logu in lu[:,comp]:
-            j1 = locate_interval(logu,logubins)
-            if logu<minU:
+            jl = locate_interval(logu,logubins)
+            #if logu<minU:
+            if jl<0:
                 du.append(0.0)
                 j.append(0)
                 #du = 0.0
-                j1 = 0
-            elif j1 == nu - 1:
+                jl = 0
+            elif jl == nu - 1:
                 du.append(1.0)
                 j.append(nu-2)
                 #du = 1.0
-                j1 = nu - 2
+                jl = nu - 2
             else:
-                d = (logu - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
+                d = (logu - logubins[jl]) / (logubins[jl + 1] - logubins[jl])
                 du.append(d)
-                j.append(j1)
+                j.append(jl)
 
         # Interpolate over disk gas metallicity lzgas[comp]
         dz = []
