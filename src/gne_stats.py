@@ -163,83 +163,38 @@ def n_gt_x(xedges, array):
     return y
 
 
-def get_interval(val, low, high):
-    '''
-    Get the index, i, of the interval where low[i]<val<high[i]
-
-    Parameters:
-    val : int or float
-        Value
-    low : array of int or floats
-        Array of the low edges of the intervals
-    high : array of int or floats
-        Array of the high edges of the intervals
-    Returns:
-    ind : integer
-       Index of the interval the value belongs to or -999 if outside
-    '''
-
-    ind = -999
-
-    if (len(low) != len(high)):
-        return ind
-
-    if (val == high[-1] and val >= low[-1]):
-        ind = len(high) - 1
-    else:
-        linds = np.where(val >= low)
-        hinds = np.where(val < high)
-
-        if (np.shape(linds)[1] > 0 and np.shape(hinds)[1] > 0):
-            lind = linds[0]
-            hind = hinds[0]
-            common = list(set(lind).intersection(hind))
-            if (len(common) == 1):
-                ind = common[0]
-
-    return ind
-
-
 def locate_interval(val, edges):
     '''
-    Get the index, i, of the interval with edges.
+    Get the index, i, of the interval to which val belongs.
 
     Parameters
     ----------
     val : int or float
-        Value
+        Value to evaluate
     edges : array of int or floats
-        Array of the edges of the intervals
+        Array of the n edges for the (n-1) intervals
         
     Returns
     -------
-    ind : integer
-        Index of the interval. If outside: index of the limits
+    jl : integer
+        Index of the interval, (edges(jl),edges(jl+1)], where val is place.
+        If outside: jl=-1 or jl=n.
     '''
 
-    ind = c.notnum
-    low = np.asarray(edges[:-1])
-    high = np.asarray(edges[1:])
+    n = edges.size
+    jl = -1
+    ju = n
+    while(ju-jl > 1):
+        jm = int((ju+jl)/2)
+        if (edges[n-1] > edges[0]) == (val > edges[jm]):
+            jl=jm
+        else:
+            ju=jm
 
-    if (val >= high[-1] and val >= low[-1]):
-        ind = len(high)
-    elif (val<=low[0]):
-        ind = 0
-    else:
-        linds = np.where(val >= low)
-        hinds = np.where(val < high)
-
-        if (np.shape(linds)[1] > 0 and np.shape(hinds)[1] > 0):
-            lind = linds[0]
-            hind = hinds[0]
-            common = list(set(lind).intersection(hind))
-
-            if (len(common) == 1):
-                ind = common[0]
-
-    return ind
+    return jl
 
 
+#def locate_index(val,): ###here
 
 def chi2(obs, model, err2):
     '''

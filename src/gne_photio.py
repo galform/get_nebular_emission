@@ -226,6 +226,10 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
        Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
     '''
 
+    ndat = lu.shape[0]
+    ncomp = lu.shape[1]
+
+    # Get table limits
     photmod = 'gutkin16'
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
@@ -245,12 +249,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
     line_names = c.line_names[photmod]
     nemline = len(line_names)
-
-    #print(nzmet,nzmet_reduced,nu,nemline); exit() ##here
     
-    ndat = lu.shape[0]
-    ncomp = lu.shape[1]
-
     # Obtain metallicity values from the file names
     zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
@@ -264,7 +263,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     l = 0
     kred = 0
     nn = 0
-
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
         io.check_file(infile,verbose=True)
@@ -285,21 +283,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 imf_cut = float(data[4])
                 
                 if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
-                    if u == -4.:
-                        l = 0
-                    if u == -3.5:
-                        l = 1
-                    if u == -3.:
-                        l = 2
-                    if u == -2.5:
-                        l = 3
-                    if u == -2.:
-                        l = 4
-                    if u == -1.5:
-                        l = 5
-                    if u == -1.:
-                        l = 6
-
+                    l = np.where(logubins==u)[0][0]
 
                     if nH==10 or nH==100 or nH==1000 or nH==10000:
 
@@ -339,7 +323,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
     # Interpolate in all three ne grids,
     # starting with u-grid first (same for all grids)
-    
     for comp in range(ncomp):
         
         ind = np.where(lu[:,comp] != c.notnum)[0]
