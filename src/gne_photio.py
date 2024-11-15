@@ -272,8 +272,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
     emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
-
-    l = 0; kred = 0; nn = 0
+    
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
         io.check_file(infile,verbose=True)
@@ -292,7 +291,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 nH = float(data[2])
                 co = float(data[3])
                 imf_cut = float(data[4])
-                
+
+                l = 0; kred = 0
                 if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
                     l = np.where(logubins==u)[0][0]
 
@@ -321,7 +321,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     for comp in range(ncomp):
         ind = np.where(lu[:,comp] != c.notnum)[0]
 
-        emline_int1 = np.zeros((nemline,ndat))
+        emline_int1 = np.zeros((nemline, ndat))
         emline_int2 = np.zeros((nemline, ndat))
         emline_int3 = np.zeros((nemline, ndat))
         emline_int4 = np.zeros((nemline, ndat))
@@ -349,22 +349,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         # Calculate the weights for interpolating linearly z
         xx = lzgas[:,comp]
         zd, iz = st.interpl_weights(xx,lzmets) 
-
-#                # Calculate the weights on z: zd = (z-z1)/(z2-z1)
-#        zd = []; iz = []
-#        for logz in lzgas[:,comp]:
-#            jl = st.locate_interval(logz, lzmets)
-#            #if logz<minZ:
-#            if jl<0:
-#                zd.append(0.0)
-#                jl = 0
-#            elif jl == nzmet - 1:
-#                zd.append(1.0)
-#                jl = nzmet - 2
-#            else:
-#                d = (logz - lzmets[jl]) / (lzmets[jl + 1] - lzmets[jl])
-#                zd.append(d)
-#            iz.append(jl)
 
         # Interpolate for each line over u and z
         for k in range(nemline):
@@ -433,7 +417,10 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
        Line luminosities per galaxy component.
        Units: Lsun for L_AGN = 10^45 erg/s
     '''
+    ndat = lu.shape[0]
+    ncomp = lu.shape[1]
 
+    # Get table limits
     photmod = 'feltre16'
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
@@ -451,23 +438,26 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     line_names = c.line_names[photmod]
     nemline = len(line_names)
 
-    
-
+    # Obtain metallicity values from the file names
     zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
 
-    ndat = lu.shape[0]
-    ncomp = lu.shape[1]
+    lzmets = np.full(len(zmets), c.notnum)
+    ind = np.where(zmets > 0.)
+    if (np.shape(ind)[1] > 0):
+        lzmets[ind] = np.log10(zmets[ind])
 
+    # Initialize the matrix to store the emission lines
+    nebline = np.zeros((ncomp,nemline,ndat))
+    
+    # Store grids for different nH values (different Z grids)
     emline_grid1 = np.zeros((nzmet,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
 
-    l = 0
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
         io.check_file(infile,verbose=True)
-        #print(k,infile)
         ih = io.get_nheader(infile)
 
         with open(infile,'r') as ff:
@@ -476,33 +466,15 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                 iline += 1
 
                 if iline<ih:continue
-
                 data = np.array((line.split()))
                 u = float(data[0])
                 xid = float(data[1])
                 nH = float(data[2])
                 alpha = float(data[3])
 
+                l = 0
                 if xid==xid_phot and alpha==alpha_phot:
-                    if u == -5.:
-                        l = 0
-                    if u == -4.5:
-                        l = 1
-                    if u == -4.:
-                        l = 2
-                    if u == -3.5:
-                        l = 3
-                    if u == -3.:
-                        l = 4
-                    if u == -2.5:
-                        l = 5
-                    if u == -2.:
-                        l = 6
-                    if u == -1.5:
-                        l = 7
-                    if u == -1.:
-                        l = 8
-
+                    l = np.where(logubins==u)[0][0]
 
                     if nH==100 or nH==1000 or nH==10000:
                         for j in range(nemline):
@@ -514,82 +486,38 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                                 emline_grid3[k,l,j] = float(data[j+4])
         ff.close()
 
-    # log metallicity bins ready for interpolation:
-
-    lzmets = np.full(len(zmets), c.notnum)
-    ind = np.where(zmets > 0.)
-    if (np.shape(ind)[1] > 0):
-        lzmets[ind] = np.log10(zmets[ind])
-
-    nebline = np.zeros((ncomp,nemline,ndat))
-
-    # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
-    
+    # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
-        
         ind = np.where(lu[:,comp] != c.notnum)[0]
 
-        emline_int1 = np.zeros((nemline,ndat))
+        emline_int1 = np.zeros((nemline, ndat))
         emline_int2 = np.zeros((nemline, ndat))
         emline_int3 = np.zeros((nemline, ndat))
-    
-        # Interpolate over ionisation parameter
-        du = []
-        j = []
-        for logu in lu[:,comp]:
-            j1 = st.locate_interval(logu,logubins)
-            if logu<minU:
-                du.append(0.0)
-                j.append(0)
-                #du = 0.0
-                j1 = 0
-            elif j1 == nu - 1:
-                du.append(1.0)
-                j.append(nu-2)
-                #du = 1.0
-                j1 = nu - 2
-            else:
-                d = (logu - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
-                du.append(d)
-                j.append(j1)
 
-        dz = []
-        i = []
-    
-        for logz in lzgas[:,comp]:
-            i1 = st.locate_interval(logz, lzmets)
-            if logz<minZ:
-                dz.append(0.0)
-                # dz = 0.0
-                i1 = 0
-                i.append(0)
-            elif i1 == nzmet - 1:
-                dz.append(1.0)
-                # dz = 1.0
-                i1 = nzmet - 2
-                i.append(nzmet - 2)
-            else:
-                d = (logz - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
-                dz.append(d)
-                i.append(i1)
-    
-    
+        # Calculate the weights for interpolating linearly u and reduced z
+        xx = lu[:,comp]
+        ud, iu = st.interpl_weights(xx,logubins) 
+
+        xx = lzgas[:,comp]
+        zd, iz = st.interpl_weights(xx,lzmets) 
+
+        # Interpolate for each line over u and z
         for k in range(nemline):
             for ii in ind:
-                emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid1[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid1[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid1[i[ii]+1][j[ii]+1][k]
+                emline_int1[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid1[iz[ii]][iu[ii]][k]+\
+                                     zd[ii]*(1-ud[ii])*emline_grid1[iz[ii]+1][iu[ii]][k]+\
+                                     (1.-zd[ii])*ud[ii]*emline_grid1[iz[ii]][iu[ii]+1][k]+\
+                                     zd[ii]*ud[ii]*emline_grid1[iz[ii]+1][iu[ii]+1][k]
                                      
-                emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid2[i[ii]+1][j[ii]+1][k]
+                emline_int2[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid2[iz[ii]][iu[ii]][k]+\
+                                     zd[ii]*(1-ud[ii])*emline_grid2[iz[ii]+1][iu[ii]][k]+\
+                                     (1.-zd[ii])*ud[ii]*emline_grid2[iz[ii]][iu[ii]+1][k]+\
+                                     zd[ii]*ud[ii]*emline_grid2[iz[ii]+1][iu[ii]+1][k]
     
-                emline_int3[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid3[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid3[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid3[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid3[i[ii]+1][j[ii]+1][k]
+                emline_int3[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid3[iz[ii]][iu[ii]][k]+\
+                                     zd[ii]*(1-ud[ii])*emline_grid3[iz[ii]+1][iu[ii]][k]+\
+                                     (1.-zd[ii])*ud[ii]*emline_grid3[iz[ii]][iu[ii]+1][k]+\
+                                     zd[ii]*ud[ii]*emline_grid3[iz[ii]+1][iu[ii]+1][k]
     
         # Interpolate over ne
         # use gas density in disk logned
