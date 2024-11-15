@@ -326,42 +326,14 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int3 = np.zeros((nemline, ndat))
         emline_int4 = np.zeros((nemline, ndat))
 
-        # Calculate the weights on u: ud = (u-u1)/(u2-u1)
-        #ud = []; iu = []
-        #for logu in lu[:,comp]:
-        #    jl = st.locate_interval(logu,logubins)
-        #    if jl<0: # Use first value in the grid
-        #        ud.append(0.0)
-        #
-        #        jl = 0
-        #    elif jl > nu - 2: # Use last value in the grid
-        #        ud.append(1.0)
-        #
-        #        jl = nu - 2
-        #    else:
-        #        d = (logu - logubins[jl]) / (logubins[jl + 1] - logubins[jl])
-        #        ud.append(d)
-        #    iu.append(jl)
-
+        # Calculate the weights for interpolating linearly u and reduced z
         xx = lu[:,comp]
         ud, iu = st.interpl_weights(xx,logubins) 
-        
-        # Calculate the weights on z (reduced): zd = (z-z1)/(z2-z1)
-        zd = []; iz = []
-        for logz in lzgas[:,comp]:
-            jl = st.locate_interval(logz,lzmets_reduced)
-            if logz<minZ:
-                #if jl<0:
-                zd.append(0.0)
-                jl = 0
-            elif jl == nzmet_reduced-1:
-                zd.append(1.0)
-                jl = nzmet_reduced-2
-            else:
-                d = (logz - lzmets_reduced[jl])/(lzmets_reduced[jl+1]-lzmets_reduced[jl])
-                zd.append(d)
-            iz.append(jl)
-        
+
+        xx = lzgas[:,comp]
+        zd, iz = st.interpl_weights(xx,lzmets_reduced) 
+
+        # Interpolate for each line over u and reduced z
         for k in range(nemline):
             for ii in ind:
                 emline_int1[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid1[iz[ii]][iu[ii]][k]+\
@@ -374,22 +346,27 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                                      (1.-zd[ii])*ud[ii]*emline_grid4[iz[ii]][iu[ii]+1][k]+\
                                      zd[ii]*ud[ii]*emline_grid4[iz[ii]+1][iu[ii]+1][k]
     
-        # Calculate the weights on z: zd = (z-z1)/(z2-z1)
-        zd = []; iz = []
-        for logz in lzgas[:,comp]:
-            jl = st.locate_interval(logz, lzmets)
-            #if logz<minZ:
-            if jl<0:
-                zd.append(0.0)
-                jl = 0
-            elif jl == nzmet - 1:
-                zd.append(1.0)
-                jl = nzmet - 2
-            else:
-                d = (logz - lzmets[jl]) / (lzmets[jl + 1] - lzmets[jl])
-                zd.append(d)
-            iz.append(jl)
-    
+        # Calculate the weights for interpolating linearly z
+        xx = lzgas[:,comp]
+        zd, iz = st.interpl_weights(xx,lzmets) 
+
+#                # Calculate the weights on z: zd = (z-z1)/(z2-z1)
+#        zd = []; iz = []
+#        for logz in lzgas[:,comp]:
+#            jl = st.locate_interval(logz, lzmets)
+#            #if logz<minZ:
+#            if jl<0:
+#                zd.append(0.0)
+#                jl = 0
+#            elif jl == nzmet - 1:
+#                zd.append(1.0)
+#                jl = nzmet - 2
+#            else:
+#                d = (logz - lzmets[jl]) / (lzmets[jl + 1] - lzmets[jl])
+#                zd.append(d)
+#            iz.append(jl)
+
+        # Interpolate for each line over u and z
         for k in range(nemline):
             for ii in ind:
                 emline_int2[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid2[iz[ii]][iu[ii]][k]+\
