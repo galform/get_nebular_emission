@@ -9,7 +9,7 @@ import sys
 #import warnings
 import src.gne_io as io
 import src.gne_const as c
-from src.gne_stats import locate_interval
+import src.gne_stats as st
 from src.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
 
 
@@ -327,36 +327,40 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int4 = np.zeros((nemline, ndat))
 
         # Calculate the weights on u: ud = (u-u1)/(u2-u1)
-        ud = []; iu = []
-        for logu in lu[:,comp]:
-            jl = locate_interval(logu,logubins)
-            if jl<0: # Use first value in the grid
-                ud.append(0.0)
+        #ud = []; iu = []
+        #for logu in lu[:,comp]:
+        #    jl = st.locate_interval(logu,logubins)
+        #    if jl<0: # Use first value in the grid
+        #        ud.append(0.0)
+        #
+        #        jl = 0
+        #    elif jl > nu - 2: # Use last value in the grid
+        #        ud.append(1.0)
+        #
+        #        jl = nu - 2
+        #    else:
+        #        d = (logu - logubins[jl]) / (logubins[jl + 1] - logubins[jl])
+        #        ud.append(d)
+        #    iu.append(jl)
 
-                jl = 0
-            elif jl > nu - 2: # Use last value in the grid
-                ud.append(1.0)
-
-                jl = nu - 2
-            else:
-                d = (logu - logubins[jl]) / (logubins[jl + 1] - logubins[jl])
-                ud.append(d)
-            iu.append(jl)
+        xx = lu[:,comp]
+        ud, iu = st.interpl_weights(xx,logubins) 
         
         # Calculate the weights on z (reduced): zd = (z-z1)/(z2-z1)
         zd = []; iz = []
         for logz in lzgas[:,comp]:
-            il = locate_interval(logz,lzmets_reduced)
+            jl = st.locate_interval(logz,lzmets_reduced)
             if logz<minZ:
+                #if jl<0:
                 zd.append(0.0)
-                il = 0
-            elif il == nzmet_reduced-1:
+                jl = 0
+            elif jl == nzmet_reduced-1:
                 zd.append(1.0)
-                il = nzmet_reduced-2
+                jl = nzmet_reduced-2
             else:
-                d = (logz - lzmets_reduced[il])/(lzmets_reduced[il+1]-lzmets_reduced[il])
+                d = (logz - lzmets_reduced[jl])/(lzmets_reduced[jl+1]-lzmets_reduced[jl])
                 zd.append(d)
-            iz.append(il)
+            iz.append(jl)
         
         for k in range(nemline):
             for ii in ind:
@@ -373,17 +377,18 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         # Calculate the weights on z: zd = (z-z1)/(z2-z1)
         zd = []; iz = []
         for logz in lzgas[:,comp]:
-            il = locate_interval(logz, lzmets)
-            if logz<minZ:
+            jl = st.locate_interval(logz, lzmets)
+            #if logz<minZ:
+            if jl<0:
                 zd.append(0.0)
-                il = 0
-            elif il == nzmet - 1:
+                jl = 0
+            elif jl == nzmet - 1:
                 zd.append(1.0)
-                il = nzmet - 2
+                jl = nzmet - 2
             else:
-                d = (logz - lzmets[il]) / (lzmets[il + 1] - lzmets[il])
+                d = (logz - lzmets[jl]) / (lzmets[jl + 1] - lzmets[jl])
                 zd.append(d)
-            iz.append(il)
+            iz.append(jl)
     
         for k in range(nemline):
             for ii in ind:
@@ -555,7 +560,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         du = []
         j = []
         for logu in lu[:,comp]:
-            j1 = locate_interval(logu,logubins)
+            j1 = st.locate_interval(logu,logubins)
             if logu<minU:
                 du.append(0.0)
                 j.append(0)
@@ -575,7 +580,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         i = []
     
         for logz in lzgas[:,comp]:
-            i1 = locate_interval(logz, lzmets)
+            i1 = st.locate_interval(logz, lzmets)
             if logz<minZ:
                 dz.append(0.0)
                 # dz = 0.0

@@ -194,7 +194,58 @@ def locate_interval(val, edges):
     return jl
 
 
-#def locate_index(val,): ###here
+def interpl_weights(xx,edges):
+    '''
+    Get linear interpolation weights: xd=(x-x1)/(x2-1)
+    Values outside the edges limits are given the weights
+    corresponding to the minimum and maximum edge values.
+    
+    Parameters
+    ----------
+    xx : float (or int) or array of floats (or int)
+        Values to be evaluated
+    edges : array of floats (or int)
+        Array of the n edges for the (n-1) intervals
+        
+    Returns
+    -------
+    xd : float or list of float (or int)
+        Weights for linear interpolation
+    ix : int or list of ints
+        Lower index of the interval the value belongs to
+    '''
+    n = edges.size
+    
+    if isinstance(xx, (float, int)): # Floats
+        x = xx
+        jl = locate_interval(x,edges)
+        if jl<0: # Use first value in the grid
+            xd = 0.0
+            jl = 0
+        elif jl > n - 2: # Use last value in the grid
+            xd = 1.0
+            jl = n - 2
+        else:
+            xd = (x - edges[jl]) / (edges[jl + 1] - edges[jl])
+        ix = jl
+        
+    else: # Arrays
+        xd = []; ix = []
+        for x in xx[:]:
+            jl = locate_interval(x,edges)
+            if jl<0: # Use first value in the grid
+                xd.append(0.0)
+                jl = 0
+            elif jl > n - 2: # Use last value in the grid
+                xd.append(1.0)
+                jl = n - 2
+            else:
+                d = (x - edges[jl]) / (edges[jl + 1] - edges[jl])
+                xd.append(d)
+            ix.append(jl)
+
+    return xd, ix
+
 
 def chi2(obs, model, err2):
     '''
