@@ -15,7 +15,34 @@ class TestPredict(TestCase):
                         lims,rtol=0.01)
 
     
-        
+    def test_interp_u_z(self):
+        grid = np.random.rand(5, 10, 3)
+        u = np.array([1.0, 2.0, c.notnum, 4.0, 5.0])
+        ud = np.array([0.3, 0.7, 0.5, 0.2, 0.8])
+        iu = np.array([2, 4, 6, 1, 3])
+        zd = np.array([0.4, 0.6, 0.3, 0.8, 0.5])
+        iz = np.array([1, 3, 2, 0, 4])
+        emline = ph.interp_u_z(grid, u, ud, iu, zd, iz)
+        # Check that the output has the correct shape
+        self.assertEqual(emline.shape, (3, 5))
+        # Check that the output values are correct
+        expected_emline = np.array([[grid[1, 2, 0]*(1-ud[0])*(1-zd[0]),
+                                     grid[3, 4, 0]*ud[1]*(1-zd[1]),
+                                     grid[2, 6, 0]*(1-ud[2])*zd[2],
+                                     grid[0, 1, 0]*ud[3]*(1-zd[3]),
+                                     grid[4, 3, 0]*ud[4]*zd[4]],
+                                    [grid[1, 2, 1]*(1-ud[0])*(1-zd[0]),
+                                     grid[3, 4, 1]*ud[1]*(1-zd[1]),
+                                     grid[2, 6, 1]*(1-ud[2])*zd[2],
+                                     grid[0, 1, 1]*ud[3]*(1-zd[3]),
+                                     grid[4, 3, 1]*ud[4]*zd[4]],
+                                    [grid[1, 2, 2]*(1-ud[0])*(1-zd[0]),
+                                     grid[3, 4, 2]*ud[1]*(1-zd[1]),
+                                     grid[2, 6, 2]*(1-ud[2])*zd[2],
+                                     grid[0, 1, 2]*ud[3]*(1-zd[3]),
+                                     grid[4, 3, 2]*ud[4]*zd[4]]
+                                    ])
+        np.testing.assert_allclose(emline, expected_emline)
 
 if __name__ == '__main__':
     unittest.main()

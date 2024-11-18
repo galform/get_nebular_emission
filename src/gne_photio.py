@@ -195,6 +195,37 @@ def calculate_flux(nebline,filenom,origin='sfr'):
     return fluxes
 
 
+def interp_u_z(grid,u,ud,iu,zd,iz):
+    ndat = u.size
+    nlines = grid.shape[2]
+    emline = np.zeros((nlines, ndat))
+
+    #ind = np.where(u[:] != c.notnum)
+    #if (np.shape(ind)[1] < 1):
+    #    print('WARNING (gne_photio.interp_u_z): no adequate log(Us) found')
+    #    return emline
+    ind = np.where(u[:] != c.notnum)[0]
+    if (ind.size < 1):
+        print('WARNING (gne_photio.interp_u_z): no adequate log(Us) found')
+        return emline
+
+    # Get the interpolation over u and z
+    emline = np.zeros((nlines, ndat))
+    for k in range(nlines):
+        for ii in ind:
+            emline[k][ii] = (
+                (grid[iz[ii]][iu[ii]][k]*(1.-ud[ii])+
+                 grid[iz[ii]][iu[ii]+1][k]*ud[ii])*(1.-zd[ii])+
+                (grid[iz[ii]+1][iu[ii]][k]*(1-ud[ii])+
+                 grid[iz[ii]+1][iu[ii]+1][k]*ud[ii])*zd[ii])
+    
+    #emline[:, ind] = ((grid[  iz[ind],   iu[ind],:]*(1-ud[ind,None]) + 
+    #                   grid[  iz[ind], iu[ind]+1,:]*ud[ind,None]) * (1-zd[ind,None]) +
+    #                  (grid[iz[ind]+1,   iu[ind],:]*(1-ud[ind,None]) +
+    #                   grid[iz[ind]+1, iu[ind]+1,:]*ud[ind,None]) * zd[ind,None])
+    return emline
+
+
 def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                      co_phot=1,imf_cut_phot=100,verbose=True):
     '''
@@ -327,41 +358,23 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int4 = np.zeros((nemline, ndat))
 
         # Calculate the weights for interpolating linearly u and reduced z
-        xx = lu[:,comp]
-        ud, iu = st.interpl_weights(xx,logubins) 
+        uu = lu[:,comp]
+        ud, iu = st.interpl_weights(uu,logubins) 
 
-        xx = lzgas[:,comp]
-        zd, iz = st.interpl_weights(xx,lzmets_reduced) 
+        zz = lzgas[:,comp]
+        zd, iz = st.interpl_weights(zz,lzmets_reduced) 
 
         # Interpolate for each line over u and reduced z
-        for k in range(nemline):
-            for ii in ind:
-                emline_int1[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid1[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid1[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid1[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid1[iz[ii]+1][iu[ii]+1][k]
-    
-                emline_int4[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid4[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid4[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid4[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid4[iz[ii]+1][iu[ii]+1][k]
+        emline_int1 = interp_u_z(emline_grid1,uu,ud,iu,zd,iz)
+        emline_int4 = interp_u_z(emline_grid4,uu,ud,iu,zd,iz) 
     
         # Calculate the weights for interpolating linearly z
         xx = lzgas[:,comp]
         zd, iz = st.interpl_weights(xx,lzmets) 
 
         # Interpolate for each line over u and z
-        for k in range(nemline):
-            for ii in ind:
-                emline_int2[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid2[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid2[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid2[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid2[iz[ii]+1][iu[ii]+1][k]
-    
-                emline_int3[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid3[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid3[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid3[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid3[iz[ii]+1][iu[ii]+1][k]
+        emline_int2 = interp_u_z(emline_grid2,uu,ud,iu,zd,iz)
+        emline_int3 = interp_u_z(emline_grid3,uu,ud,iu,zd,iz) 
     
         # Interpolate over ne
         # use gas density in disk logned
@@ -495,29 +508,16 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         emline_int3 = np.zeros((nemline, ndat))
 
         # Calculate the weights for interpolating linearly u and reduced z
-        xx = lu[:,comp]
-        ud, iu = st.interpl_weights(xx,logubins) 
+        uu = lu[:,comp]
+        ud, iu = st.interpl_weights(uu,logubins) 
 
-        xx = lzgas[:,comp]
-        zd, iz = st.interpl_weights(xx,lzmets) 
+        zz = lzgas[:,comp]
+        zd, iz = st.interpl_weights(zz,lzmets) 
 
         # Interpolate for each line over u and z
-        for k in range(nemline):
-            for ii in ind:
-                emline_int1[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid1[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid1[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid1[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid1[iz[ii]+1][iu[ii]+1][k]
-                                     
-                emline_int2[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid2[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid2[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid2[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid2[iz[ii]+1][iu[ii]+1][k]
-    
-                emline_int3[k][ii] = (1.-zd[ii])*(1.-ud[ii])*emline_grid3[iz[ii]][iu[ii]][k]+\
-                                     zd[ii]*(1-ud[ii])*emline_grid3[iz[ii]+1][iu[ii]][k]+\
-                                     (1.-zd[ii])*ud[ii]*emline_grid3[iz[ii]][iu[ii]+1][k]+\
-                                     zd[ii]*ud[ii]*emline_grid3[iz[ii]+1][iu[ii]+1][k]
+        emline_int1 = interp_u_z(emline_grid1,uu,ud,iu,zd,iz)
+        emline_int2 = interp_u_z(emline_grid2,uu,ud,iu,zd,iz)
+        emline_int3 = interp_u_z(emline_grid3,uu,ud,iu,zd,iz) 
     
         # Interpolate over ne
         # use gas density in disk logned
