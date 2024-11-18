@@ -200,29 +200,32 @@ def interp_u_z(grid,u,ud,iu,zd,iz):
     nlines = grid.shape[2]
     emline = np.zeros((nlines, ndat))
 
-    #ind = np.where(u[:] != c.notnum)
-    #if (np.shape(ind)[1] < 1):
-    #    print('WARNING (gne_photio.interp_u_z): no adequate log(Us) found')
-    #    return emline
     ind = np.where(u[:] != c.notnum)[0]
     if (ind.size < 1):
         print('WARNING (gne_photio.interp_u_z): no adequate log(Us) found')
         return emline
-
-    # Get the interpolation over u and z
-    emline = np.zeros((nlines, ndat))
-    for k in range(nlines):
-        for ii in ind:
-            emline[k][ii] = (
-                (grid[iz[ii]][iu[ii]][k]*(1.-ud[ii])+
-                 grid[iz[ii]][iu[ii]+1][k]*ud[ii])*(1.-zd[ii])+
-                (grid[iz[ii]+1][iu[ii]][k]*(1-ud[ii])+
-                 grid[iz[ii]+1][iu[ii]+1][k]*ud[ii])*zd[ii])
     
-    #emline[:, ind] = ((grid[  iz[ind],   iu[ind],:]*(1-ud[ind,None]) + 
-    #                   grid[  iz[ind], iu[ind]+1,:]*ud[ind,None]) * (1-zd[ind,None]) +
-    #                  (grid[iz[ind]+1,   iu[ind],:]*(1-ud[ind,None]) +
-    #                   grid[iz[ind]+1, iu[ind]+1,:]*ud[ind,None]) * zd[ind,None])
+    # Extract relevant indices for vectorized operation
+    iu_ind = iu[ind]; ud_ind = ud[ind, np.newaxis]
+    iz_ind = iz[ind]; zd_ind = zd[ind, np.newaxis]
+    
+    # Get the four corner values for all points simultaneously
+    q11 = grid[iz_ind, iu_ind, :]
+    q12 = grid[iz_ind, iu_ind + 1, :]
+    q21 = grid[iz_ind + 1, iu_ind, :]
+    q22 = grid[iz_ind + 1, iu_ind + 1, :]
+    
+    # Compute interpolation in u direction first, then in z direction
+    # Broadcasting handles the operations across all emission lines simultaneously
+    u_interp1 = q11 * (1 - ud_ind) + q12 * ud_ind  # Upper z interpolation
+    u_interp2 = q21 * (1 - ud_ind) + q22 * ud_ind  # Lower z interpolation
+    
+    # Final interpolation in z direction
+    result = u_interp1 * (1 - zd_ind) + u_interp2 * zd_ind
+    
+    # Place results in the output array
+    emline[:, ind] = result.T
+    
     return emline
 
 

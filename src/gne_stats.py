@@ -244,7 +244,7 @@ def interpl_weights(xx,edges):
                 xd.append(d)
             ix.append(jl)
 
-    return xd, ix
+    return np.asarray(xd), np.asarray(ix,dtype=int)
 
 
 def chi2(obs, model, err2):
