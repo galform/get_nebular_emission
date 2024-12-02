@@ -214,10 +214,6 @@ zmet_str = {
                            '070'])
 }
 
-#zmet_reduced = {
-#    "gutkin16" : np.array([0.0001,0.002,0.014,0.030])
-#}
-
 zmet_str_reduced = {
     "gutkin16" : np.array(['0001','002','014','030']),
 }

@@ -328,26 +328,10 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
-    nzmet = len(zmet_str)
-    zmets = np.full(len(zmet_str),c.notnum)
-    zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
+    nzmet, zmets, lzmets = get_Zgrid(zmet_str)
 
     zmet_str_reduced = c.zmet_str_reduced[photmod]
-    nzmet_reduced = len(zmet_str_reduced)
-    zmets_reduced = np.full(len(zmet_str_reduced),c.notnum)
-    zmets_reduced = np.array([float('0.' + zmet) for zmet in zmet_str_reduced])
-    
-    #zmets_reduced = c.zmet_reduced[photmod]
-    #nzmet_reduced = len(zmets_reduced)
-    lzmets_reduced = np.full(len(zmets_reduced), c.notnum)
-    ind = np.where(zmets_reduced > 0.)
-    if (np.shape(ind)[1]) > 0:
-        lzmets_reduced[ind] = np.log10(zmets_reduced[ind])
-
-    lzmets = np.full(len(zmets), c.notnum)
-    ind = np.where(zmets > 0.)
-    if (np.shape(ind)[1] > 0):
-        lzmets[ind] = np.log10(zmets[ind])
+    nzmet_reduced, zmets_reduced, lzmets_reduced = get_Zgrid(zmet_str_reduced)
 
     # Read grid of Us
     logubins = c.lus_bins[photmod]
@@ -487,38 +471,32 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
        Line luminosities per galaxy component.
        Units: Lsun for L_AGN = 10^45 erg/s
     '''
+
+    photmod = 'feltre16'
+    
+    # Read line names
+    line_names = c.line_names[photmod]
+    nemline = len(line_names)
+
+    # Initialize the matrix to store the emission lines
     ndat = lu.shape[0]
     ncomp = lu.shape[1]
+    nebline = np.zeros((ncomp,nemline,ndat))
 
     # Get table limits
-    photmod = 'feltre16'
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
 
     minZ = np.log10(minZ); maxZ = np.log10(maxZ)
 
-    # Read information on the tables
+    # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
-    nzmet = len(zmet_str)
-    
+    nzmet, zmets, lzmets = get_Zgrid(zmet_str)
+
+    # Read grid of Us
     logubins = c.lus_bins[photmod]
     nu = len(logubins)
-
-    line_names = c.line_names[photmod]
-    nemline = len(line_names)
-
-    # Obtain metallicity values from the file names
-    zmets = np.full(len(zmet_str),c.notnum)
-    zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
-
-    lzmets = np.full(len(zmets), c.notnum)
-    ind = np.where(zmets > 0.)
-    if (np.shape(ind)[1] > 0):
-        lzmets[ind] = np.log10(zmets[ind])
-
-    # Initialize the matrix to store the emission lines
-    nebline = np.zeros((ncomp,nemline,ndat))
     
     # Store grids for different nH values (different Z grids)
     nHbins = c.nH_bins[photmod]
