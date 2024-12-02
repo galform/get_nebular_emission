@@ -182,6 +182,11 @@ epsilon_a_sfr = -0.1633
 epsilon_b_sfr = 0.3776
 
 #------------------------------------------
+nH_bins = {
+    "gutkin16" : np.array([10, 100, 1000, 10000]),
+    "feltre16" : np.array([100, 1000, 10000])
+}
+
 lus_bins = {
     "gutkin16" : np.array([-4., -3.5, -3., -2.5, -2., -1.5, -1.]),
     "feltre16" : np.array([-5., -4.5, -4., -3.5, -3., -2.5, -2.,
@@ -209,9 +214,9 @@ zmet_str = {
                            '070'])
 }
 
-zmet_reduced = {
-    "gutkin16" : np.array([0.0001,0.002,0.014,0.030])
-}
+#zmet_reduced = {
+#    "gutkin16" : np.array([0.0001,0.002,0.014,0.030])
+#}
 
 zmet_str_reduced = {
     "gutkin16" : np.array(['0001','002','014','030']),

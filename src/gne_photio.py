@@ -195,12 +195,60 @@ def calculate_flux(nebline,filenom,origin='sfr'):
     return fluxes
 
 
+def get_Zgrid(zgrid_str):
+    '''
+    Get the metallicity values from the file names
+
+    Params
+    -------
+    zgrid_str : array or list of strings
+        String with decimal part of the metallicity grid
+      
+    Returns
+    -------
+    nz : integer
+        Number of elements of zgrid_str
+    zgrid, lzgrid : array of floats
+        Numerical value of the metallicity grid, Z, and log10(Z)
+    '''
+    nz = len(zgrid_str)
+
+    zgrid = np.full(nz,c.notnum)
+    zgrid = np.array([float('0.' + zz) for zz in zgrid_str])
+
+    lzgrid = np.full(nz, c.notnum)
+    ind = np.where(zgrid > 0.)
+    if (np.shape(ind)[1] > 0):
+        lzgrid[ind] = np.log10(zgrid[ind])
+
+    return nz,zgrid,lzgrid
+
+
 def interp_u_z(grid,u,ud,iu,zd,iz):
+    '''
+    Bilinear interpolation on U and Z
+
+    Params
+    -------
+    grid : array of floats
+       Grid for U and Z given values
+    u : array of floats
+       U is used to select values
+    ud, zd : array of floats
+       Weights for the bilinear interpolation
+    iu, iz : array of integers
+       Indeces for the bilinear interpolation
+    
+    Returns
+    -------
+    emline : array of floats
+        Interpolated emission line values
+    '''    
     ndat = u.size
     nlines = grid.shape[2]
     emline = np.zeros((nlines, ndat))
 
-    ind = np.where(u[:] != c.notnum)[0]
+    ind = np.where(u > c.notnum)[0]
     if (ind.size < 1):
         print('WARNING (gne_photio.interp_u_z): no adequate log(Us) found')
         return emline
@@ -215,12 +263,12 @@ def interp_u_z(grid,u,ud,iu,zd,iz):
     q21 = grid[iz_ind + 1, iu_ind, :]
     q22 = grid[iz_ind + 1, iu_ind + 1, :]
     
-    # Compute interpolation in u direction first, then in z direction
+    # Compute interpolation in U direction first, then in Z direction
     # Broadcasting handles the operations across all emission lines simultaneously
-    u_interp1 = q11 * (1 - ud_ind) + q12 * ud_ind  # Upper z interpolation
-    u_interp2 = q21 * (1 - ud_ind) + q22 * ud_ind  # Lower z interpolation
+    u_interp1 = q11 * (1 - ud_ind) + q12 * ud_ind  # Upper Z interpolation
+    u_interp2 = q21 * (1 - ud_ind) + q22 * ud_ind  # Lower Z interpolation
     
-    # Final interpolation in z direction
+    # Final interpolation in Z direction
     result = u_interp1 * (1 - zd_ind) + u_interp2 * zd_ind
     
     # Place results in the output array
@@ -260,34 +308,37 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
        Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
     '''
 
+    photmod = 'gutkin16'
+
+    # Read line names
+    line_names = c.line_names[photmod]
+    nemline = len(line_names)
+
+    # Initialize the matrix to store the emission lines
     ndat = lu.shape[0]
     ncomp = lu.shape[1]
+    nebline = np.zeros((ncomp,nemline,ndat))
 
     # Get table limits
-    photmod = 'gutkin16'
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
 
     minZ = np.log10(minZ); maxZ = np.log10(maxZ)
 
-    # Read information on the tables
+    # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
     nzmet = len(zmet_str)
-    
-    zmets_reduced = c.zmet_reduced[photmod]
-    nzmet_reduced = len(zmets_reduced)
-    
-    logubins = c.lus_bins[photmod]
-    nu = len(logubins)
-
-    line_names = c.line_names[photmod]
-    nemline = len(line_names)
-    
-    # Obtain metallicity values from the file names
     zmets = np.full(len(zmet_str),c.notnum)
     zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
 
+    zmet_str_reduced = c.zmet_str_reduced[photmod]
+    nzmet_reduced = len(zmet_str_reduced)
+    zmets_reduced = np.full(len(zmet_str_reduced),c.notnum)
+    zmets_reduced = np.array([float('0.' + zmet) for zmet in zmet_str_reduced])
+    
+    #zmets_reduced = c.zmet_reduced[photmod]
+    #nzmet_reduced = len(zmets_reduced)
     lzmets_reduced = np.full(len(zmets_reduced), c.notnum)
     ind = np.where(zmets_reduced > 0.)
     if (np.shape(ind)[1]) > 0:
@@ -298,20 +349,25 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     if (np.shape(ind)[1] > 0):
         lzmets[ind] = np.log10(zmets[ind])
 
-    # Initialize the matrix to store the emission lines
-    nebline = np.zeros((ncomp,nemline,ndat))
+    # Read grid of Us
+    logubins = c.lus_bins[photmod]
+    nu = len(logubins)
     
     # Store grids for different nH values (different Z grids)
+    nHbins = c.nH_bins[photmod]
+    nnH = len(nHbins)
+
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
     emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
-    
+
+    # Store the photoionisation model tables into matrices
     for k, zname in enumerate(zmets):
         infile = get_zfile(zmet_str[k],photmod=photmod)
         io.check_file(infile,verbose=True)
         ih = io.get_nheader(infile)
-
+        
         with open(infile,'r') as ff:
             iline = -1.
             for line in ff:
@@ -330,8 +386,10 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
                     l = np.where(logubins==u)[0][0]
 
+                    
                     if nH==10 or nH==100 or nH==1000 or nH==10000:
                         if nH==10 or nH==10000:
+                            # Reduced metalliticy grid
                             if k==0:
                                 kred = 0
                             if k==4:
@@ -355,11 +413,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     for comp in range(ncomp):
         ind = np.where(lu[:,comp] != c.notnum)[0]
 
-        emline_int1 = np.zeros((nemline, ndat))
-        emline_int2 = np.zeros((nemline, ndat))
-        emline_int3 = np.zeros((nemline, ndat))
-        emline_int4 = np.zeros((nemline, ndat))
-
         # Calculate the weights for interpolating linearly u and reduced z
         uu = lu[:,comp]
         ud, iu = st.interpl_weights(uu,logubins) 
@@ -379,8 +432,9 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int2 = interp_u_z(emline_grid2,uu,ud,iu,zd,iz)
         emline_int3 = interp_u_z(emline_grid3,uu,ud,iu,zd,iz) 
     
-        # Interpolate over ne
-        # use gas density in disk logned
+        # Interpolate over nH
+        #xx = lnH[:,comp] ###here
+        #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         for n in ind:
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
                 dn = (lnH[:,comp][n] -2.)/(3. - 2.)
@@ -467,6 +521,9 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     nebline = np.zeros((ncomp,nemline,ndat))
     
     # Store grids for different nH values (different Z grids)
+    nHbins = c.nH_bins[photmod]
+    nnH = len(nHbins)
+
     emline_grid1 = np.zeros((nzmet,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))

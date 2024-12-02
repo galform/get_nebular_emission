@@ -13,8 +13,19 @@ class TestPredict(TestCase):
         lims[0]= 10; lims[1]=10000
         assert_allclose(ph.get_limits(propname ='nH',photmod='gutkin16'),
                         lims,rtol=0.01)
-
     
+    def test_Zgrid(self):
+        grid_str = ['0001','002','014','030']
+        nout = len(grid_str)
+        zout = np.array([0.0001,0.002,0.014,0.030])
+        lzout = np.array([np.log10(zout[i]) for i in range(nout)])
+
+        nz,zgrid,lzgrid = ph.get_Zgrid(grid_str)
+        self.assertEqual(nz,nout)
+        np.testing.assert_allclose(zgrid, zout)
+        np.testing.assert_allclose(lzgrid, lzout)
+
+        
     def test_interp_u_z(self):
         grid = np.random.rand(5, 10, 3)
         u = np.array([1.0, 2.0, c.notnum, 4.0, 5.0])
@@ -43,6 +54,6 @@ class TestPredict(TestCase):
                                      grid[4, 3, 2]*ud[4]*zd[4]]
                                     ])
         np.testing.assert_allclose(emline, expected_emline)
-
+        
 if __name__ == '__main__':
     unittest.main()
