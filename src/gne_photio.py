@@ -339,6 +339,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     
     # Store grids for different nH values (different Z grids)
     nHbins = c.nH_bins[photmod]
+    lnHbins = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
     
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
@@ -417,6 +418,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     
         # Interpolate over nH
         xx = lnH[:,comp]
+        #print(xx); exit() ###here
         #nHd, inH = st.interpl_weights(xx,) ###here
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         for n in ind:
@@ -499,6 +501,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     
     # Store grids for different nH values (different Z grids)
     nHbins = c.nH_bins[photmod]
+    lnHbins = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
 
     emline_grid1 = np.zeros((nzmet,nu,nemline))
@@ -527,7 +530,6 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                     l = np.where(logubins==u)[0][0]
 
                     if nH in nHbins:
-                    #if nH==100 or nH==1000 or nH==10000:
                         for j in range(nemline):
                             if nH == 100:
                                 emline_grid1[k,l,j] = float(data[j+4])
