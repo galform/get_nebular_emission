@@ -340,7 +340,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     # Store grids for different nH values (different Z grids)
     nHbins = c.nH_bins[photmod]
     nnH = len(nHbins)
-
+    
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
@@ -370,8 +370,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
                     l = np.where(logubins==u)[0][0]
 
-                    
-                    if nH==10 or nH==100 or nH==1000 or nH==10000:
+                    if nH in nHbins:
                         if nH==10 or nH==10000:
                             # Reduced metalliticy grid
                             if k==0:
@@ -417,7 +416,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int3 = interp_u_z(emline_grid3,uu,ud,iu,zd,iz) 
     
         # Interpolate over nH
-        #xx = lnH[:,comp] ###here
+        xx = lnH[:,comp]
+        #nHd, inH = st.interpl_weights(xx,) ###here
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         for n in ind:
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
@@ -434,7 +434,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 dn = (lnH[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
-                # print('hay mayor que 3')
     
             elif (lnH[:,comp][n] <= 1.):
                 for k in range(nemline):
@@ -527,7 +526,8 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                 if xid==xid_phot and alpha==alpha_phot:
                     l = np.where(logubins==u)[0][0]
 
-                    if nH==100 or nH==1000 or nH==10000:
+                    if nH in nHbins:
+                    #if nH==100 or nH==1000 or nH==10000:
                         for j in range(nemline):
                             if nH == 100:
                                 emline_grid1[k,l,j] = float(data[j+4])
