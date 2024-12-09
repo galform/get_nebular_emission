@@ -196,7 +196,7 @@ def locate_interval(val, edges):
 
 def interpl_weights(xx,edges):
     '''
-    Get linear interpolation weights: xd=(x-x1)/(x2-1)
+    Get linear interpolation weights: xd=(x-x1)/(x2-x1)
     Values outside the edges limits are given the weights
     corresponding to the minimum and maximum edge values.
     

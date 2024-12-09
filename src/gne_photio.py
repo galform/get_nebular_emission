@@ -418,22 +418,19 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     
         # Interpolate over nH
         xx = lnH[:,comp]
-        #print(xx); exit() ###here
-        #nHd, inH = st.interpl_weights(xx,) ###here
+        nHd, inH = st.interpl_weights(xx,lnHbins) 
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         for n in ind:
+            dn = nHd[n]
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
-                dn = (lnH[:,comp][n] -2.)/(3. - 2.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int2[k][n] + (dn)*emline_int3[k][n]
     
             elif (lnH[:,comp][n] > 1. and lnH[:,comp][n] <= 2.):
-                dn = (lnH[:,comp][n] -1.)/(2. - 1.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
     
             elif (lnH[:,comp][n] > 3. and lnH[:,comp][n]<=4.):
-                dn = (lnH[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
     
@@ -559,19 +556,18 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         emline_int2 = interp_u_z(emline_grid2,uu,ud,iu,zd,iz)
         emline_int3 = interp_u_z(emline_grid3,uu,ud,iu,zd,iz) 
     
-        # Interpolate over ne
-        # use gas density in disk logned
+        # Interpolate over nH
+        xx = lnH[:,comp]
+        nHd, inH = st.interpl_weights(xx,lnHbins) 
         for n in ind:
+            dn = nHd[n]
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
-                dn = (lnH[:,comp][n] -2.)/(3. - 2.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
     
             elif (lnH[:,comp][n] > 3. and lnH[:,comp][n] <= 4.):
-                dn = (lnH[:,comp][n] - 3.)/(4. - 3.)
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int2[k][n] + (dn) * emline_int3[k][n]
-                # print('hay mayor que 3')
     
             elif (lnH[:,comp][n] <= 2.):
                 for k in range(nemline):
