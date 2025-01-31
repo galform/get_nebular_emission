@@ -256,6 +256,9 @@ def interp_u_z(grid,u,ud,iu,zd,iz):
     # Extract relevant indices for vectorized operation
     iu_ind = iu[ind]; ud_ind = ud[ind, np.newaxis]
     iz_ind = iz[ind]; zd_ind = zd[ind, np.newaxis]
+
+    ###here NOT set for dealing with data outside
+    print('iz_ind = ',iz_ind, '; iu_ind = ',iu_ind, "; grid.shape = ",grid.shape)
     
     # Get the four corner values for all points simultaneously
     q11 = grid[iz_ind, iu_ind, :]
@@ -273,7 +276,7 @@ def interp_u_z(grid,u,ud,iu,zd,iz):
     
     # Place results in the output array
     emline[:, ind] = result.T
-    
+    print('emline = ',emline) ###here
     return emline
 
 
@@ -420,6 +423,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         xx = lnH[:,comp]
         nHd, inH = st.interpl_weights(xx,lnHbins) 
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
+        #jnd = np.where(xx>2 and xx<=3)  ###here
+        
         for n in ind:
             dn = nHd[n]
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
@@ -437,6 +442,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
             elif (lnH[:,comp][n] <= 1.):
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int1[k][n]
+                    
             elif (lnH[:,comp][n] > 4.):
                 for k in range(nemline):
                     nebline[comp][k][n] = emline_int4[k][n]
