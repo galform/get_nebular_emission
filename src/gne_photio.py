@@ -258,7 +258,7 @@ def interp_u_z(grid,u,ud,iu,zd,iz):
     iz_ind = iz[ind]; zd_ind = zd[ind, np.newaxis]
 
     ###here NOT set for dealing with data outside
-    print('iz_ind = ',iz_ind, '; iu_ind = ',iu_ind, "; grid.shape = ",grid.shape)
+    #print('iz_ind = ',iz_ind, '; iu_ind = ',iu_ind, "; grid.shape = ",grid.shape)
     
     # Get the four corner values for all points simultaneously
     q11 = grid[iz_ind, iu_ind, :]
@@ -276,7 +276,7 @@ def interp_u_z(grid,u,ud,iu,zd,iz):
     
     # Place results in the output array
     emline[:, ind] = result.T
-    print('emline = ',emline) ###here
+    #print('emline = ',emline) ###here
     return emline
 
 
@@ -344,7 +344,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     nHbins = c.nH_bins[photmod]
     lnHbins = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
-    
+
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
@@ -420,22 +420,25 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         emline_int3 = interp_u_z(emline_grid3,uu,ud,iu,zd,iz) 
     
         # Interpolate over nH
-        xx = lnH[:,comp]
+        ###here xx = lnH[:,comp]
         nHd, inH = st.interpl_weights(xx,lnHbins) 
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         #jnd = np.where(xx>2 and xx<=3)  ###here
         
         for n in ind:
-            dn = nHd[n]
+            #dn = nHd[n] ###here
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
+                dn = (lnH[:,comp][n] -2.)/(3. - 2.) ###here
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int2[k][n] + (dn)*emline_int3[k][n]
     
             elif (lnH[:,comp][n] > 1. and lnH[:,comp][n] <= 2.):
+                dn = (lnH[:,comp][n] -1.)/(2. - 1.) ###here
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
     
             elif (lnH[:,comp][n] > 3. and lnH[:,comp][n]<=4.):
+                dn = (lnH[:,comp][n] - 3.)/(4. - 3.) ###here
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
     
@@ -566,12 +569,14 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         xx = lnH[:,comp]
         nHd, inH = st.interpl_weights(xx,lnHbins) 
         for n in ind:
-            dn = nHd[n]
+            #dn = nHd[n] ###here
             if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
+                dn = (lnH[:,comp][n] -2.)/(3. - 2.) ###here    
                 for k in range(nemline):
                     nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
     
             elif (lnH[:,comp][n] > 3. and lnH[:,comp][n] <= 4.):
+                dn = (lnH[:,comp][n] - 3.)/(4. - 3.) ###here
                 for k in range(nemline):
                     nebline[comp][k][n] = (1. - dn) * emline_int2[k][n] + (dn) * emline_int3[k][n]
     
