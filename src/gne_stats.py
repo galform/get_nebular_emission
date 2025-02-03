@@ -169,7 +169,7 @@ def locate_interval(val, edges):
 
     Parameters
     ----------
-    val : int or float
+    val : int or float or array of ints or floats
         Value to evaluate
     edges : array of int or floats
         Array of the n edges for the (n-1) intervals
@@ -191,7 +191,6 @@ def locate_interval(val, edges):
         else:
             ju=jm
 
-            
     return jl
 
 
