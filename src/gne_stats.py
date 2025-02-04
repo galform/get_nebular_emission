@@ -166,6 +166,7 @@ def n_gt_x(xedges, array):
 def locate_interval(val, edges):
     '''
     Get the index, i, of the interval, [), to which val belongs.
+    If outside the limits, using values -1 or the number of bins+1.
 
     Parameters
     ----------
@@ -178,19 +179,11 @@ def locate_interval(val, edges):
     -------
     jl : integer
         Index of the interval, [edges(jl),edges(jl+1)), where val is place.
-        If outside: jl=-1 or jl=n.
     '''
 
     n = edges.size
-    jl = -1
-    ju = n
-    while(ju-jl > 1):
-        jm = int((ju+jl)/2)
-        if (edges[n-1] > edges[0]) == (val >= edges[jm]):
-            jl=jm
-        else:
-            ju=jm
-
+    jl = np.searchsorted(edges, val, side='right') - 1
+    jl = np.clip(jl, -1, n - 1)
     return jl
 
 

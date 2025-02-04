@@ -9,16 +9,18 @@ class TestPredict(unittest.TestCase):
     def test_locate_interval(self):
         edges = np.array([0,1,2,3,4])
         self.assertEqual(st.locate_interval(0.5,edges),0)
-        self.assertEqual(st.locate_interval(0,edges),0)
-        self.assertEqual(st.locate_interval(-0.2,edges),-1)
-        self.assertEqual(st.locate_interval(3.5,edges),3)
-        self.assertEqual(st.locate_interval(4,edges),4)
+        vals = st.locate_interval(np.array([0,-0.2,3.5,4,5]),edges)
+        i = 0
+        for vexp in [0,-1,3,4,4]:
+            self.assertEqual(vals[i],vexp); i += 1
+
         edges = np.array([-3,-2.,-1.])
         self.assertEqual(st.locate_interval(-2.5,edges),0)
-        self.assertEqual(st.locate_interval(-3,edges),0)
-        self.assertEqual(st.locate_interval(-3.2,edges),-1)
-        self.assertEqual(st.locate_interval(-1,edges),2)
-        self.assertEqual(st.locate_interval(0,edges),2)
+        vals = st.locate_interval(np.array([-3,-3.2,-1,0]),edges)
+        i = 0
+        for vexp in [0,-1,2,2]:
+            self.assertEqual(vals[i],vexp); i += 1
+
         
     #def test_interpl_weights(self):
     #    edges = np.array([0,1,2])
