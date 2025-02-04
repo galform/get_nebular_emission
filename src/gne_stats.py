@@ -240,15 +240,15 @@ def interpl_weights(xx,edges):
     return outxd, outix
 
 
-def bilinear_interpl(xx, yy, xedges, yedges, zedges,verbose=False):
+def bilinear_interpl(xx, yy, xedges, yedges, zedges, verbose=False):
     """
-    Bilinear interpolation. If the points to be interplated are outside
+    Bilinear interpolation. If the points to be interpolated are outside
     the boundaries of the coordinate grid, the resulting interpolated values
     are evaluated at the boundary.
-
+    
     Parameters
     ----------
-    xx : 1D array or calar, shape N
+    xx : 1D array or scalar, shape N
         x-coordinates for point(s) to be interpolated.
     yy : 1D array or scalar, shape N
         y-coordinates for point(s) to be interpolated.
@@ -256,50 +256,81 @@ def bilinear_interpl(xx, yy, xedges, yedges, zedges,verbose=False):
         x-coordinates of data points zp (grid coordinates).
     yedges : 1D array, shape Ny
         y-coordinates of data points zp (grid coordinates).
-        grid, i.e. uniform spacing.
-    zedges : 2D array, shape (Nx, Ny)
+    zedges : array, shape (Nx, Ny) or (Nx, Ny, M)
         Data points on grid from which to interpolate.
-
+    verbose : bool, optional
+        If True, print intermediate calculation steps.
+    
     Returns
     -------
-    zz : 1D array or scalar, shape N
+    zz : scalar or array, shape N if 2D zedges or (N,M) if 3D zedges
         Interpolated values at given point(s).
     """       
     # If scalar, turn it into array
     scalar = False
-    if isinstance(xx, (float, int)): # Floats
+    if isinstance(xx, (float, int)): 
         scalar = True
         xx = np.array([xx])
         yy = np.array([yy])
         
-    # Initialize interpolation output
+    # Initialize input validation
     n = xx.size
     if (yy.size != n):
         sys.exit('STOP bilinear_interpl: input sizes different for x and y')
-    zz = np.zeros(n)   
-
+    
     # Get the intervals and weights
     xd, ix = interpl_weights(xx, xedges)
     yd, iy = interpl_weights(yy, yedges)
-    if verbose: print('xd,ix=',xd,ix,'\nyd,iy=',yd,iy)
+    if verbose: print('xd,ix=', xd, ix, '\nyd,iy=', yd, iy)
     
-    # Get the four corner values for all points
-    c00 = zedges[ix,iy]
-    c01 = zedges[ix,iy+1]
-    c10 = zedges[ix+1,iy]
-    c11 = zedges[ix+1,iy+1]
-    if verbose: print('cij=',c00,c01,c10,c11)
-    
-    # Linear interpolation ove x
-    c0 = c00*(1-xd) + c10*xd
-    c1 = c01*(1-xd) + c11*xd
-    if verbose: print('c0=',c0,'\nc1=',c1)
+    # Handle both 2D and 3D zedges input
+    if verbose: print(zedges.ndim,'D zedges')
+    if zedges.ndim == 2:
+        zz = np.zeros(n)
+        
+        # Get the four corner values for all points
+        c00 = zedges[ix, iy]
+        c01 = zedges[ix, iy+1]
+        c10 = zedges[ix+1, iy]
+        c11 = zedges[ix+1, iy+1]
+        if verbose: print('cij=', c00, c01, c10, c11)
 
-    # Linear interpolation ove y
-    zz = c0*(1-yd) + c1*yd
+        # Linear interpolation ove x
+        c0 = c00*(1-xd) + c10*xd
+        c1 = c01*(1-xd) + c11*xd
+        if verbose: print('c0=',c0,'\nc1=',c1)
 
-    if scalar:
-        zz = zz[0]
+        # Linear interpolation ove y
+        zz = c0*(1-yd) + c1*yd
+
+        if scalar: 
+            zz = zz[0]
+
+    elif zedges.ndim == 3:
+        m = zedges.shape[2]
+        zz = np.zeros((n, m))
+
+        ## Get the four corner values for each z-layer
+        c00 = zedges[ix, iy, :]
+        c01 = zedges[ix, iy+1, :]
+        c10 = zedges[ix+1, iy, :]
+        c11 = zedges[ix+1, iy+1, :]
+        if verbose: print('c00=',c00,'\nc01=',c01,'\nc10=',c10,'\nc11=',c11)
+        
+        # Linear interpolation over x
+        c0 = c00*(1-xd[:, np.newaxis]) + c10*xd[:, np.newaxis]
+        c1 = c01*(1-xd[:, np.newaxis]) + c11*xd[:, np.newaxis]
+        if verbose: print('c0=',c0,'\nc1=',c1)
+        
+        # Linear interpolation over y
+        zz = c0*(1-yd[:, np.newaxis]) + c1*yd[:, np.newaxis]
+
+        if scalar: 
+            zz = zz[0,:]
+
+    else:
+        raise ValueError('bilinear_interpl: zedges must be a 2D or 3D array')
+
     return zz
 
 

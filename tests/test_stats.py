@@ -41,16 +41,28 @@ class TestPredict(unittest.TestCase):
         xedges = np.array([14,15,16])
         yedges = np.array([20,21])
         zedges = np.array([[91,162],[210,95],[90,200]])
-        # Test float
-        val = st.bilinear_interpl(14.5, 20, xedges, yedges, zedges)
-        self.assertAlmostEqual(val, 150.5, places=7)
-        # Test arrays
-        eval_x = np.array([14.5,15.5,  15,  14,  13,  16,  17,15.5,15.5,17,14.5])
-        eval_y = np.array([20.2,20.8,20.8,20.2,20.2,20.2,20.2,  21,  22,22,  19])
-        expval= [146.1,148,118,105.2,105.2,112,112,147.5,147.5,200,150.5]
+        zedges_3d = np.array([[[91,100],[162,170]],
+                              [[210,220],[95,105]],
+                              [[90,95],[200,210]]])
+        # Test float and 2D zedges
+        val = st.bilinear_interpl(14.5, 20.2, xedges, yedges, zedges)
+        self.assertAlmostEqual(val, 146.1, places=7)
+        # Test arrays with 2D zedges
+        eval_x = np.array([15.5,  15,  14,  13,  16,  17,15.5,15.5,17,14.5,14.5])
+        eval_y = np.array([20.8,20.8,20.2,20.2,20.2,20.2,  21,  22,22,  19,  20])
+        expval= [148,118,105.2,105.2,112,112,147.5,147.5,200,150.5,150.5]
         val = st.bilinear_interpl(eval_x, eval_y, xedges, yedges, zedges)
         for i in range(eval_x.size):
             self.assertAlmostEqual(val[i], expval[i], places=7)
-                
+        # Test float and 3D zedges
+        val = st.bilinear_interpl(14.5, 20.2, xedges, yedges, zedges_3d)
+        np.testing.assert_array_almost_equal(val,[146.1, 155.5], decimal=7)
+        # Test arrays with 3D zedges
+        eval_x = np.array([14.5, 15.5])
+        eval_y = np.array([20, 20.8])
+        expval = [[150.5, 160],[148.0, 157.5]]
+        val = st.bilinear_interpl(eval_x, eval_y, xedges, yedges, zedges_3d)
+        np.testing.assert_array_almost_equal(val, expval, decimal=7)
+        
 if __name__ == '__main__':
     unittest.main()
