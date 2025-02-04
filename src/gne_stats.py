@@ -240,57 +240,67 @@ def interpl_weights(xx,edges):
     return outxd, outix
 
 
-def bilinear_interpl_matrix(vals,grid):
-    '''
-    Get linear interpolation eights: xd=(x-x1)/(x2-x1)
-    Values outside the edges limits are given the weights
-    corresponding to the minimum and maximum edge values.
-    
+def bilinear_interpl(xx, yy, xedges, yedges, zedges,verbose=False):
+    """
+    Bilinear interpolation. If the points to be interplated are outside
+    the boundaries of the coordinate grid, the resulting interpolated values
+    are evaluated at the boundary.
+
     Parameters
     ----------
-    xx : float (or int) or array of floats (or int)
-        Values to be evaluated
-    edges : array of floats (or int)
-        Array of the n edges for the (n-1) intervals
-        
+    xx : 1D array or calar, shape N
+        x-coordinates for point(s) to be interpolated.
+    yy : 1D array or scalar, shape N
+        y-coordinates for point(s) to be interpolated.
+    xedges : 1D array, shape Nx
+        x-coordinates of data points zp (grid coordinates).
+    yedges : 1D array, shape Ny
+        y-coordinates of data points zp (grid coordinates).
+        grid, i.e. uniform spacing.
+    zedges : 2D array, shape (Nx, Ny)
+        Data points on grid from which to interpolate.
+
     Returns
     -------
-    xd : float or list of float (or int)
-        Weights for linear interpolation
-    ix : int or list of ints
-        Lower index of the interval the value belongs to
-    '''
-    n = edges.size
-    
+    zz : 1D array or scalar, shape N
+        Interpolated values at given point(s).
+    """       
+    # If scalar, turn it into array
+    scalar = False
     if isinstance(xx, (float, int)): # Floats
-        x = xx
-        jl = locate_interval(x,edges)
-        if jl<0: # Use first value in the grid
-            xd = 0.0
-            jl = 0
-        elif jl > n - 2: # Use last value in the grid
-            xd = 1.0
-            jl = n - 2
-        else:
-            xd = (x - edges[jl]) / (edges[jl + 1] - edges[jl])
-        ix = jl
+        scalar = True
+        xx = np.array([xx])
+        yy = np.array([yy])
         
-    else: # Arrays
-        xd = []; ix = []
-        for x in xx[:]:
-            jl = locate_interval(x,edges)
-            if jl<0: # Use first value in the grid
-                xd.append(0.0)
-                jl = 0
-            elif jl > n - 2: # Use last value in the grid
-                xd.append(1.0)
-                jl = n - 2
-            else:
-                d = (x - edges[jl]) / (edges[jl + 1] - edges[jl])
-                xd.append(d)
-            ix.append(jl)
+    # Initialize interpolation output
+    n = xx.size
+    if (yy.size != n):
+        sys.exit('STOP bilinear_interpl: input sizes different for x and y')
+    zz = np.zeros(n)   
 
-    return np.asarray(xd), np.asarray(ix,dtype=int)
+    # Get the intervals and weights
+    xd, ix = interpl_weights(xx, xedges)
+    yd, iy = interpl_weights(yy, yedges)
+    if verbose: print('xd,ix=',xd,ix,'\nyd,iy=',yd,iy)
+    
+    # Get the four corner values for all points
+    c00 = zedges[ix,iy]
+    c01 = zedges[ix,iy+1]
+    c10 = zedges[ix+1,iy]
+    c11 = zedges[ix+1,iy+1]
+    if verbose: print('cij=',c00,c01,c10,c11)
+    
+    # Linear interpolation ove x
+    c0 = c00*(1-xd) + c10*xd
+    c1 = c01*(1-xd) + c11*xd
+    if verbose: print('c0=',c0,'\nc1=',c1)
+
+    # Linear interpolation ove y
+    zz = c0*(1-yd) + c1*yd
+
+    if scalar:
+        zz = zz[0]
+    return zz
 
 
 def chi2(obs, model, err2):

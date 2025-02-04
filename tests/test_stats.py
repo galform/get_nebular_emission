@@ -34,10 +34,23 @@ class TestPredict(unittest.TestCase):
         expected_xd = [0.5, 0., 1., 0., 1., 0.2]
         expected_ix = [  0, 0,  1,  1,  1,  1]
         for i in range(x.size):
-            with self.subTest(i=i, x=x[i]):
-                self.assertAlmostEqual(xd[i], expected_xd[i])
-                self.assertEqual(ix[i], expected_ix[i])
+            self.assertAlmostEqual(xd[i], expected_xd[i])
+            self.assertEqual(ix[i], expected_ix[i])
 
+    def test_bilinear_interpl(self):
+        xedges = np.array([14,15,16])
+        yedges = np.array([20,21])
+        zedges = np.array([[91,162],[210,95],[90,200]])
+        # Test float
+        val = st.bilinear_interpl(14.5, 20, xedges, yedges, zedges)
+        self.assertAlmostEqual(val, 150.5, places=7)
+        # Test arrays
+        eval_x = np.array([14.5,15.5,  15,  14,  13,  16,  17,15.5,15.5,17,14.5])
+        eval_y = np.array([20.2,20.8,20.8,20.2,20.2,20.2,20.2,  21,  22,22,  19])
+        expval= [146.1,148,118,105.2,105.2,112,112,147.5,147.5,200,150.5]
+        val = st.bilinear_interpl(eval_x, eval_y, xedges, yedges, zedges)
+        for i in range(eval_x.size):
+            self.assertAlmostEqual(val[i], expval[i], places=7)
                 
 if __name__ == '__main__':
     unittest.main()
