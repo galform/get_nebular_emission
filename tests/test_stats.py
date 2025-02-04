@@ -22,31 +22,21 @@ class TestPredict(unittest.TestCase):
             self.assertEqual(vals[i],vexp); i += 1
 
         
-    #def test_interpl_weights(self):
-    #    edges = np.array([0,1,2])
-    #    # Test floats
-    #    test_cases = [ # x value, expected (xd, ix)
-    #        (0.5,(0.5, 0)),  # middle of first interval
-    #        (0,  (0.0, 0)),  # lower edge
-    #        (2.,  (1., 1)),  # upper edge
-    #        (1., (0.0, 1)),  # at second edge
-    #        (2.2, (1., 1)),  # above range
-    #    ]
-    #    for x, (expected_xd, expected_ix) in test_cases:
-    #        with self.subTest(x=x):
-    #            xd, ix = st.interpl_weights(x, edges)
-    #            self.assertAlmostEqual(xd, expected_xd, places=7)
-    #            self.assertEqual(ix, expected_ix)
-    #            
-    #    # Test arrays
-    #    x = np.array([0.5, 0, 2.0, 1., 2.2, 1.2])
-    #    xd, ix = st.interpl_weights(x, edges)
-    #    expected_xd = [0.5, 0., 1., 0., 1., 0.2]
-    #    expected_ix = [  0, 0,  1,  1,  1,  1]
-    #    for i in range(x.size):
-    #        with self.subTest(i=i, x=x[i]):
-    #            self.assertAlmostEqual(xd[i], expected_xd[i])
-    #            self.assertEqual(ix[i], expected_ix[i])
+    def test_interpl_weights(self):
+        edges = np.array([0,1,2])
+        # Test floats
+        xd, ix = st.interpl_weights(0.5, edges)
+        self.assertAlmostEqual(xd, 0.5, places=7)
+        self.assertEqual(ix, 0)
+        # Test arrays
+        x = np.array([0.5, 0, 2.0, 1., 2.2, 1.2])
+        xd, ix = st.interpl_weights(x, edges)
+        expected_xd = [0.5, 0., 1., 0., 1., 0.2]
+        expected_ix = [  0, 0,  1,  1,  1,  1]
+        for i in range(x.size):
+            with self.subTest(i=i, x=x[i]):
+                self.assertAlmostEqual(xd[i], expected_xd[i])
+                self.assertEqual(ix[i], expected_ix[i])
 
                 
 if __name__ == '__main__':

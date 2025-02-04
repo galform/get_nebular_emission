@@ -216,19 +216,21 @@ def interpl_weights(xx,edges):
         scalar = True
         xx = np.array([xx])
 
-    xd = []; ix = []
-    for x in xx[:]:
-        jl = locate_interval(x,edges)
-        if jl<0: # Use first value in the grid
-            xd.append(0.0)
-            jl = 0
-        elif jl > n - 2: # Use last value in the grid
-            xd.append(1.0)
-            jl = n - 2
-        else:
-            d = (x - edges[jl]) / (edges[jl + 1] - edges[jl])
-            xd.append(d)
-        ix.append(jl)
+    # Locate intervals and handle boundaries
+    ix = locate_interval(xx, edges)
+
+    # Initialize interpolation weights
+    xd = np.zeros(len(ix))
+    
+    # Calculate interpolation weights
+    ind = np.where((ix>-1) & (ix<n-1))
+    if (np.shape(ind)[1]>0):
+        ii = ix[ind]
+        xd[ind] = (xx[ind] - edges[ii])/(edges[ii + 1] - edges[ii])
+    
+    # Handle boundaries
+    xd[ix > n-2] = 1.0
+    ix = np.clip(ix, 0, n-2)
 
     outxd = np.asarray(xd)
     outix = np.asarray(ix,dtype=int)
