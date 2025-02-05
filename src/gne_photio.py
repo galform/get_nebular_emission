@@ -224,62 +224,6 @@ def get_Zgrid(zgrid_str):
     return nz,zgrid,lzgrid
 
 
-def interp_u_z(grid,u,ud,iu,zd,iz):
-    '''
-    Bilinear interpolation on U and Z
-
-    Params
-    -------
-    grid : array of floats
-       Grid for U and Z given values
-    u : array of floats
-       U is used to select values
-    ud, zd : array of floats
-       Weights for the bilinear interpolation
-    iu, iz : array of integers
-       Indeces for the bilinear interpolation
-    
-    Returns
-    -------
-    emline : array of floats
-        Interpolated emission line values
-    '''    
-    ndat = u.size
-    nlines = grid.shape[2]
-    emline = np.zeros((nlines, ndat))
-
-    ind = np.where(u > c.notnum)[0]
-    if (ind.size < 1):
-        print('WARNING (gne_photio.interp_u_z): no adequate log(Us) found')
-        return emline
-    
-    # Extract relevant indices for vectorized operation
-    iu_ind = iu[ind]; ud_ind = ud[ind, np.newaxis]
-    iz_ind = iz[ind]; zd_ind = zd[ind, np.newaxis]
-
-    ###here NOT set for dealing with data outside
-    #print('iz_ind = ',iz_ind, '; iu_ind = ',iu_ind, "; grid.shape = ",grid.shape)
-    
-    # Get the four corner values for all points simultaneously
-    q11 = grid[iz_ind, iu_ind, :]
-    q12 = grid[iz_ind, iu_ind + 1, :]
-    q21 = grid[iz_ind + 1, iu_ind, :]
-    q22 = grid[iz_ind + 1, iu_ind + 1, :]
-    
-    # Compute interpolation in U direction first, then in Z direction
-    # Broadcasting handles the operations across all emission lines simultaneously
-    u_interp1 = q11 * (1 - ud_ind) + q12 * ud_ind  # Upper Z interpolation
-    u_interp2 = q21 * (1 - ud_ind) + q22 * ud_ind  # Lower Z interpolation
-    
-    # Final interpolation in Z direction
-    result = u_interp1 * (1 - zd_ind) + u_interp2 * zd_ind
-    
-    # Place results in the output array
-    emline[:, ind] = result.T
-    #print('emline = ',emline) ###here
-    return emline
-
-
 def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                      co_phot=1,imf_cut_phot=100,verbose=True):
     '''
@@ -398,7 +342,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
-        ucomp = lu[:,comp]; zcomp=lzgas[:,comp]
+        ucomp = lu[:,comp]; zcomp=lzgas[:,comp]; nHcomp = lnH[:,comp]
         
         # Initialize matrices with interpolated values
         ngal = ucomp.size
@@ -419,7 +363,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         int3_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
          
         # Interpolate over nH
-        xx = lnH[:,comp]
+        xx = 
         nHd, inH = st.interpl_weights(xx,lnHbins) 
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         #jnd = np.where(xx>2 and xx<=3)  ###here
