@@ -264,8 +264,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     # Initialize the matrix to store the emission lines
     ndat = lu.shape[0]
     ncomp = lu.shape[1]
-    nebline = np.zeros((ncomp,nemline,ndat))
-
+    nebline = np.zeros((ndat,nemline,ncomp))
+    
     # Get table limits
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
@@ -286,7 +286,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     
     # Store grids for different nH values (different Z grids)
     nHbins = c.nH_bins[photmod]
-    lnHbins = np.array([np.log10(val) for val in nHbins])
+    nHedges = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
 
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
@@ -363,37 +363,36 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         int3_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
          
         # Interpolate over nH
-        xx = 
-        nHd, inH = st.interpl_weights(xx,lnHbins) 
+        nHd, inH = st.interpl_weights(nHcomp,nHedges) 
         #nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
         #jnd = np.where(xx>2 and xx<=3)  ###here
-        for n in ind:
-            #dn = nHd[n] ###here
-            if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
-                dn = (lnH[:,comp][n] -2.)/(3. - 2.) ###here
+        for ii in ind:
+            dn = nHd[ii] ###here
+            if (lnH[:,comp][ii] > 2. and lnH[:,comp][ii] <= 3.):
+                dn = (lnH[:,comp][ii] -2.)/(3. - 2.) ###here
                 for k in range(nemline):
-                    nebline[comp][k][n] = (1.-dn)*int2_zu[n][k] + (dn)*int3_zu[n][k]
+                    nebline[ii][k][comp] = (1.-dn)*int2_zu[ii][k] + (dn)*int3_zu[ii][k]
     
-            elif (lnH[:,comp][n] > 1. and lnH[:,comp][n] <= 2.):
-                dn = (lnH[:,comp][n] -1.)/(2. - 1.) ###here
+            elif (lnH[:,comp][ii] > 1. and lnH[:,comp][ii] <= 2.):
+                dn = (lnH[:,comp][ii] -1.)/(2. - 1.) ###here
                 for k in range(nemline):
-                    nebline[comp][k][n] = (1.-dn)*int1_zu[n][k] + (dn)*int2_zu[n][k]
+                    nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
     
-            elif (lnH[:,comp][n] > 3. and lnH[:,comp][n]<=4.):
-                dn = (lnH[:,comp][n] - 3.)/(4. - 3.) ###here
+            elif (lnH[:,comp][ii] > 3. and lnH[:,comp][ii]<=4.):
+                dn = (lnH[:,comp][ii] - 3.)/(4. - 3.) ###here
                 for k in range(nemline):
-                    nebline[comp][k][n] = (1. - dn) * int3_zu[n][k] + (dn) * int4_zu[n][k]
+                    nebline[ii][k][comp] = (1. - dn) * int3_zu[ii][k] + (dn) * int4_zu[ii][k]
     
-            elif (lnH[:,comp][n] <= 1.):
+            elif (lnH[:,comp][ii] <= 1.):
                 for k in range(nemline):
-                    nebline[comp][k][n] = int1_zu[n][k]
+                    nebline[ii][k][comp] = int1_zu[ii][k]
                     
-            elif (lnH[:,comp][n] > 4.):
+            elif (lnH[:,comp][ii] > 4.):
                 for k in range(nemline):
-                    nebline[comp][k][n] = int4_zu[n][k]
+                    nebline[ii][k][comp] = int4_zu[ii][k]
             else:
-                print('log(nH)disk out of limits','log(nH)disk = {}'.format(lnH[:,comp][n]))
-
+                print('log(nH)disk out of limits','log(nH)disk = {}'.format(lnH[:,comp][ii]))
+        
     return nebline
 
 
@@ -430,8 +429,8 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     # Initialize the matrix to store the emission lines
     ndat = lu.shape[0]
     ncomp = lu.shape[1]
-    nebline = np.zeros((ncomp,nemline,ndat))
-
+    nebline = np.zeros((ndat,nemline,ncomp))
+    
     # Get table limits
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
@@ -449,7 +448,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     
     # Store grids for different nH values (different Z grids)
     nHbins = c.nH_bins[photmod]
-    lnHbins = np.array([np.log10(val) for val in nHbins])
+    nHedges = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
 
     emline_grid1 = np.zeros((nzmet,nu,nemline))
@@ -498,7 +497,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         # Interplate over Zgas and U
         ind = np.where(ucomp > c.notnum)[0]
         if (ind.size < 1):
-            print('WARNING (get_lines_gutkin16): no adequate log(Us) found')
+            print('WARNING (get_lines_feltre16): no adequate log(Us) found')
             return nebline
         uu = ucomp[ind]
         zz = zcomp[ind]
@@ -509,27 +508,27 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     
         # Interpolate over nH
         xx = lnH[:,comp]
-        nHd, inH = st.interpl_weights(xx,lnHbins) 
-        for n in ind:
+        nHd, inH = st.interpl_weights(xx,nHedges) 
+        for ii in ind:
             #dn = nHd[n] ###here
-            if (lnH[:,comp][n] > 2. and lnH[:,comp][n] <= 3.):
-                dn = (lnH[:,comp][n] -2.)/(3. - 2.) ###here    
+            if (lnH[:,comp][ii] > 2. and lnH[:,comp][ii] <= 3.):
+                dn = (lnH[:,comp][ii] -2.)/(3. - 2.) ###here    
                 for k in range(nemline):
-                    nebline[comp][k][n] = (1.-dn)*int1_zu[n][k] + (dn)*int2_zu[n][k]
+                    nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
     
-            elif (lnH[:,comp][n] > 3. and lnH[:,comp][n] <= 4.):
-                dn = (lnH[:,comp][n] - 3.)/(4. - 3.) ###here
+            elif (lnH[:,comp][ii] > 3. and lnH[:,comp][ii] <= 4.):
+                dn = (lnH[:,comp][ii] - 3.)/(4. - 3.) ###here
                 for k in range(nemline):
-                    nebline[comp][k][n] = (1. - dn) * int2_zu[n][k] + (dn) * int3_zu[n][k]
+                    nebline[ii][k][comp] = (1. - dn) * int2_zu[ii][k] + (dn) * int3_zu[ii][k]
     
-            elif (lnH[:,comp][n] <= 2.):
+            elif (lnH[:,comp][ii] <= 2.):
                 for k in range(nemline):
-                    nebline[comp][k][n] = int1_zu[n][k]
-            elif (lnH[:,comp][n] > 4.):
+                    nebline[ii][k][comp] = int1_zu[ii][k]
+            elif (lnH[:,comp][ii] > 4.):
                 for k in range(nemline):
-                    nebline[comp][k][n] = int3_zu[n][k]
+                    nebline[ii][k][comp] = int3_zu[ii][k]
             else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lnH[:,comp][n]))
+                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lnH[:,comp][ii]))
                 
     return nebline
 
@@ -579,5 +578,5 @@ def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
         nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 
-    return nebline
+    return nebline.T
 
