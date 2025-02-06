@@ -473,47 +473,6 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                 emline_grid2[k, l, :] = em_values
             elif nH[idx] == 10000:
                 emline_grid3[k, l, :] = em_values
-##############
-#    
-#    # Store grids for different nH values (different Z grids)
-#    nHbins = c.nH_bins[photmod]
-#    nHedges = np.array([np.log10(val) for val in nHbins])
-#    nnH = len(nHbins)
-#
-#    emline_grid1 = np.zeros((nzmet,nu,nemline))
-#    emline_grid2 = np.zeros((nzmet,nu,nemline))
-#    emline_grid3 = np.zeros((nzmet,nu,nemline))
-#
-#    for k, zname in enumerate(zmets):
-#        infile = get_zfile(zmet_str[k],photmod=photmod)
-#        io.check_file(infile,verbose=True)
-#        ih = io.get_nheader(infile)
-#
-#        with open(infile,'r') as ff:
-#            iline = -1.
-#            for line in ff:
-#                iline += 1
-#
-#                if iline<ih:continue
-#                data = np.array((line.split()))
-#                u = float(data[0])
-#                xid = float(data[1])
-#                nH = float(data[2])
-#                alpha = float(data[3])
-#
-#                l = 0
-#                if xid==xid_phot and alpha==alpha_phot:
-#                    l = np.where(uedges==u)[0][0]
-#
-#                    if nH in nHbins:
-#                        for j in range(nemline):
-#                            if nH == 100:
-#                                emline_grid1[k,l,j] = float(data[j+4])
-#                            if nH == 1000:
-#                                emline_grid2[k,l,j] = float(data[j+4])
-#                            if nH == 10000:
-#                                emline_grid3[k,l,j] = float(data[j+4])
-#        ff.close()
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):

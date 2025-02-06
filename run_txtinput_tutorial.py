@@ -200,7 +200,7 @@ root_z0 = None
     # luminosity for the emission lines.
 
 # att=True to calculate the dust attenuation; False, otherwise
-att = True
+att = False
     
 # To use Cardelli's law (following Favole et. al. 2020):
     # attmod = 'cardelli89' (default)
