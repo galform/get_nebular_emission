@@ -42,7 +42,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
     return zfile
 
 
-def clean_photarray(lms, lssfr, lu, lnH, lzgas, photmod='gutkin16', verbose=True):
+def clean_photarray(lu, lnH, lzgas, photmod='gutkin16', verbose=True):
 
     '''
     Given the model, take the values outside the limits and give them the apropriate
@@ -67,7 +67,7 @@ def clean_photarray(lms, lssfr, lu, lnH, lzgas, photmod='gutkin16', verbose=True
 
     Returns
     -------
-    lms,lssfr,lu,lnH,lzgas : floats
+    lu,lnH,lzgas : floats
     '''
 
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
@@ -84,7 +84,7 @@ def clean_photarray(lms, lssfr, lu, lnH, lzgas, photmod='gutkin16', verbose=True
         lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != c.notnum)] = np.log10(maxZ)
         lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != c.notnum)] = np.log10(minZ)
                 
-    return lms, lssfr, lu, lnH, lzgas
+    return lu, lnH, lzgas
 
 
 def get_limits(propname, photmod='gutkin16',verbose=True):
