@@ -280,6 +280,9 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     zmet_str_reduced = c.zmet_str_reduced[photmod]
     nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
 
+    # Map indices from full Z grid to reduced one
+    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
+    
     # Read grid of Us
     uedges = c.lus_bins[photmod]
     nu = len(uedges)
@@ -293,52 +296,89 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
     emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
-
+    
     # Store the photoionisation model tables into matrices
-    for k, zname in enumerate(zmets):
-        infile = get_zfile(zmet_str[k],photmod=photmod)
+    for k, zname in enumerate(zmet_str):
+        infile = get_zfile(zname,photmod=photmod)
         io.check_file(infile,verbose=True)
         ih = io.get_nheader(infile)
-        
-        with open(infile,'r') as ff:
-            iline = -1.
-            for line in ff:
-                iline += 1
 
-                if iline<ih:continue
+        # Read all lines after header and extract columns
+        data = np.loadtxt(infile, skiprows=ih)
+        u = data[:, 0]          # log(Us)
+        xid = data[:, 1]        # xid
+        nH = data[:, 2]         # nh
+        co = data[:, 3]         # (C/O)/(C/O)sol
+        imf_cut = data[:, 4]    # mup
+        emission_lines = data[:, 5:]  # All emission line data
 
-                data = np.array((line.split()))
-                u = float(data[0])
-                xid = float(data[1])
-                nH = float(data[2])
-                co = float(data[3])
-                imf_cut = float(data[4])
+        # Create mask for matching conditions
+        mask = (xid == xid_phot) & (co == co_phot) & (imf_cut == imf_cut_phot)
+        filtered_indices = np.where(mask)[0]
 
-                l = 0; kred = 0
-                if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
-                    l = np.where(uedges==u)[0][0]
+        # Process filtered data
+        for idx in filtered_indices:
+            if nH[idx] not in nHbins: continue
 
-                    if nH in nHbins:
-                        if nH==10 or nH==10000:
-                            # Reduced metalliticy grid
-                            if k==0:
-                                kred = 0
-                            if k==4:
-                                kred = 1
-                            if k==9:
-                                kred = 2
-                            if k==12:
-                                kred = 3
-                        for j in range(nemline):
-                            if nH == 10:
-                                emline_grid1[kred,l,j] = float(data[j+5])
-                            if nH == 100:
-                                emline_grid2[k,l,j] = float(data[j+5])
-                            if nH == 1000:
-                                emline_grid3[k,l,j] = float(data[j+5])
-                            if nH == 10000:
-                                emline_grid4[kred,l,j] = float(data[j+5])
-        ff.close()
+            # Find index for the read u value
+            l = np.where(uedges == u[idx])[0]
+            if len(l) == 0: continue
+            l = l[0] 
+            
+            # Get emission line values
+            em_values = emission_lines[idx]
+
+            # Determine grid and index based on nH value
+            if nH[idx] == 10:
+                kred = k_to_kred.get(k)
+                emline_grid1[kred, l, :] = em_values
+            elif nH[idx] == 100:
+                emline_grid2[k, l, :] = em_values
+            elif nH[idx] == 1000:
+                emline_grid3[k, l, :] = em_values
+            elif nH[idx] == 10000:
+                kred = k_to_kred.get(k)
+                emline_grid4[kred, l, :] = em_values    
+
+        #with open(infile,'r') as ff:
+        #    iline = -1.
+        #    for line in ff:
+        #        iline += 1
+        #
+        #        if iline<ih:continue
+        #
+        #        data = np.array((line.split()))
+        #        u = float(data[0])
+        #        xid = float(data[1])
+        #        nH = float(data[2])
+        #        co = float(data[3])
+        #        imf_cut = float(data[4])
+        #
+        #        l = 0; kred = 0
+        #        if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
+        #            l = np.where(uedges==u)[0][0]
+        #
+        #            if nH in nHbins:
+        #                if nH==10 or nH==10000:
+        #                    # Reduced metalliticy grid
+        #                    if k==0:
+        #                        kred = 0
+        #                    if k==4:
+        #                        kred = 1
+        #                    if k==9:
+        #                        kred = 2
+        #                    if k==12:
+        #                        kred = 3
+        #                for j in range(nemline):
+        #                    if nH == 10:
+        #                        emline_grid1[kred,l,j] = float(data[j+5])
+        #                    if nH == 100:
+        #                        emline_grid2[k,l,j] = float(data[j+5])
+        #                    if nH == 1000:
+        #                        emline_grid3[k,l,j] = float(data[j+5])
+        #                    if nH == 10000:
+        #                        emline_grid4[kred,l,j] = float(data[j+5])
+        #ff.close()
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
@@ -505,31 +545,6 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
         
         nebline[ind,:,comp] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
-#############        
-#        # Interpolate over nH
-#        xx = lnH[:,comp]
-#        nHd, inH = st.interpl_weights(xx,nHedges) 
-#        for ii in ind:
-#            dn = nHd[ii] ###here
-#            if (nHcomp[ii] >= 2. and nHcomp[ii] < 3.): ###here check the effect of limits [)
-#                dn = (nHcomp[ii] -2.)/(3. - 2.) ###here
-#                #print(nHd[ii]-dn);exit() ###here check they are the same
-#                for k in range(nemline):
-#                    nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
-#    
-#            elif (nHcomp[ii] >= 3. and nHcomp[ii] < 4.):
-#                dn = (nHcomp[ii] - 3.)/(4. - 3.) ###here
-#                for k in range(nemline):
-#                    nebline[ii][k][comp] = (1. - dn) * int2_zu[ii][k] + (dn) * int3_zu[ii][k]
-#    
-#            elif (nHcomp[ii] < 2.):
-#                for k in range(nemline):
-#                    nebline[ii][k][comp] = int1_zu[ii][k]
-#            elif (nHcomp[ii] >= 4.):
-#                for k in range(nemline):
-#                    nebline[ii][k][comp] = int3_zu[ii][k]
-#            else:
-#                print('log(ne)disk out of limits','log(ne)disk = {}'.format(nHcomp[ii]))
                         
     return nebline
 
