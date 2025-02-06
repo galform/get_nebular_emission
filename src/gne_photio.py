@@ -75,14 +75,14 @@ def clean_photarray(lu, lnH, lzgas, photmod='gutkin16', verbose=True):
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
     
     for i in range(lu.shape[1]):        
-        lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != c.notnum)] = maxU
-        lu[:,i][(lu[:,i] < minU)&(lu[:,i] != c.notnum)] = minU
+        lu[:,i][(lu[:,i] > maxU)&(lu[:,i] > c.notnum)] = maxU
+        lu[:,i][(lu[:,i] < minU)&(lu[:,i] > c.notnum)] = minU
         
-        lnH[:,i][(lnH[:,i] > np.log10(maxnH))&(lnH[:,i] != c.notnum)] = np.log10(maxnH)
-        lnH[:,i][(lnH[:,i] < np.log10(minnH))&(lnH[:,i] != c.notnum)] = np.log10(minnH)
+        lnH[:,i][(lnH[:,i] > np.log10(maxnH))&(lnH[:,i] > c.notnum)] = np.log10(maxnH)
+        lnH[:,i][(lnH[:,i] < np.log10(minnH))&(lnH[:,i] > c.notnum)] = np.log10(minnH)
         
-        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != c.notnum)] = np.log10(maxZ)
-        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != c.notnum)] = np.log10(minZ)
+        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] > c.notnum)] = np.log10(maxZ)
+        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] > c.notnum)] = np.log10(minZ)
                 
     return lu, lnH, lzgas
 
@@ -225,7 +225,7 @@ def get_Zgrid(zgrid_str):
 
 
 def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
-                     co_phot=1,imf_cut_phot=100,verbose=True):
+                       co_phot=1,imf_cut_phot=100,verbose=True):
     '''
     Get the interpolations for the emission lines,
     using the tables
