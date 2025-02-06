@@ -230,7 +230,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lnH_o_sfr = np.copy(lnH_sfr)
     lzgas_o_sfr = np.copy(lzgas)
     ###here why do we need to clean_photarray?
-    clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
+    #clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
 
     # Obtain spectral emission lines from HII regions
     nebline_sfr = get_lines(lu_sfr,lnH_sfr,lzgas,photmod=photmod_sfr,
@@ -341,7 +341,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lnH_o_agn = np.copy(lnH_agn)
         lzgas_o_agn = np.copy(lzgas_agn) 
         ###here it doesn't make sense that nebline_agn has several components
-        clean_photarray(lu_agn, lnH_agn, lzgas_agn, photmod=photmod_agn)            
+        #clean_photarray(lu_agn, lnH_agn, lzgas_agn, photmod=photmod_agn)            
         nebline_agn = get_lines(lu_agn,lnH_agn,lzgas_agn,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
