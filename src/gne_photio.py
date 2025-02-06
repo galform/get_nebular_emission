@@ -273,9 +273,11 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     zmet_str = c.zmet_str[photmod]
     nzmet, zmets, zedges = get_Zgrid(zmet_str)
 
+    # Read reduced grid of Zs and map its indeces to the full grid
     zmet_str_reduced = c.zmet_str_reduced[photmod]
     nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
-    
+    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
+
     # Read grid of Us
     uedges = c.lus_bins[photmod]
     nu = len(uedges)
@@ -284,9 +286,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     nHbins = c.nH_bins[photmod]
     nHedges = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
-
-    # Map indices from full Z grid to reduced one
-    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
         
     # Store the photoionisation model tables into matrices
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
@@ -338,7 +337,9 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
         ucomp = lu[:,comp]; zcomp=lzgas[:,comp]; nHcomp = lnH[:,comp]
-        ind = np.where(ucomp > c.notnum)[0]
+        ind = np.where((ucomp > c.notnum) &
+                       (zcomp > c.notnum) &
+                       (nHcomp > c.notnum))[0]
         if (ind.size < 1):
             print('WARNING (get_lines_gutkin16): no adequate log(Us) found')
             return nebline
@@ -466,7 +467,9 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
         ucomp = lu[:,comp]; zcomp=lzgas[:,comp]; nHcomp = lnH[:,comp]
-        ind = np.where(ucomp > c.notnum)[0]
+        ind = np.where((ucomp > c.notnum) &
+                       (zcomp > c.notnum) &
+                       (nHcomp > c.notnum))[0]
         if (ind.size < 1):
             print('WARNING (get_lines_feltre16): no adequate log(Us) found')
             return nebline
@@ -476,13 +479,8 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         zz = zcomp[ind]
         ngal = uu.size
         int1_zu, int2_zu, int3_zu = [np.zeros((ngal,nemline)) for i in range(3)]
-        #int1_zu, int2_zu, int3_zu = [np.zeros((ucomp.size,nemline)) for i in range(3)]
 
         # Interplate over Zgas and U
-        #int1_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid1)
-        #int2_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
-        #int3_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)    
-
         int1_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid1)
         int2_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
         int3_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)    
