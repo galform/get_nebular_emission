@@ -477,43 +477,60 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
             print('WARNING (get_lines_feltre16): no adequate log(Us) found')
             return nebline
         
-        # Initialize matrices with interpolated values
-        ngal = ucomp.size
-        int1_zu, int2_zu, int3_zu = [np.zeros((ngal,nemline)) for i in range(3)]
-
-        # Interplate over Zgas and U
+        # Initialize matrices with interpolated values on Z and U
         uu = ucomp[ind]
         zz = zcomp[ind]
+        ngal = uu.size
+        int1_zu, int2_zu, int3_zu = [np.zeros((ngal,nemline)) for i in range(3)]
+        #int1_zu, int2_zu, int3_zu = [np.zeros((ucomp.size,nemline)) for i in range(3)]
 
-        int1_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid1)
-        int2_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
-        int3_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
-    
+        # Interplate over Zgas and U
+        #int1_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid1)
+        #int2_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
+        #int3_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)    
+
+        int1_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid1)
+        int2_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
+        int3_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)    
+         
         # Interpolate over nH
-        xx = lnH[:,comp]
-        nHd, inH = st.interpl_weights(xx,nHedges) 
-        for ii in ind:
-            dn = nHd[ii] ###here
-            if (nHcomp[ii] > 2. and nHcomp[ii] <= 3.): ###here check the effect of limits [)
-                dn = (nHcomp[ii] -2.)/(3. - 2.) ###here
-                #print(nHd[ii]-dn);exit() ###here check they are the same
-                for k in range(nemline):
-                    nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
-    
-            elif (nHcomp[ii] > 3. and nHcomp[ii] <= 4.):
-                dn = (nHcomp[ii] - 3.)/(4. - 3.) ###here
-                for k in range(nemline):
-                    nebline[ii][k][comp] = (1. - dn) * int2_zu[ii][k] + (dn) * int3_zu[ii][k]
-    
-            elif (nHcomp[ii] <= 2.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = int1_zu[ii][k]
-            elif (nHcomp[ii] > 4.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = int3_zu[ii][k]
-            else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(nHcomp[ii]))
-                
+        nn = nHcomp[ind]
+        nHd, inH = st.interpl_weights(nn,nHedges)
+        
+        c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
+        
+        mask0 = (inH == 0)
+        mask1 = (inH == 1)
+        c0[mask0,:] = int1_zu[mask0,:]; c1[mask0,:] = int2_zu[mask0,:]
+        c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
+        
+        nebline[ind,:,comp] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
+#############        
+#        # Interpolate over nH
+#        xx = lnH[:,comp]
+#        nHd, inH = st.interpl_weights(xx,nHedges) 
+#        for ii in ind:
+#            dn = nHd[ii] ###here
+#            if (nHcomp[ii] >= 2. and nHcomp[ii] < 3.): ###here check the effect of limits [)
+#                dn = (nHcomp[ii] -2.)/(3. - 2.) ###here
+#                #print(nHd[ii]-dn);exit() ###here check they are the same
+#                for k in range(nemline):
+#                    nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
+#    
+#            elif (nHcomp[ii] >= 3. and nHcomp[ii] < 4.):
+#                dn = (nHcomp[ii] - 3.)/(4. - 3.) ###here
+#                for k in range(nemline):
+#                    nebline[ii][k][comp] = (1. - dn) * int2_zu[ii][k] + (dn) * int3_zu[ii][k]
+#    
+#            elif (nHcomp[ii] < 2.):
+#                for k in range(nemline):
+#                    nebline[ii][k][comp] = int1_zu[ii][k]
+#            elif (nHcomp[ii] >= 4.):
+#                for k in range(nemline):
+#                    nebline[ii][k][comp] = int3_zu[ii][k]
+#            else:
+#                print('log(ne)disk out of limits','log(ne)disk = {}'.format(nHcomp[ii]))
+                        
     return nebline
 
 
