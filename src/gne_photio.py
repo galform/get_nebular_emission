@@ -279,25 +279,24 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
     zmet_str_reduced = c.zmet_str_reduced[photmod]
     nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
-
-    # Map indices from full Z grid to reduced one
-    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
     
     # Read grid of Us
     uedges = c.lus_bins[photmod]
     nu = len(uedges)
     
-    # Store grids for different nH values (different Z grids)
+    # Read grid of nHs
     nHbins = c.nH_bins[photmod]
     nHedges = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
 
+    # Map indices from full Z grid to reduced one
+    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
+        
+    # Store the photoionisation model tables into matrices
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
     emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
-    
-    # Store the photoionisation model tables into matrices
     for k, zname in enumerate(zmet_str):
         infile = get_zfile(zname,photmod=photmod)
         io.check_file(infile,verbose=True)
@@ -338,48 +337,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                 emline_grid3[k, l, :] = em_values
             elif nH[idx] == 10000:
                 kred = k_to_kred.get(k)
-                emline_grid4[kred, l, :] = em_values    
-
-        #with open(infile,'r') as ff:
-        #    iline = -1.
-        #    for line in ff:
-        #        iline += 1
-        #
-        #        if iline<ih:continue
-        #
-        #        data = np.array((line.split()))
-        #        u = float(data[0])
-        #        xid = float(data[1])
-        #        nH = float(data[2])
-        #        co = float(data[3])
-        #        imf_cut = float(data[4])
-        #
-        #        l = 0; kred = 0
-        #        if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
-        #            l = np.where(uedges==u)[0][0]
-        #
-        #            if nH in nHbins:
-        #                if nH==10 or nH==10000:
-        #                    # Reduced metalliticy grid
-        #                    if k==0:
-        #                        kred = 0
-        #                    if k==4:
-        #                        kred = 1
-        #                    if k==9:
-        #                        kred = 2
-        #                    if k==12:
-        #                        kred = 3
-        #                for j in range(nemline):
-        #                    if nH == 10:
-        #                        emline_grid1[kred,l,j] = float(data[j+5])
-        #                    if nH == 100:
-        #                        emline_grid2[k,l,j] = float(data[j+5])
-        #                    if nH == 1000:
-        #                        emline_grid3[k,l,j] = float(data[j+5])
-        #                    if nH == 10000:
-        #                        emline_grid4[kred,l,j] = float(data[j+5])
-        #ff.close()
-
+                emline_grid4[kred, l, :] = em_values
+                
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
         ucomp = lu[:,comp]; zcomp=lzgas[:,comp]; nHcomp = lnH[:,comp]
@@ -468,46 +427,93 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     # Read grid of Us
     uedges = c.lus_bins[photmod]
     nu = len(uedges)
-    
-    # Store grids for different nH values (different Z grids)
+
+    # Read grid of nHs
     nHbins = c.nH_bins[photmod]
     nHedges = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
-
+    
+    # Store the photoionisation model tables into matrices
     emline_grid1 = np.zeros((nzmet,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
-
-    for k, zname in enumerate(zmets):
-        infile = get_zfile(zmet_str[k],photmod=photmod)
+    for k, zname in enumerate(zmet_str):
+        infile = get_zfile(zname,photmod=photmod)
         io.check_file(infile,verbose=True)
         ih = io.get_nheader(infile)
 
-        with open(infile,'r') as ff:
-            iline = -1.
-            for line in ff:
-                iline += 1
+        # Read all lines after header and extract columns
+        data = np.loadtxt(infile, skiprows=ih)
+        u = data[:, 0]          # log(Us)
+        xid = data[:, 1]        # xid
+        nH = data[:, 2]         # nh
+        alpha = data[:, 3]      # alpha
+        emission_lines = data[:, 4:]  # All emission line data
 
-                if iline<ih:continue
-                data = np.array((line.split()))
-                u = float(data[0])
-                xid = float(data[1])
-                nH = float(data[2])
-                alpha = float(data[3])
+        # Create mask for matching conditions
+        mask = (xid == xid_phot) & (alpha == alpha_phot)
+        filtered_indices = np.where(mask)[0]
 
-                l = 0
-                if xid==xid_phot and alpha==alpha_phot:
-                    l = np.where(uedges==u)[0][0]
+        # Process filtered data
+        for idx in filtered_indices:
+            if nH[idx] not in nHbins: continue
 
-                    if nH in nHbins:
-                        for j in range(nemline):
-                            if nH == 100:
-                                emline_grid1[k,l,j] = float(data[j+4])
-                            if nH == 1000:
-                                emline_grid2[k,l,j] = float(data[j+4])
-                            if nH == 10000:
-                                emline_grid3[k,l,j] = float(data[j+4])
-        ff.close()
+            # Find index for the read u value
+            l = np.where(uedges == u[idx])[0]
+            if len(l) == 0: continue
+            l = l[0] 
+            
+            # Get emission line values
+            em_values = emission_lines[idx]
+
+            # Determine grid and index based on nH value
+            if nH[idx] == 100:
+                emline_grid1[k, l, :] = em_values
+            elif nH[idx] == 1000:
+                emline_grid2[k, l, :] = em_values
+            elif nH[idx] == 10000:
+                emline_grid3[k, l, :] = em_values
+##############
+#    
+#    # Store grids for different nH values (different Z grids)
+#    nHbins = c.nH_bins[photmod]
+#    nHedges = np.array([np.log10(val) for val in nHbins])
+#    nnH = len(nHbins)
+#
+#    emline_grid1 = np.zeros((nzmet,nu,nemline))
+#    emline_grid2 = np.zeros((nzmet,nu,nemline))
+#    emline_grid3 = np.zeros((nzmet,nu,nemline))
+#
+#    for k, zname in enumerate(zmets):
+#        infile = get_zfile(zmet_str[k],photmod=photmod)
+#        io.check_file(infile,verbose=True)
+#        ih = io.get_nheader(infile)
+#
+#        with open(infile,'r') as ff:
+#            iline = -1.
+#            for line in ff:
+#                iline += 1
+#
+#                if iline<ih:continue
+#                data = np.array((line.split()))
+#                u = float(data[0])
+#                xid = float(data[1])
+#                nH = float(data[2])
+#                alpha = float(data[3])
+#
+#                l = 0
+#                if xid==xid_phot and alpha==alpha_phot:
+#                    l = np.where(uedges==u)[0][0]
+#
+#                    if nH in nHbins:
+#                        for j in range(nemline):
+#                            if nH == 100:
+#                                emline_grid1[k,l,j] = float(data[j+4])
+#                            if nH == 1000:
+#                                emline_grid2[k,l,j] = float(data[j+4])
+#                            if nH == 10000:
+#                                emline_grid3[k,l,j] = float(data[j+4])
+#        ff.close()
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
