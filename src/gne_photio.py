@@ -73,16 +73,19 @@ def clean_photarray(lu, lnH, lzgas, photmod='gutkin16', verbose=True):
     minU, maxU = get_limits(propname='logUs', photmod=photmod)
     minnH, maxnH = get_limits(propname='nH', photmod=photmod)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    
+
+    minnH = np.log10(minnH); maxnH = np.log10(maxnH)
+    minZ = np.log10(minZ); maxZ = np.log10(maxZ)
+
     for i in range(lu.shape[1]):        
         lu[:,i][(lu[:,i] > maxU)&(lu[:,i] > c.notnum)] = maxU
         lu[:,i][(lu[:,i] < minU)&(lu[:,i] > c.notnum)] = minU
         
-        lnH[:,i][(lnH[:,i] > np.log10(maxnH))&(lnH[:,i] > c.notnum)] = np.log10(maxnH)
-        lnH[:,i][(lnH[:,i] < np.log10(minnH))&(lnH[:,i] > c.notnum)] = np.log10(minnH)
+        lnH[:,i][(lnH[:,i] > maxnH)&(lnH[:,i] > c.notnum)] = maxnH
+        lnH[:,i][(lnH[:,i] < minnH)&(lnH[:,i] > c.notnum)] = minnH
         
-        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] > c.notnum)] = np.log10(maxZ)
-        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] > c.notnum)] = np.log10(minZ)
+        lzgas[:,i][(lzgas[:,i] > maxZ)&(lzgas[:,i] > c.notnum)] = maxZ
+        lzgas[:,i][(lzgas[:,i] < minZ)&(lzgas[:,i] > c.notnum)] = minZ
                 
     return lu, lnH, lzgas
 
@@ -265,13 +268,6 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     ndat = lu.shape[0]
     ncomp = lu.shape[1]
     nebline = np.zeros((ndat,nemline,ncomp))
-    
-    # Get table limits
-    minU, maxU = get_limits(propname='logUs', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-
-    minZ = np.log10(minZ); maxZ = np.log10(maxZ)
 
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
@@ -413,13 +409,6 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     ncomp = lu.shape[1]
     nebline = np.zeros((ndat,nemline,ncomp))
     
-    # Get table limits
-    minU, maxU = get_limits(propname='logUs', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-
-    minZ = np.log10(minZ); maxZ = np.log10(maxZ)
-
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
     nzmet, zmets, zedges = get_Zgrid(zmet_str)
