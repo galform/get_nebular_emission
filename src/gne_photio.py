@@ -349,44 +349,32 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
             return nebline
         
         # Initialize matrices with interpolated values on Z and U
-        ngal = ucomp.size
+        uu = ucomp[ind]
+        zz = zcomp[ind]
+        ngal = uu.size
         int1_zu, int2_zu, int3_zu, int4_zu = [np.zeros((ngal,nemline)) for i in range(4)]
 
         # Interplate over Zgas and U
-        uu = ucomp[ind]
-        zz = zcomp[ind]
+        int1_zu = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid1)
+        int4_zu = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid4)
 
-        int1_zu[ind,:] = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid1)
-        int4_zu[ind,:] = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid4)
-
-        int2_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
-        int3_zu[ind,:] = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
+        int2_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
+        int3_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
          
         # Interpolate over nH
-        nHd, inH = st.interpl_weights(nHcomp,nHedges)
-        ##nebline_c = interp_nH(emline_grid2,uu,ud,iu,zd,iz)
-        ##jnd = np.where(xx>2 and xx<=3)  ###here
-        for ii in ind:
-            dn = nHd[ii]
-            if (nHcomp[ii] >= 2. and nHcomp[ii] < 3.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = (1.-dn)*int2_zu[ii][k] + (dn)*int3_zu[ii][k]
-        
-            elif (nHcomp[ii] >= 1. and nHcomp[ii] < 2.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
-        
-            elif (nHcomp[ii] >= 3. and nHcomp[ii]< 4.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = (1. - dn) * int3_zu[ii][k] + (dn) * int4_zu[ii][k]
-        
-            elif (nHcomp[ii] < 1.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = int1_zu[ii][k]
-                    
-            elif (nHcomp[ii] >= 4.):
-                for k in range(nemline):
-                    nebline[ii][k][comp] = int4_zu[ii][k]
+        nn = nHcomp[ind]
+        nHd, inH = st.interpl_weights(nn,nHedges)
+
+        c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
+
+        mask0 = (inH == 0)
+        mask1 = (inH == 1)
+        mask2 = (inH == 2)
+        c0[mask0,:] = int1_zu[mask0,:]; c1[mask0,:] = int2_zu[mask0,:]
+        c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
+        c0[mask2,:] = int3_zu[mask2,:]; c1[mask2,:] = int4_zu[mask2,:] 
+
+        nebline[ind,:,comp] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
         
     return nebline
 
@@ -505,9 +493,10 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         xx = lnH[:,comp]
         nHd, inH = st.interpl_weights(xx,nHedges) 
         for ii in ind:
-            #dn = nHd[n] ###here
-            if (nHcomp[ii] > 2. and nHcomp[ii] <= 3.):
-                dn = (nHcomp[ii] -2.)/(3. - 2.) ###here    
+            dn = nHd[ii] ###here
+            if (nHcomp[ii] > 2. and nHcomp[ii] <= 3.): ###here check the effect of limits [)
+                dn = (nHcomp[ii] -2.)/(3. - 2.) ###here
+                #print(nHd[ii]-dn);exit() ###here check they are the same
                 for k in range(nemline):
                     nebline[ii][k][comp] = (1.-dn)*int1_zu[ii][k] + (dn)*int2_zu[ii][k]
     
