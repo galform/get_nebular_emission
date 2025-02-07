@@ -231,7 +231,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lzgas_o_sfr = np.copy(lzgas)
 
     ###here why do we need to clean_photarray?
-    clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
+    #clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
 
     # Obtain spectral emission lines from HII regions
     nebline_sfr = get_lines(lu_sfr.T,lnH_sfr.T,lzgas.T,photmod=photmod_sfr,
