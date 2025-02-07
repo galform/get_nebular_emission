@@ -6,31 +6,33 @@
 import time
 import numpy as np
 import src.gne_io as io
-from src.gne_une import get_une, calculate_ng_hydro_eq, Z_blanc, get_Ztremonti, get_Ztremonti2, n_ratio
+from src.gne_une import get_une_sfr, get_une_agn
+from src.gne_Z import correct_Z, correct_Zagn
 from src.gne_Lagn import bursttobulge,get_Lagn
-import src.gne_const as const
-from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
+import src.gne_const as c
+from src.gne_photio import get_lines, get_limits, calculate_flux
 from src.gne_att import attenuation
 from src.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
-        unemod_sfr='kashino19',photmod_sfr='gutkin16',
-        q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3,
+        une_sfr_nH='kashino19',une_sfr_U='kashino19',
+        photmod_sfr='gutkin16',
+        q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
         T=10000,xid_sfr=0.3,co_sfr=1,
-        m_sfr_z=[None],mtot2mdisk=True,LC2sfr=False,
-        inoh=False,
-        IMF=['Kennicut','Kennicut'],imf_cut_sfr=100,
-        AGN=False,
-        unemod_agn='panuzzo03',photmod_agn='feltre16',
+        m_sfr_z=[None],mtot2mdisk=True,
+        inoh=False,LC2sfr=False,
+        IMF=['Kroupa','Kroupa'],imf_cut_sfr=100,
+        AGN=False,une_agn_nH=None,une_agn_spec='feltre16',
+        une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
-        mg_r50=[None],AGNinputs='Lagn', Lagn_params=[None],
-        Z_central_cor=False,flag=0,
+        agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
+        Z_central=True,zeq=None,
         infile_z0=None,
         att=False,attmod='cardelli89',
         att_params=[None], att_ratio_lines=[None],
-        flux=True,
+        flux=False,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
         cutcols=[None], mincuts=[None], maxcuts=[None],
@@ -98,10 +100,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Inputs for AGN's bolometric luminosity calculations.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    Z_central_correction : boolean
+    Z_centralrection : boolean
      If False, the code supposes the central metallicity of the galaxy to be the mean one.
      If True, the code estimates the central metallicity of the galaxy from the mean one.
-    mg_r50 : list
+    agn_nH_params : list
      Inputs for the calculation of the volume-filling factor.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
@@ -115,10 +117,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Description labels of the datasets in the output files for the extra parameters.
     attmod : string
      Attenuation model.
-    unemod_sfr : string
-     Model to go from galaxy properties to U and ne.
-    unemod_agn : string
-     Model to go from galaxy properties to U and ne.
+    une_sfr_nH : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    une_sfr_U : string
+        Model to go from galaxy properties to ionising parameter.
+    une_agn_nH : list of 2 strings
+        Profile assumed for the gas around NLR AGN and provided radii.
+    une_agn_spec : string
+        Model for the spectral distribution for AGNs.
+    une_sfr_U : string
+        Model to go from galaxy properties to AGN ionising parameter.
     photmod_sfr : string
      Photoionisation model to be used for look up tables.
     photmod_agn : string
@@ -163,11 +171,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
-                                 unemod_sfr=unemod_sfr, unemod_agn=unemod_agn,
+                                 une_sfr_nH=une_sfr_nH,une_sfr_U=une_sfr_U,
                                  photmod_sfr=photmod_sfr,
+                                 une_agn_nH=une_agn_nH,
+                                 une_agn_spec=une_agn_spec,
+                                 une_agn_U=une_agn_U,
                                  photmod_agn=photmod_agn,
                                  attmod=attmod,verbose=verbose)
 
+    #----------------HII region calculation------------------------
     # Number of components
     ncomp = io.get_ncomponents(m_sfr_z)
     
@@ -184,51 +196,42 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lms, lssfr, lzgas = io.get_sfrdata(infile,m_sfr_z,selection=cut,
                                        h0=h0,units_h0=units_h0,
                                        units_Gyr=units_Gyr,
-                                       inputformat=inputformat,IMF=IMF,
-                                       inoh = inoh,
-                                       LC2sfr=LC2sfr,mtot2mdisk=mtot2mdisk,
+                                       inoh = inoh,LC2sfr=LC2sfr,
+                                       mtot2mdisk=mtot2mdisk,
+                                       inputformat=inputformat,
                                        testing=testing,verbose=verbose)
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
         epsilon_param_z0 = io.read_data(infile_z0,cut,
                                         inputformat=inputformat,
-                                        params=mg_r50,
+                                        params=agn_nH_params,
                                         testing=testing,
                                         verbose=verbose)
-
-    extra_param = io.read_data(infile,cut,
-                               inputformat=inputformat,
-                               params=extra_params,
-                               testing=testing,
-                               verbose=verbose)
     
     # Modification of the stellar mass-metallicity relation
-    # 0 for no correction
-    if flag==1:
-        lzgas = get_Ztremonti(lms,lzgas,Lagn_param)[1]
-    elif flag==2:
+    if zeq is not None:
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
-        lzgas = get_Ztremonti2(lms,lzgas,minZ,maxZ,Lagn_param)
-            
-    Q_sfr, lu_sfr, lne_sfr, lzgas_sfr, epsilon_sfr, ng_ratio = \
-        get_une(lms, lssfr, lzgas, outfile,
-                q0=q0, z0=z0, T=T,
-                epsilon_param_z0=epsilon_param_z0,
-                origin='sfr', unemod=unemod_sfr,
-                gamma=gamma, verbose=verbose)
+        ###here this does not work due to Lagn_param, need to change this dependency
+        lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
 
+    # Characterise the HII regions from galaxy global properties
+    lu_sfr, lnH_sfr = get_une_sfr(lms, lssfr, lzgas, outfile,
+                                  q0=q0, z0=z0,gamma=gamma, T=T,
+                                  epsilon_param_z0=epsilon_param_z0,
+                                  IMF=IMF,une_sfr_nH=une_sfr_nH,
+                                  une_sfr_U=une_sfr_U,verbose=verbose)
+    
     if verbose:
         print('SF:')
-        print(' U and ne calculated.')
+        print(' U and nH calculated.')
             
     lu_o_sfr = np.copy(lu_sfr)
-    lne_o_sfr = np.copy(lne_sfr)
-    lzgas_o_sfr = np.copy(lzgas_sfr)
+    lnH_o_sfr = np.copy(lnH_sfr)
+    lzgas_o_sfr = np.copy(lzgas)
 
-    clean_photarray(lms, lssfr, lu_sfr, lne_sfr, lzgas_sfr, photmod=photmod_sfr)
-
-    nebline_sfr = get_lines(lu_sfr,lne_sfr,lzgas_sfr,photmod=photmod_sfr,
+    # Obtain spectral emission lines from HII regions
+    nebline_sfr = get_lines(lu_sfr.T,lnH_sfr.T,lzgas.T,photmod=photmod_sfr,
                             xid_phot=xid_sfr, co_phot=co_sfr,
                             imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
@@ -238,7 +241,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         sfr = np.zeros(shape=np.shape(lssfr))
         for comp in range(ncomp):
             sfr[:,comp] = 10**(lms[:,comp]+lssfr[:,comp])
-            nebline_sfr[comp] = nebline_sfr[comp]*const.Lbolsun*sfr[:,comp]
+            nebline_sfr[comp,:,:] = nebline_sfr[comp,:,:]*c.Lbolsun*sfr[:,comp]
 
     if verbose:
         print(' Emission calculated.')
@@ -270,7 +273,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         fluxes_sfr = np.array(None)
         fluxes_sfr_att = np.array(None)
 
-    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lne_o_sfr,lzgas_o_sfr,
+    # Read any extra parameters and write them in the output file
+    # together with the HII spectral lines
+    extra_param = io.read_data(infile,cut,
+                               inputformat=inputformat,
+                               params=extra_params,
+                               testing=testing,
+                               verbose=verbose)
+        
+    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
                       nebline_sfr,nebline_sfr_att,
                       fluxes_sfr,fluxes_sfr_att,
                       extra_param=extra_param,
@@ -278,16 +289,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                       extra_params_labels=extra_params_labels,
                       verbose=verbose)
     
-    del lu_sfr, lne_sfr, lzgas_sfr
-    del lu_o_sfr, lne_o_sfr, lzgas_o_sfr
+    del lu_sfr, lnH_sfr
+    del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
     del nebline_sfr, nebline_sfr_att
-        
+
+    #----------------NLR AGN calculation------------------------
     if AGN:
-        epsilon_param = io.get_agndata(infile,mg_r50,selection=cut,
-                                       h0=h0,units_h0=units_h0,
-                                       inputformat=inputformat,IMF=IMF,
-                                       testing=testing,verbose=verbose)
-        
         ###here to be removed from here
         Lagn_param = io.read_data(infile,cut,
                                   inputformat=inputformat,
@@ -297,30 +304,42 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
         ###here to be removed until here (affecting to tremonti aprox)
-        
+        if Z_central:
+            lzgas_agn = np.copy(lzgas)
+        else:
+            lzgas_agn = correct_Zagn(lms,lzgas)
+
+        agn_nH_param = None
+        if une_agn_nH is not None:
+            agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
+                                             agn_nH_params,selection=cut,
+                                             h0=h0,units_h0=units_h0,
+                                             inputformat=inputformat,
+                                             testing=testing,verbose=verbose)
+            
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,AGNinputs=AGNinputs,
                         h0=h0,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
         
-        Q_agn, lu_agn, lne_agn, lzgas_agn, epsilon_agn, ng_ratio = \
-            get_une(lms,lssfr, lzgas, outfile, q0=q0, z0=z0,
-                    Z_central_cor=Z_central_cor,Lagn=Lagn, T=T,
-                    epsilon_param=epsilon_param,
-                    origin='agn',
-                    unemod=unemod_agn, gamma=gamma, verbose=verbose)
+        Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
+            get_une_agn(lms,lssfr,lzgas_agn, outfile,
+                        Lagn=Lagn, T=T,
+                        agn_nH_param=agn_nH_param,
+                        une_agn_nH=une_agn_nH,
+                        une_agn_spec=une_agn_spec,
+                        une_agn_U=une_agn_U,verbose=verbose)
 
         if verbose:
             print('AGN:')
-            print(' U and ne calculated.')
+            print(' U and nH calculated.')
         
         lu_o_agn = np.copy(lu_agn)
-        lne_o_agn = np.copy(lne_agn)
+        lnH_o_agn = np.copy(lnH_agn)
         lzgas_o_agn = np.copy(lzgas_agn) 
-        ###here it doesn't make sense that nebline_agn has several components
-        clean_photarray(lms, lssfr, lu_agn, lne_agn, lzgas_agn, photmod=photmod_agn)            
-        nebline_agn = get_lines(lu_agn,lne_agn,lzgas_agn,photmod=photmod_agn,
+
+        nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
         
@@ -351,13 +370,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn = np.array(None)
             fluxes_agn_att = np.array(None)
 
-        io.write_agn_data(outfile,lu_o_agn,lne_o_agn,lzgas_o_agn,
+        io.write_agn_data(outfile,lu_o_agn,lnH_o_agn,lzgas_o_agn,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn,
                           verbose=verbose)             
-        del lu_agn, lne_agn, lzgas_agn 
-        del lu_o_agn, lne_o_agn, lzgas_o_agn
+        del lu_agn, lnH_agn, lzgas_agn 
+        del lu_o_agn, lnH_o_agn, lzgas_o_agn
         del nebline_agn, nebline_agn_att
 
 

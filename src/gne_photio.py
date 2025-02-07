@@ -5,11 +5,11 @@
 """
 import h5py
 import numpy as np
-import src.gne_io as io
-import src.gne_const as const
-from src.gne_io import check_file
 import sys
-import warnings
+#import warnings
+import src.gne_io as io
+import src.gne_const as c
+import src.gne_stats as st
 from src.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
 
 
@@ -35,60 +35,12 @@ def get_zfile(zmet_str, photmod='gutkin16'):
         zmet_str = zmet_str+'0'
     zfile = root + zmet_str + '.txt'
     # Si son 2 numeros que le añada un cero
-    file_fine = check_file(zfile)
+    file_fine = io.check_file(zfile)
     if (not file_fine):
         zfile = None
 
     return zfile
-
-
-def clean_photarray(lms, lssfr, lu, lne, lzgas, photmod='gutkin16', verbose=True):
-
-    '''
-    Given the model, take the values outside the limits and give them the apropriate
-    value inside the limits depending on the model.
-
-    Parameters
-    ----------
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lu : floats
-     U of the galaxies per component.
-    lne : floats
-     ne of the galaxies per component (cm^-3).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    photomod : string
-     Name of the considered photoionisation model.
-    verbose : boolean
-     If True print out messages.
-
-    Returns
-    -------
-    lms,lssfr,lu,lne,lzgas : floats
-    '''
-
-    minU, maxU = get_limits(propname='U', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-
-    limits = np.where((lu[:,0]>minU)&(lu[:,0]<maxU)&(lzgas[:,0]>np.log10(minZ))&(lzgas[:,0]<np.log10(maxZ))&
-                      (lne[:,0]>np.log10(minnH))&(lne[:,0]<np.log10(maxnH))&(lu[:,0]!=const.notnum))[0]
-    
-    for i in range(lu.shape[1]):        
-        lu[:,i][(lu[:,i] > maxU)&(lu[:,i] != const.notnum)] = maxU
-        lu[:,i][(lu[:,i] < minU)&(lu[:,i] != const.notnum)] = minU
-        
-        lne[:,i][(lne[:,i] > np.log10(maxnH))&(lne[:,i] != const.notnum)] = np.log10(maxnH)
-        lne[:,i][(lne[:,i] < np.log10(minnH))&(lne[:,i] != const.notnum)] = np.log10(minnH)
-        
-        lzgas[:,i][(lzgas[:,i] > np.log10(maxZ))&(lzgas[:,i] != const.notnum)] = np.log10(maxZ)
-        lzgas[:,i][(lzgas[:,i] < np.log10(minZ))&(lzgas[:,i] != const.notnum)] = np.log10(minZ)
                 
-    return lms, lssfr, lu, lne, lzgas
-
 
 def get_limits(propname, photmod='gutkin16',verbose=True):
     '''
@@ -114,28 +66,27 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
 
     Examples
     -------
-    >>> get_limits(propname = 'Z', photmod = 'gutkin16')
-        0.0001 0.04
     >>> get_limits(propname = 'nH', photmod = 'gutkin16')
-        1  4
+        10  10000
     '''
 
     try:
-        infile = const.mod_lim[photmod]
+        infile = c.mod_lim[photmod]
     except KeyError:
-        print('STOP (gne_photio): the {}'.format(photmod) + ' model is an unrecognised model in the dictionary mod_lim')
-        print('                  Possible photmod= {}'.format(const.mod_lim.keys()))
+        print('STOP (gne_photio.get_limits): the {}'.format(photmod) +
+              ' is an unrecognised model in the dictionary mod_lim')
+        print('                  Possible photmod= {}'.format(c.mod_lim.keys()))
         sys.exit()
 
     # Check if the limits file exists:
-    check_file(infile, verbose=verbose)
+    io.check_file(infile, verbose=verbose)
     # print(infile)
 
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
     if propname not in prop:
-        print('STOP (gne_photio): property {} '.format(propname)+'not found in the limits file {}'.format(infile))
-        print('                   In the limits file we must find the properties written as: U, Z and nH')
+        print('STOP (gne_photio.get_limits): property {} '.format(propname)+
+              'not found in the limits file {}'.format(infile))
         sys.exit()
     else:
         ind = prop.index(propname)
@@ -199,210 +150,37 @@ def calculate_flux(nebline,filenom,origin='sfr'):
     return fluxes
 
 
-
-def get_lines_Feltre(lu, lne, lzgas, xid_phot=0.5,
-                     alpha_phot=-1.7,verbose=True):
+def get_Zgrid(zgrid_str):
     '''
-    Get the interpolations for the emission lines,
-    using the tables
-    from Feltre et al. (2016) (https://arxiv.org/pdf/1511.08217utkingalaxies per component.
-    lne : floats
-     ne of the galaxies per component (cm^-3).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z))
-    xid_phot : float
-     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
-    alpha_phot : float
-     Alpha value for the Feltre et. al. photoionisation model.
-    verbose : boolean
-      If True print out messages
+    Get the metallicity values from the file names
+
+    Params
+    -------
+    zgrid_str : array or list of strings
+        String with decimal part of the metallicity grid
       
     Returns
     -------
-    nebline : array of floats
-       Line luminosities per galaxy component.
-       Units: Lsun for L_AGN = 10^45 erg/s
+    nz : integer
+        Number of elements of zgrid_str
+    zgrid, lzgrid : array of floats
+        Numerical value of the metallicity grid, Z, and log10(Z)
     '''
+    nz = len(zgrid_str)
 
-    photmod = 'feltre16'
-    minU, maxU = get_limits(propname='U', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    minZ, maxZ = np.log10(minZ), np.log10(maxZ)
-    
-    zmet_str = const.zmet_str[photmod]
-    zmets = np.full(len(zmet_str),const.notnum)
-    zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
+    zgrid = np.full(nz,c.notnum)
+    zgrid = np.array([float('0.' + zz) for zz in zgrid_str])
 
-    logubins = [-5., -4.5, -4., -3.5, -3., -2.5, -2., -1.5, -1.]
-    
-    nemline = 20
-    ndat = lu.shape[0]
-    ncomp = lu.shape[1]
-
-    nzmet = 16
-    nu = 9
-
-    emline_grid1 = np.zeros((nzmet,nu,nemline))
-    emline_grid2 = np.zeros((nzmet,nu,nemline))
-    emline_grid3 = np.zeros((nzmet,nu,nemline))
-
-    l = 0
-    for k, zname in enumerate(zmets):
-        infile = get_zfile(zmet_str[k],photmod=photmod)
-        check_file(infile,verbose=True)
-        #print(k,infile)
-        ih = io.get_nheader(infile)
-
-        with open(infile,'r') as ff:
-            iline = -1.
-            for line in ff:
-                iline += 1
-
-                if iline<ih:continue
-
-                data = np.array((line.split()))
-                u = float(data[0])
-                xid = float(data[1])
-                nH = float(data[2])
-                alpha = float(data[3])
-
-                if xid==xid_phot and alpha==alpha_phot:
-                    if u == -5.:
-                        l = 0
-                    if u == -4.5:
-                        l = 1
-                    if u == -4.:
-                        l = 2
-                    if u == -3.5:
-                        l = 3
-                    if u == -3.:
-                        l = 4
-                    if u == -2.5:
-                        l = 5
-                    if u == -2.:
-                        l = 6
-                    if u == -1.5:
-                        l = 7
-                    if u == -1.:
-                        l = 8
-
-
-                    if nH==100 or nH==1000 or nH==10000:
-                        for j in range(nemline):
-                            if nH == 100:
-                                emline_grid1[k,l,j] = float(data[j+4])
-                            if nH == 1000:
-                                emline_grid2[k,l,j] = float(data[j+4])
-                            if nH == 10000:
-                                emline_grid3[k,l,j] = float(data[j+4])
-        ff.close()
-
-    # log metallicity bins ready for interpolation:
-
-    lzmets = np.full(len(zmets), const.notnum)
-    ind = np.where(zmets > 0.)
+    lzgrid = np.full(nz, c.notnum)
+    ind = np.where(zgrid > 0.)
     if (np.shape(ind)[1] > 0):
-        lzmets[ind] = np.log10(zmets[ind])
+        lzgrid[ind] = np.log10(zgrid[ind])
 
-    nebline = np.zeros((ncomp,nemline,ndat))
-
-    # Interpolate in all three ne grids to start with u-grid first, since the same for all grids
-    
-    for comp in range(ncomp):
-        
-        ind = np.where(lu[:,comp] != const.notnum)[0]
-
-        emline_int1 = np.zeros((nemline,ndat))
-        emline_int2 = np.zeros((nemline, ndat))
-        emline_int3 = np.zeros((nemline, ndat))
-    
-        # Interpolate over ionisation parameter
-        du = []
-        j = []
-        for logu in lu[:,comp]:
-            j1 = io.locate_interval(logu,logubins)
-            if logu<minU:
-                du.append(0.0)
-                j.append(0)
-                #du = 0.0
-                j1 = 0
-            elif j1 == nu - 1:
-                du.append(1.0)
-                j.append(nu-2)
-                #du = 1.0
-                j1 = nu - 2
-            else:
-                d = (logu - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
-                du.append(d)
-                j.append(j1)
-
-        dz = []
-        i = []
-    
-        for logz in lzgas[:,comp]:
-            i1 = io.locate_interval(logz, lzmets)
-            if logz<minZ:
-                dz.append(0.0)
-                # dz = 0.0
-                i1 = 0
-                i.append(0)
-            elif i1 == nzmet - 1:
-                dz.append(1.0)
-                # dz = 1.0
-                i1 = nzmet - 2
-                i.append(nzmet - 2)
-            else:
-                d = (logz - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
-                dz.append(d)
-                i.append(i1)
-    
-    
-        for k in range(nemline):
-            for ii in ind:
-                emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid1[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid1[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid1[i[ii]+1][j[ii]+1][k]
-                                     
-                emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid2[i[ii]+1][j[ii]+1][k]
-    
-                emline_int3[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid3[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid3[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid3[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid3[i[ii]+1][j[ii]+1][k]
-    
-        # Interpolate over ne
-        # use gas density in disk logned
-        for n in ind:
-            if (lne[:,comp][n] > 2. and lne[:,comp][n] <= 3.):
-                dn = (lne[:,comp][n] -2.)/(3. - 2.)
-                for k in range(nemline):
-                    nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
-    
-            elif (lne[:,comp][n] > 3. and lne[:,comp][n] <= 4.):
-                dn = (lne[:,comp][n] - 3.)/(4. - 3.)
-                for k in range(nemline):
-                    nebline[comp][k][n] = (1. - dn) * emline_int2[k][n] + (dn) * emline_int3[k][n]
-                # print('hay mayor que 3')
-    
-            elif (lne[:,comp][n] <= 2.):
-                for k in range(nemline):
-                    nebline[comp][k][n] = emline_int1[k][n]
-            elif (lne[:,comp][n] > 4.):
-                for k in range(nemline):
-                    nebline[comp][k][n] = emline_int3[k][n]
-            else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lne[:,comp][n]))
-                
-    return nebline
+    return nz,zgrid,lzgrid
 
 
-def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
-                     co_phot=1,imf_cut_phot=100,verbose=True):
+def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
+                       co_phot=1,imf_cut_phot=100,verbose=True):
     '''
     Get the interpolations for the emission lines,
     using the tables
@@ -412,7 +190,7 @@ def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
     ----------
     lu : floats
      U of the galaxies per component.
-    lne : floats
+    lnH : floats
      ne of the galaxies per component (cm^-3).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z))
@@ -431,245 +209,251 @@ def get_lines_Gutkin(lu, lne, lzgas, xid_phot=0.3,
        Line luminosity per component
        Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
     '''
-
+    
     photmod = 'gutkin16'
-    minU, maxU = get_limits(propname='U', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-    minZ, maxZ = np.log10(minZ), np.log10(maxZ)
+
+    # Read line names
+    line_names = c.line_names[photmod]
+    nemline = len(line_names)
+
+    # Initialize the matrix to store the emission lines
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
+
+    # Read grid of Zs
+    zmet_str = c.zmet_str[photmod]
+    nzmet, zmets, zedges = get_Zgrid(zmet_str)
+
+    # Read reduced grid of Zs and map its indeces to the full grid
+    zmet_str_reduced = c.zmet_str_reduced[photmod]
+    nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
+    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
+
+    # Read grid of Us
+    uedges = c.lus_bins[photmod]
+    nu = len(uedges)
     
-    zmet_str = const.zmet_str[photmod]
-    zmets = np.full(len(zmet_str),const.notnum)
-    zmets = np.array([float('0.' + zmet) for zmet in zmet_str])
-
-    logubins = [-4., -3.5, -3., -2.5, -2., -1.5, -1.]
-    
-    nemline = 18
-    ndat = lu.shape[0]
-    ncomp = lu.shape[1]
-
-    nzmet = 14
-    nu = 7
-    nzmet_reduced = 4
-    zmets_reduced = const.zmet_reduced[photmod]
-
-    emline_grid1 = np.zeros((nzmet_reduced,nu,nemline)) # From slower to faster
+    # Read grid of nHs
+    nHbins = c.nH_bins[photmod]
+    nHedges = np.array([np.log10(val) for val in nHbins])
+    nnH = len(nHbins)
+        
+    # Store the photoionisation model tables into matrices
+    emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
     emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
-
-    l = 0
-    kred = 0
-    nn = 0
-
-    for k, zname in enumerate(zmets):
-        infile = get_zfile(zmet_str[k],photmod=photmod)
-        check_file(infile,verbose=True)
+    for k, zname in enumerate(zmet_str):
+        infile = get_zfile(zname,photmod=photmod)
+        io.check_file(infile,verbose=True)
         ih = io.get_nheader(infile)
 
-        with open(infile,'r') as ff:
-            iline = -1.
-            for line in ff:
-                iline += 1
+        # Read all lines after header and extract columns
+        data = np.loadtxt(infile, skiprows=ih)
+        u = data[:, 0]          # log(Us)
+        xid = data[:, 1]        # xid
+        nH = data[:, 2]         # nh
+        co = data[:, 3]         # (C/O)/(C/O)sol
+        imf_cut = data[:, 4]    # mup
+        emission_lines = data[:, 5:]  # All emission line data
 
-                if iline<ih:continue
+        # Create mask for matching conditions
+        mask = (xid == xid_phot) & (co == co_phot) & (imf_cut == imf_cut_phot)
+        filtered_indices = np.where(mask)[0]
 
-                data = np.array((line.split()))
-                u = float(data[0])
-                xid = float(data[1])
-                nH = float(data[2])
-                co = float(data[3])
-                imf_cut = float(data[4])
-                
-                if xid == xid_phot and co == co_phot and imf_cut == imf_cut_phot:
-                    if u == -4.:
-                        l = 0
-                    if u == -3.5:
-                        l = 1
-                    if u == -3.:
-                        l = 2
-                    if u == -2.5:
-                        l = 3
-                    if u == -2.:
-                        l = 4
-                    if u == -1.5:
-                        l = 5
-                    if u == -1.:
-                        l = 6
+        # Process filtered data
+        for idx in filtered_indices:
+            if nH[idx] not in nHbins: continue
 
+            # Find index for the read u value
+            l = np.where(uedges == u[idx])[0]
+            if len(l) == 0: continue
+            l = l[0] 
+            
+            # Get emission line values
+            em_values = emission_lines[idx]
 
-                    if nH==10 or nH==100 or nH==1000 or nH==10000:
+            # Determine grid and index based on nH value
+            if nH[idx] == 10:
+                kred = k_to_kred.get(k)
+                emline_grid1[kred, l, :] = em_values
+            elif nH[idx] == 100:
+                emline_grid2[k, l, :] = em_values
+            elif nH[idx] == 1000:
+                emline_grid3[k, l, :] = em_values
+            elif nH[idx] == 10000:
+                kred = k_to_kred.get(k)
+                emline_grid4[kred, l, :] = em_values
 
-                        if nH==10 or nH==10000:
-                            if k==0:
-                                kred = 0
-                            if k==4:
-                                kred = 1
-                            if k==9:
-                                kred = 2
-                            if k==12:
-                                kred = 3
-                        for j in range(nemline):
-                            if nH == 10:
-                                emline_grid1[kred,l,j] = float(data[j+5])
-                            if nH == 100:
-                                emline_grid2[k,l,j] = float(data[j+5])
-                            if nH == 1000:
-                                emline_grid3[k,l,j] = float(data[j+5])
-                            if nH == 10000:
-                                emline_grid4[kred,l,j] = float(data[j+5])
-        ff.close()
-
-    # log metallicity bins ready for interpolation:
-    lzmets_reduced = np.full(len(zmets_reduced), const.notnum)
-    ind = np.where(zmets_reduced > 0.)
-    if (np.shape(ind)[1]) > 0:
-        lzmets_reduced[ind] = np.log10(zmets_reduced[ind])
-
-
-    lzmets = np.full(len(zmets), const.notnum)
-    ind = np.where(zmets > 0.)
-    if (np.shape(ind)[1] > 0):
-        lzmets[ind] = np.log10(zmets[ind])
-
-    nebline = np.zeros((ncomp,nemline,ndat))
-
-    # Interpolate in all three ne grids,
-    # starting with u-grid first (same for all grids)
-    
+    # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
+        ucomp = lu[comp,:]; zcomp=lzgas[comp,:]; nHcomp = lnH[comp,:]
+        ind = np.where((ucomp > c.notnum) &
+                       (zcomp > c.notnum) &
+                       (nHcomp > c.notnum))[0]
+        if (ind.size < 1):
+            print('WARNING (get_lines_gutkin16): no adequate log(Us) found')
+            return nebline
         
-        ind = np.where(lu[:,comp] != const.notnum)[0]
+        # Initialize matrices with interpolated values on Z and U
+        uu = ucomp[ind]
+        zz = zcomp[ind]
+        ngal = uu.size
+        int1_zu, int2_zu, int3_zu, int4_zu = [np.zeros((ngal,nemline)) for i in range(4)]
 
-        emline_int1 = np.zeros((nemline,ndat))
-        emline_int2 = np.zeros((nemline, ndat))
-        emline_int3 = np.zeros((nemline, ndat))
-        emline_int4 = np.zeros((nemline, ndat))
-    
-        # Interpolate over ionisation parameter
-        du = []
-        j = []
-        for logu in lu[:,comp]:
-            j1 = io.locate_interval(logu,logubins)
-            if logu<minU:
-                du.append(0.0)
-                j.append(0)
-                #du = 0.0
-                j1 = 0
-            elif j1 == nu - 1:
-                du.append(1.0)
-                j.append(nu-2)
-                #du = 1.0
-                j1 = nu - 2
-            else:
-                d = (logu - logubins[j1]) / (logubins[j1 + 1] - logubins[j1])
-                du.append(d)
-                j.append(j1)
+        # Interplate over Zgas and U
+        int1_zu = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid1)
+        int4_zu = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid4)
 
-        # Interpolate over disk gas metallicity lzgas[comp]
-        dz = []
-        i = []
-        for logz in lzgas[:,comp]:
-            i1 = io.locate_interval(logz,lzmets_reduced)
-    
-            if logz<minZ:
-                dz.append(0.0)
-                #dz = 0.0
-                i1 = 0
-                i.append(0)
-            elif i1 == nzmet_reduced-1:
-                dz.append(1.0)
-                #dz = 1.0
-                i1 = nzmet_reduced-2
-                i.append(nzmet_reduced-2)
-            else:
-                d = (logz - lzmets_reduced[i1])/(lzmets_reduced[i1+1]-lzmets_reduced[i1])
-                dz.append(d)
-                i.append(i1)
-    
-    
-        for k in range(nemline):
-            for ii in ind:
-                #emline_grid1 = np.zeros((nzmet_reduced, nu, nemline))
-                #print(emline_grid1[i[ii]][j[ii]][k])
-                emline_int1[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid1[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid1[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid1[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid1[i[ii]+1][j[ii]+1][k]
-    
-                emline_int4[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid4[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid4[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid4[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid4[i[ii]+1][j[ii]+1][k]
-    
-    
-        # full metallicity grid for emlines_grid2 ne=100 and emlines_grid3 ne=1000
-    
-        dz = []
-        i = []
-    
-        for logz in lzgas[:,comp]:
-            i1 = io.locate_interval(logz, lzmets)
-            if logz<minZ:
-                dz.append(0.0)
-                # dz = 0.0
-                i1 = 0
-                i.append(0)
-            elif i1 == nzmet - 1:
-                dz.append(1.0)
-                # dz = 1.0
-                i1 = nzmet - 2
-                i.append(nzmet - 2)
-            else:
-                d = (logz - lzmets[i1]) / (lzmets[i1 + 1] - lzmets[i1])
-                dz.append(d)
-                i.append(i1)
-    
-    
-        for k in range(nemline):
-            for ii in ind:
-                emline_int2[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid2[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid2[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid2[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid2[i[ii]+1][j[ii]+1][k]
-    
-                emline_int3[k][ii] = (1.-dz[ii])*(1.-du[ii])*emline_grid3[i[ii]][j[ii]][k]+\
-                                     dz[ii]*(1-du[ii])*emline_grid3[i[ii]+1][j[ii]][k]+\
-                                     (1.-dz[ii])*du[ii]*emline_grid3[i[ii]][j[ii]+1][k]+\
-                                     dz[ii]*du[ii]*emline_grid3[i[ii]+1][j[ii]+1][k]
-    
-        # Interpolate over ne
-        # use gas density in disk logned
-        for n in ind:
-            if (lne[:,comp][n] > 2. and lne[:,comp][n] <= 3.):
-                dn = (lne[:,comp][n] -2.)/(3. - 2.)
-                for k in range(nemline):
-                    nebline[comp][k][n] = (1.-dn)*emline_int2[k][n] + (dn)*emline_int3[k][n]
-    
-            elif (lne[:,comp][n] > 1. and lne[:,comp][n] <= 2.):
-                dn = (lne[:,comp][n] -1.)/(2. - 1.)
-                for k in range(nemline):
-                    nebline[comp][k][n] = (1.-dn)*emline_int1[k][n] + (dn)*emline_int2[k][n]
-    
-            elif (lne[:,comp][n] > 3. and lne[:,comp][n]<=4.):
-                dn = (lne[:,comp][n] - 3.)/(4. - 3.)
-                for k in range(nemline):
-                    nebline[comp][k][n] = (1. - dn) * emline_int3[k][n] + (dn) * emline_int4[k][n]
-                # print('hay mayor que 3')
-    
-            elif (lne[:,comp][n] <= 1.):
-                for k in range(nemline):
-                    nebline[comp][k][n] = emline_int1[k][n]
-            elif (lne[:,comp][n] > 4.):
-                for k in range(nemline):
-                    nebline[comp][k][n] = emline_int4[k][n]
-            else:
-                print('log(ne)disk out of limits','log(ne)disk = {}'.format(lne[:,comp][n]))
+        int2_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
+        int3_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
 
+        # Interpolate over nH
+        nn = nHcomp[ind]
+        nHd, inH = st.interpl_weights(nn,nHedges)
+
+        c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
+
+        mask0 = (inH == 0)
+        mask1 = (inH == 1)
+        mask2 = (inH == 2)
+        c0[mask0,:] = int1_zu[mask0,:]; c1[mask0,:] = int2_zu[mask0,:]
+        c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
+        c0[mask2,:] = int3_zu[mask2,:]; c1[mask2,:] = int4_zu[mask2,:] 
+
+        nebline[comp,:,ind] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
+        
     return nebline
 
 
-def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
+def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
+                     alpha_phot=-1.7,verbose=True):
+    '''
+    Get the interpolations for the emission lines,
+    using the tables from Feltre+2016 (https://arxiv.org/pdf/1511.08217)
+    
+    lnH : floats
+     ne of the galaxies per component (cm^-3).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z))
+    xid_phot : float
+     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
+    alpha_phot : float
+     Alpha value for the Feltre et. al. photoionisation model.
+    verbose : boolean
+      If True print out messages
+      
+    Returns
+    -------
+    nebline : array of floats
+       Line luminosities per galaxy component.
+       Units: Lsun for L_AGN = 10^45 erg/s
+    '''
+
+    photmod = 'feltre16'
+    
+    # Read line names
+    line_names = c.line_names[photmod]
+    nemline = len(line_names)
+
+    # Initialize the matrix to store the emission lines
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nebline = np.zeros((ncomp,nemline,ndat))
+    
+    # Read grid of Zs
+    zmet_str = c.zmet_str[photmod]
+    nzmet, zmets, zedges = get_Zgrid(zmet_str)
+
+    # Read grid of Us
+    uedges = c.lus_bins[photmod]
+    nu = len(uedges)
+
+    # Read grid of nHs
+    nHbins = c.nH_bins[photmod]
+    nHedges = np.array([np.log10(val) for val in nHbins])
+    nnH = len(nHbins)
+    
+    # Store the photoionisation model tables into matrices
+    emline_grid1 = np.zeros((nzmet,nu,nemline))
+    emline_grid2 = np.zeros((nzmet,nu,nemline))
+    emline_grid3 = np.zeros((nzmet,nu,nemline))
+    for k, zname in enumerate(zmet_str):
+        infile = get_zfile(zname,photmod=photmod)
+        io.check_file(infile,verbose=True)
+        ih = io.get_nheader(infile)
+
+        # Read all lines after header and extract columns
+        data = np.loadtxt(infile, skiprows=ih)
+        u = data[:, 0]          # log(Us)
+        xid = data[:, 1]        # xid
+        nH = data[:, 2]         # nh
+        alpha = data[:, 3]      # alpha
+        emission_lines = data[:, 4:]  # All emission line data
+
+        # Create mask for matching conditions
+        mask = (xid == xid_phot) & (alpha == alpha_phot)
+        filtered_indices = np.where(mask)[0]
+
+        # Process filtered data
+        for idx in filtered_indices:
+            if nH[idx] not in nHbins: continue
+
+            # Find index for the read u value
+            l = np.where(uedges == u[idx])[0]
+            if len(l) == 0: continue
+            l = l[0] 
+            
+            # Get emission line values
+            em_values = emission_lines[idx]
+
+            # Determine grid and index based on nH value
+            if nH[idx] == 100:
+                emline_grid1[k, l, :] = em_values
+            elif nH[idx] == 1000:
+                emline_grid2[k, l, :] = em_values
+            elif nH[idx] == 10000:
+                emline_grid3[k, l, :] = em_values
+
+    # Interpolate in all three grids: logUs, logZ, nH
+    for comp in range(ncomp):
+        ucomp = lu[comp,:]; zcomp=lzgas[comp,:]; nHcomp = lnH[comp,:]
+        ind = np.where((ucomp > c.notnum) &
+                       (zcomp > c.notnum) &
+                       (nHcomp > c.notnum))[0]
+        if (ind.size < 1):
+            print('WARNING (get_lines_feltre16): no adequate log(Us) found')
+            return nebline
+        
+        # Initialize matrices with interpolated values on Z and U
+        uu = ucomp[ind]
+        zz = zcomp[ind]
+        ngal = uu.size
+        int1_zu, int2_zu, int3_zu = [np.zeros((ngal,nemline)) for i in range(3)]
+
+        # Interplate over Zgas and U
+        int1_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid1)
+        int2_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
+        int3_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)    
+         
+        # Interpolate over nH
+        nn = nHcomp[ind]
+        nHd, inH = st.interpl_weights(nn,nHedges)
+        
+        c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
+        
+        mask0 = (inH == 0)
+        mask1 = (inH == 1)
+        c0[mask0,:] = int1_zu[mask0,:]; c1[mask0,:] = int2_zu[mask0,:]
+        c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
+        
+        nebline[comp,:,ind] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
+                        
+    return nebline
+
+
+def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
               co_phot=1,imf_cut_phot=100,alpha_phot=-1.7, verbose=True):
     '''
     Get the emission lines
@@ -678,7 +462,7 @@ def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
     ----------
     lu : floats
        U of the galaxies per component.
-    lne : floats
+    lnH : floats
        ne of the galaxies per component (cm^-3).
     lzgas : floats
        Metallicity of the galaxies per component (log10(Z))
@@ -702,16 +486,36 @@ def get_lines(lu, lne, lzgas, photmod='gutkin16',xid_phot=0.3,
         Units depend on the photoionisation model.
     '''
 
-    if photmod not in const.photmods:
+    if photmod not in c.photmods:
         if verbose:
             print('STOP (gne_photio.get_lines): Unrecognised model to get emission lines.')
-            print('                Possible photmod= {}'.format(const.photmods))
+            print('                Possible photmod= {}'.format(c.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_Gutkin(lu,lne,lzgas,xid_phot=xid_phot,co_phot=co_phot,
-                                   imf_cut_phot=imf_cut_phot,verbose=verbose)
+        nebline = get_lines_gutkin16(lu,lnH,lzgas,xid_phot=xid_phot,
+                                     co_phot=co_phot,imf_cut_phot=imf_cut_phot,
+                                     verbose=verbose)
     elif (photmod == 'feltre16'):
-        nebline = get_lines_Feltre(lu,lne,lzgas,xid_phot=xid_phot,
+        limits_by_hand = True
+        if limits_by_hand:
+            minU, maxU = get_limits(propname='logUs', photmod=photmod)
+            minnH, maxnH = get_limits(propname='nH', photmod=photmod)
+            minZ, maxZ = get_limits(propname='Z', photmod=photmod)
+        
+            minnH = np.log10(minnH); maxnH = np.log10(maxnH)
+            minZ = np.log10(minZ); maxZ = np.log10(maxZ)
+
+            for i in range(lu.shape[0]):        
+                lu[i,:][(lu[i,:] > maxU)&(lu[i,:] > c.notnum)] = maxU
+                lu[i,:][(lu[i,:] < minU)&(lu[i,:] > c.notnum)] = minU
+                
+                lnH[i,:][(lnH[i,:] > maxnH)&(lnH[i,:] > c.notnum)] = maxnH
+                lnH[i,:][(lnH[i,:] < minnH)&(lnH[i,:] > c.notnum)] = minnH
+            
+                lzgas[i,:][(lzgas[i,:] > maxZ)&(lzgas[i,:] > c.notnum)] = maxZ
+                lzgas[i,:][(lzgas[i,:] < minZ)&(lzgas[i,:] > c.notnum)] = minZ
+
+        nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 
     return nebline

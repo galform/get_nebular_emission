@@ -6,103 +6,9 @@
 import sys
 import numpy as np
 import h5py
-import src.gne_const as const
+import src.gne_const as c
 from src.gne_stats import perc_2arrays
-    
-def Z_blanc(logM_or):
-    logZ = np.zeros(logM_or.shape)
-    logM = logM_or - 9.35
-    for comp in range(logM_or.shape[1]):
-        for i in range(logM_or.shape[0]):
-            if logM[i,comp]<(8.7-9.35):
-                logZ[i,comp] = 8.37
-            elif logM[i,comp]<(9.5-9.35):
-                logZ[i,comp] = 8.37 + 0.14*logM[i,comp] - 0.14*(8.7-9.35)
-            elif logM[i,comp]<(10.5-9.35):
-                logZ[i,comp] = 8.37 + 0.14*(9.5-9.35) - 0.14*(8.7-9.35) + 0.37*logM[i,comp] - 0.37*(9.5-9.35)
-            else:
-                logZ[i,comp] = 8.37 + 0.14*(9.5-9.35) - 0.14*(8.7-9.35) + 0.37*(10.5-9.35) - 0.37*(9.5-9.35) + 0.03*logM[i,comp] - 0.03*(10.5-9.35)
-            
-    logZ = logZ - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
-    
-    return logZ
-
-
-def get_Ztremonti(logM,logZ,Lagn_param=[[None],[None]]):
-    # Ms and Z scale relation from Tremonti et. al. 2004
-    
-    try:
-        if logZ.shape[1] > 1:
-            if Lagn_param[-1][0] != None:
-                logMt = np.log10(10**logM[:,0] + Lagn_param[-1])
-            else:
-                logMt = np.log10(10**logM[:,0] + 10**logM[:,1])
-            logZ[:,0] = -1.492 + 1.847*logMt - 0.08026*logMt**2
-            # logZ[:,1] = -1.492 + 1.847*logMt - 0.08026*logMt**2
-    except:
-        logZ = -1.492 + 1.847*logM - 0.08026*logM**2
-    
-    logZ = logZ - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
-    
-    return logMt, logZ
-
-def get_Ztremonti2(logM,logZ,minZ,maxZ,Lagn_param=[[None],[None]]):
-    # Correction in bins to Z values using the Ms and Z scale relation from Tremonti et. al. 2004
-    
-    logZt = np.copy(logZ)    
-
-    logMtot, logZt = get_Ztremonti(logM,logZt,Lagn_param)
-    # logZt = Z_blanc(logM)
-    
-    logZtot = logZ[:,0]
-    logZt = logZt[:,0]
-    
-    # ind_lims = np.where((logZtot > np.log10(minZ)) & (logZtot < np.log10(maxZ)))[0]
-    ind_lims = np.where((logZtot > -900) & (logZtot < 900))[0]
-    
-    smin = 7
-    smax = 12
-    ds = 0.05
-    sbins = np.arange(smin, (smax + ds), ds)
-    sbinsH = np.arange(smin, smax, ds)
-    shist = sbinsH + ds * 0.5
-
-    median = perc_2arrays(sbins, logMtot[ind_lims], logZtot[ind_lims], 0.5)
-    median_t = perc_2arrays(sbins, logMtot[ind_lims], logZt[ind_lims], 0.5)
-    ind_med = np.where(median != -999.)[0]
-
-    shist = shist[ind_med]
-    median = median[ind_med]
-    median_t = median_t[ind_med]
-    
-    final_bin = sbins[ind_med[-1]+1]
-    sbins = sbins[ind_med]
-    sbins = np.append(sbins,final_bin)
-    
-    dif = median_t - median
-
-    for i in range(len(sbins)-1):
-        ind = np.where((logMtot>sbins[i])&(logMtot<sbins[i+1]))
-        logZ[:,0][ind] = logZ[:,0][ind] + dif[i]
-        logZ[:,1][ind] = logZ[:,1][ind] + dif[i]
-        
-    # smin = 7
-    # smax = 12
-    # ds = 0.05
-    # sbins = np.arange(smin, (smax + ds), ds)
-    # sbinsH = np.arange(smin, smax, ds)
-    # shist = sbinsH + ds * 0.5
-
-    # median2 = perc_2arrays(sbins, logMtot[ind_lims], logZ[:,0][ind_lims], 0.5)
-    # ind_med = np.where(median2 != -999.)[0]
-    # median2 = median2[ind_med]
-        
-    # print(median2)
-    # print()
-    # print(median_t)
-    
-    return logZ
-    
+from src.gne_io import get_ncomponents
 
 def alpha_B(T):
     '''
@@ -301,7 +207,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
-        reff = const.halfmass_to_reff*r_hm # GALFORM ###here not to be hardwired
+        reff = c.halfmass_to_reff*r_hm # GALFORM ###here not to be hardwired
         
         if bulge:
             M_enclosed = enclosed_mass_sphere(x,M,reff,profile=profile,verbose=verbose)
@@ -312,10 +218,10 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
         
         if len(x) > 1:
             ind = np.where((M_enclosed>0)&(x>0))[0]
-            n[ind] = M_enclosed[ind]/vol_sphere(x[ind]) / (const.mp*const.kg_to_Msun*const.Mpc_to_cm**3)
+            n[ind] = M_enclosed[ind]/vol_sphere(x[ind]) / (c.mp*c.kg_to_Msun*c.Mpc_to_cm**3)
         else:
             ind = np.where((M_enclosed>0))[0]
-            n[ind] = M_enclosed[ind]/vol_sphere(x[0]) / (const.mp*const.kg_to_Msun*const.Mpc_to_cm**3)
+            n[ind] = M_enclosed[ind]/vol_sphere(x[0]) / (c.mp*c.kg_to_Msun*c.Mpc_to_cm**3)
         
         return n
 
@@ -347,20 +253,20 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     n : floats
     '''
     
-    reff = const.halfmass_to_reff*r_hm 
+    reff = c.halfmass_to_reff*r_hm 
     
     den_gas = surface_density(x,M,reff,profile=profile,verbose=verbose)
     
-    # h_star = const.reff_to_scale_high*reff
+    # h_star = c.reff_to_scale_high*reff
     # den_star = surface_density(x,Ms,reff,profile=profile,verbose=verbose)
     # gamma_gas = gamma_gas_func()
     # gamma_star = gamma_star_func(h_star,den_star)
-    # Pext = 0.5*np.pi*const.G*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(const.Mpc_to_cm**2)
+    # Pext = 0.5*np.pi*c.G*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(c.Mpc_to_cm**2)
     
-    Pext = 0.5*np.pi*const.G*den_gas**2 * 1e10/(const.Mpc_to_cm**2)
+    Pext = 0.5*np.pi*c.G*den_gas**2 * 1e10/(c.Mpc_to_cm**2)
     
     # P = nkT
-    n = Pext/(T*const.boltzmann) / const.Mpc_to_cm**3 # cm^-3
+    n = Pext/(T*c.boltzmann) / c.Mpc_to_cm**3 # cm^-3
     
     return n
 
@@ -394,7 +300,7 @@ def gamma_star_func(h_star,den_star):
     gamma_gas : float
     '''
     
-    gamma_star = np.sqrt(np.pi*const.G*h_star*den_star) # GALFORM
+    gamma_star = np.sqrt(np.pi*c.G*h_star*den_star) # GALFORM
     
     return gamma_star
     
@@ -507,7 +413,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,filenom,nH=const.nH_AGN,
+def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_AGN,
                       profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
@@ -589,53 +495,8 @@ def n_ratio(n,n_z0):
     return ratio
     
 
-def get_Zagn(logMin,logz):
-    '''
-    Estimates the metallicity of the AGN from the global metallicity.
 
-    Parameters
-    ----------
-    logMin : array of floats
-       Stellar mass of the galaxy or its components (log10(M*/Msun ???? )).
-    logz : array of floats
-       Cold gas metallicity (log10(Z)).
-     
-    Returns
-    -------
-    lzout : array of floats
-        Metallicity of the AGN
-    '''
-
-    rows = logMin.shape[0]
-    logM = np.zeros(shape=rows)
-    lzagn = np.zeros(shape=rows)
-    
-    if logz.shape[1] >= 2:
-        ind = np.where(logz[:,1]>const.notnum)
-        lzagn[ind] = np.copy(logz[ind,1])
-    
-        Ms = 10**logMin
-        Ms = np.sum(Ms,axis=1)
-        ind = np.where(Ms>0)
-        logM[ind] = np.log10(Ms[ind])
-
-    else:
-        logM = logMin
-
-    ###here where is this justified?
-    lzagn[(logM>9.5) & (logM<=10)] = lzagn[(logM>9.5) & (logM<=10)] + 0.1
-    lzagn[(logM>10)  & (logM<=10.5)] = lzagn[(logM>10)  & (logM<=10.5)] + 0.3
-    lzagn[(logM>10.5)& (logM<=11)] = lzagn[(logM>10.5)& (logM<=11)] + 0.1
-
-    ###here input should directly be zbuldge and M* total
-    lzout = np.zeros(shape=(np.shape(logz))); lzout.fill(const.notnum)
-    lzout[:,0] = lzagn
-
-    return lzout
-
-######################
-
-def phot_rate(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
+def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None):
     '''
     Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
     get the rate of ionizing photons in photon per second.
@@ -652,32 +513,53 @@ def phot_rate(lssfr=None, lms=None, IMF=None, Lagn=None, origin='sfr'):
      Assumed IMF for the input data of each component.
     Lagn : floats
      Bolometric luminosity of the AGN (Lsun).
-    origin : string
-     Source of the emission (star-forming region or AGN)
      
     Returns
     -------
     Q : floats
     '''
     
-    if origin=='sfr':
-        Q = np.zeros(np.shape(lssfr))
-        for comp in range(Q.shape[1]):
-            ###here ref. missing
-            Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * const.IMF_SFR[IMF[comp]] * const.phot_to_sfr_kenn
-            # lssfr[:,comp] = np.log10(Q[:,comp]/(const.IMF_SFR[IMF[comp]] * const.phot_to_sfr_kenn)) - lms[:,comp]
-            
-    if origin=='agn':
-        Q = np.zeros(np.shape(lssfr))
-        ind = np.where(Lagn>0)[0]
-        # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
-        Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*const.planck) # Feltre 2016
-        # This implies that Lion = Lbol/5 aprox.
+    Q = np.zeros(np.shape(lssfr))
+    for comp in range(Q.shape[1]):
+        ###here ref. missing
+        Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn
+        # lssfr[:,comp] = np.log10(Q[:,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[:,comp]
+                        
+    return Q
+
+
+def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
+    '''
+    Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
+    get the rate of ionizing photons in photon per second.
+
+    Parameters
+    ----------
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z)).
+    IMF : array of strings
+     Assumed IMF for the input data of each component.
+    Lagn : floats
+     Bolometric luminosity of the AGN (Lsun).
+     
+    Returns
+    -------
+    Q : floats
+    '''
+    Q = np.zeros(np.shape(lssfr))
+    ind = np.where(Lagn>0)[0]
+    # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
+    Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
+    # This implies that Lion = Lbol/5 aprox.
             
     return Q
 
 
-def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
+def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     '''
     Characterise the SF ionising region from global galactic properties,
     using the model from
@@ -685,154 +567,137 @@ def get_une_kashino20(Q, lms, lssfr, lzgas, T, ng_ratio, IMF):
 
     Parameters
     ----------
-    Q : floats
-     Rate of ionizing photons (phot/s).
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    T : float
-     Typical temperature of ionizing regions.
+    lms : array of floats
+        Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : array of floats
+        sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : array of floats
+        Metallicity of the galaxies per component (log10(Z)).
     ng_ratio : floats
      Ratio between the mean particle number density of the cold gas of the 
      input sample and the sample at redshift 0.
     IMF : array of strings
-     Assumed IMF for the input data of each component.
-
+        Assumed IMF for the input data of each component.
+    nhout : bool
+        True to output the hydrogen number density, False for the ionising parameter
+    
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu or lnH : floats
     '''
 
-    ###here missing transformation to the IMF assumed by Kashino
-    lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
-    
-    lssfr_new = np.full(np.shape(lssfr),const.notnum)
-    for comp in range(lssfr.shape[1]):
-        for i in range(lssfr.shape[0]):
-            if Q[i,comp] == 0:
-                continue
-            else:
-                ###here why do we need this?
-                lssfr_new[i,comp] = np.log10(Q[i,comp]/(const.IMF_SFR[IMF[comp]] * const.phot_to_sfr_kenn)) - lms[i,comp]
+    # Initialise vectors
+    lms, lssfr, lu, lnH, loh4 = [np.full(np.shape(lms1), c.notnum) for i in range(5)]
 
-    ind = np.where((lssfr_new > const.notnum) &
-                   (lms > 0) &
-                   (lzgas > const.notnum))
-    
-    
+    # In Kashino+2020 a Kroupa IMF is assumed
+    ncomp = get_ncomponents(lms1.T)
+    for i in range(ncomp):
+        iimf = IMF[i]
+        
+        ind = np.where((lms1[:,i]>c.notnum) & (lssfr1[:,i]>c.notnum))
+        if (np.shape(ind)[1]>1):
+            lms[ind,i] = np.log10(c.IMF_M[iimf]/c.IMF_M['Kroupa']) + lms1[ind,i]
+            lssfr[ind,i] = lssfr1[ind,i] + \
+                np.log10(c.IMF_SFR[iimf]*c.IMF_M['Kroupa']/c.IMF_SFR['Kroupa']/c.IMF_M[iimf])
+
+    # Perform calculation where there is adequate input data
+    ind = np.where((lssfr > c.notnum)&(lms > c.notnum)&(lzgas > c.notnum))
     if (np.shape(ind)[1]>1):
-        # Transform the metallicity into log10(O/H)+12
-        lzgas[ind] = lzgas[ind] + const.ohsun - np.log10(const.zsun)
+        # Transform log10(Zgas) into 4+log10(O/H)
+        loh4[ind] = lzgas[ind] - np.log10(c.zsunK20) + c.ohsun - 8. 
 
-        # Apply equation
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr_new[ind] + 9.)
+        # Apply equation Table 2
+        lnH[ind] = 2.066 + 0.310*(lms[ind]-10.) + 0.492*(lssfr[ind] + 9.)
 
-        # Eq. 12 from Kashino & Inoue 2019 ####here esta eq está mal
-        lu[ind] =  -2.316 - 0.360*(lzgas[ind] -8.) -0.292*lne[ind] + 0.428*(lssfr_new[ind] + 9.)
-        # lu[ind] =  -3.073 - 0.137*(lms[ind]-10) + 0.372*(lssfr[ind] + 9.)
-        lzgas[ind] = lzgas[ind] - const.ohsun + np.log10(const.zsun) # We leave it in log(Z)
-        
-    ind = np.where((lssfr > const.notnum) &
-                   (lms > 0) &
-                   (lzgas > const.notnum))
+        # Eq. 12 (and Table 2) from Kashino & Inoue 2019
+        lu[ind] =  -2.316 - 0.360*loh4[ind] - 0.292*lnH[ind] + 0.428*(lssfr[ind] + 9.)
+
+    ###here EV: this is an application of Panuzzo, not Kashino
+    #ind = np.where((lssfr > c.notnum) &
+    #               (lms > 0) &
+    #               (lzgas > c.notnum))
+    #ind_comp = []   
+    #for comp in range(len(Q[0])):
+    #    ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+    #                   (lms[:,comp] > 0) &
+    #                   (lzgas[:,comp] > c.notnum) &
+    #                   (Q[:,comp] > 0))[0])
+    #    
+    #epsilon = np.full(np.shape(lssfr),c.notnum)
+    #cte = np.zeros(np.shape(lssfr))
+    #
+    #for comp in range(len(Q[0])):
+    #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
+    #    
+    #    if ng_ratio != None:
+    #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+    #    
+    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #
+    #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+
+    output = lu
+    # As nothing is stated in the paper, we assume this is U(Rs)
+    if nhout: output = lnH
     
-    ind_comp = []   
-    for comp in range(len(Q[0])):
-        ind_comp.append(np.where((lssfr[:,comp] > const.notnum) &
-                       (lms[:,comp] > 0) &
-                       (lzgas[:,comp] > const.notnum) &
-                       (Q[:,comp] > 0))[0])
-        
-    epsilon = np.full(np.shape(lssfr),const.notnum)
-    cte = np.zeros(np.shape(lssfr))
-    
-    for comp in range(len(Q[0])):
-        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                              ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
-        
-        if ng_ratio != None:
-            epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
-        
-        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c_cm)    
-    
-    lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
-
-    return lu, lne, lzgas
+    return output
 
 
-def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
+def get_une_orsi14(lzgas, q0, z0, gamma):
     '''
-    Given log10(Mstar), log10(sSFR), log10(Z) and the values for the free parameters,
-    get the ionizing parameter, logU, and the electron density, logne,
-    using the model from Orsi 2014.
+    Given log10(Zgas) and the values for the free parameters,
+    get the ionizing parameter, logU, using the model from Orsi 2014.
 
     Parameters
     ----------
-    Q : floats
-     Rate of ionizing photons (phot/s).
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z)).
-    T : float
-     Typical temperature of ionizing regions.
     q0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     z0 : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     gamma : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    ng_ratio : floats
-     Ratio between the mean particle number density of the cold gas of the 
-     input sample and the sample at redshift 0.
 
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu : floats
+       As nothing is stated in the paper, we assume this is U(Rs)
     '''
     
-    lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
+    lu = np.full(np.shape(lzgas), c.notnum)
 
-    ind = np.where((lssfr > const.notnum) &
-                   (lms > 0) &
-                   (lzgas > const.notnum))
-    
-    if (np.shape(ind)[1]>1):
-        lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
-        lu[ind] = np.log10(q0*((10**lzgas[ind])/z0)**-gamma / const.c_cm)
-        
-    ind = np.where((lssfr > const.notnum) &
-                   (lms > 0) &
-                   (lzgas > const.notnum))
-    
-    ind_comp = []   
-    for comp in range(len(Q[0])):
-        ind_comp.append(np.where((lssfr[:,comp] > const.notnum) &
-                       (lms[:,comp] > 0) &
-                       (lzgas[:,comp] > const.notnum) &
-                       (Q[:,comp] > 0))[0])
-        
-    epsilon = np.full(np.shape(lssfr),const.notnum)
-    cte = np.zeros(np.shape(lssfr))
-    
-    for comp in range(len(Q[0])):
-        epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                              ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
-        
-        if ng_ratio != None:
-            epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
-        
-        cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c_cm)    
-    
-    lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
-    
+    ind = np.where(lzgas > c.notnum)
+    if (np.shape(ind)[1]>0):
+        lu[ind] = np.log10((q0*((10**lzgas[ind])/z0)**(-gamma)) /c.c_cm)
 
-    return lu, lne, lzgas
+    ###here Evolution part to be done externally
+    #ind = np.where((lssfr > c.notnum) &
+    #               (lms > 0) &
+    #               (lzgas > c.notnum))
+    #ind_comp = []   
+    #for comp in range(len(Q[0])):
+    #    ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+    #                   (lms[:,comp] > 0) &
+    #                   (lzgas[:,comp] > c.notnum) &
+    #                   (Q[:,comp] > 0))[0])
+    #    
+    #epsilon = np.full(np.shape(lssfr),c.notnum)
+    #cte = np.zeros(np.shape(lssfr))
+    #
+    #for comp in range(len(Q[0])):
+    #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+    #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
+    #    
+    #    if ng_ratio != None:
+    #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+    #    
+    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #
+    #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+
+    return lu
 
 # def get_une_carton17(lms, lssfr, lzgas):
 #     '''
@@ -851,20 +716,122 @@ def get_une_orsi14(Q, lms, lssfr, lzgas, T, q0, z0, gamma, ng_ratio):
 
 #     Returns
 #     -------
-#     lu, lne, lzgas : floats
+#     lu, lnH, lzgas : floats
 #     '''
     
-#     lu, lne = [np.full(np.shape(lms), const.notnum) for i in range(2)]
+#     lu, lnH = [np.full(np.shape(lms), c.notnum) for i in range(2)]
 
-#     ind = np.where((lssfr > const.notnum) &
+#     ind = np.where((lssfr > c.notnum) &
 #                    (lms > 0) &
-#                    (lzgas > const.notnum))
+#                    (lzgas > c.notnum))
     
 #     if (np.shape(ind)[1]>1):
-#         lne[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
-#         lu[ind] = -0.8*np.log10(10**lzgas[ind]/const.zsun) - 3.58   
+#         lnH[ind] = 2.066 + 0.310*(lms[ind]-10) + 0.492*(lssfr[ind] + 9.)
+#         lu[ind] = -0.8*np.log10(10**lzgas[ind]/c.zsun) - 3.58   
 
-#     return lu, lne, lzgas
+#     return lu, lnH, lzgas
+
+
+def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
+    '''
+    Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
+    the assumed temperature for the ionizing regions, the volume filling-factor
+    and the assumed IMF,
+    get the ionizing parameter, logU, and the electron density, logne,
+    using the model from Panuzzo 2003.
+
+    Parameters
+    ----------
+    Q : floats
+     Rate of ionizing photons (phot/s)
+    lms : floats
+     Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : floats
+     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z)).
+    T : float
+     Typical temperature of ionizing regions.
+    epsilon0 : floats
+     Volume filling-factor of the galaxies.
+    ng_ratio : floats
+     Ratio between the mean particle number density of the cold gas of the 
+     input sample and the sample at redshift 0.
+    origin : string
+     Source of the ionizing photons.
+    IMF : array of strings
+     Assumed IMF for the input data of each component.
+
+    Returns
+    -------
+    lu, lnH, lzgas : floats
+    '''
+    
+    lzgas_all = np.copy(lzgas)
+    
+    lu, lnH, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
+
+    ind = np.where((lssfr > c.notnum) &
+                   (lms > 0) &
+                   (lzgas_all > c.notnum) &
+                   (Q > 0))
+    
+    # ind1 = np.where((lssfr[:,0] > c.notnum) &
+    #                (lms[:,0] > 0) &
+    #                (lzgas[:,0] > c.notnum) &
+    #                (Q[:,0] > 0))[0]
+    # ind2 = np.where((lssfr[:,1] > c.notnum) &
+    #                (lms[:,1] > 0) &
+    #                (lzgas[:,1] > c.notnum) &
+    #                (Q[:,1] > 0))[0]
+    
+    # ind_comp = [ind1,ind2]
+    
+    ind_comp = []   
+    for comp in range(len(Q[0])):
+        ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
+                       (lms[:,comp] > 0) &
+                       (lzgas_all[:,comp] > c.notnum) &
+                       (Q[:,comp] > 0))[0])
+    
+    if (np.shape(ind)[1]>1):
+        
+        epsilon = np.full(np.shape(lssfr),c.notnum)
+        cte = np.zeros(np.shape(lssfr))
+        
+        if origin=='sfr':
+            # lu, lnH, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lnH, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            
+            for comp in range(len(Q[0])):
+                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
+                
+                if ng_ratio != None:
+                    epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
+                
+                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+            
+            lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+        
+        if origin=='agn':
+            lnH[ind] = 3
+            lzgas[ind] = lzgas_all[ind]
+            
+            for comp in range(len(Q[0])):
+                
+                epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
+                
+                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
+                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
+
+            # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
+            cte[cte==0] = 1e-50
+            lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
+            lu[cte==1e-50] = c.notnum
+    
+
+    return lu, lnH, lzgas
 
 
 def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
@@ -899,81 +866,176 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
 
     Returns
     -------
-    lu, lne, lzgas : floats
+    lu, lnH, lzgas : floats
     '''
     
     lzgas_all = np.copy(lzgas)
     
-    lu, lne, lzgas = [np.full(np.shape(lms), const.notnum) for i in range(3)]
+    lu, lnH, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
 
-    ind = np.where((lssfr > const.notnum) &
+    ind = np.where((lssfr > c.notnum) &
                    (lms > 0) &
-                   (lzgas_all > const.notnum) &
+                   (lzgas_all > c.notnum) &
                    (Q > 0))
     
-    # ind1 = np.where((lssfr[:,0] > const.notnum) &
+    # ind1 = np.where((lssfr[:,0] > c.notnum) &
     #                (lms[:,0] > 0) &
-    #                (lzgas[:,0] > const.notnum) &
+    #                (lzgas[:,0] > c.notnum) &
     #                (Q[:,0] > 0))[0]
-    # ind2 = np.where((lssfr[:,1] > const.notnum) &
+    # ind2 = np.where((lssfr[:,1] > c.notnum) &
     #                (lms[:,1] > 0) &
-    #                (lzgas[:,1] > const.notnum) &
+    #                (lzgas[:,1] > c.notnum) &
     #                (Q[:,1] > 0))[0]
     
     # ind_comp = [ind1,ind2]
     
     ind_comp = []   
     for comp in range(len(Q[0])):
-        ind_comp.append(np.where((lssfr[:,comp] > const.notnum) &
+        ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
                        (lms[:,comp] > 0) &
-                       (lzgas_all[:,comp] > const.notnum) &
+                       (lzgas_all[:,comp] > c.notnum) &
                        (Q[:,comp] > 0))[0])
     
     if (np.shape(ind)[1]>1):
         
-        epsilon = np.full(np.shape(lssfr),const.notnum)
+        epsilon = np.full(np.shape(lssfr),c.notnum)
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            # lu, lne, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=const.q0_orsi, z0=const.Z0_orsi, gamma=1.3)
-            lu, lne, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            # lu, lnH, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lnH, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
-                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*const.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lne[:,comp][ind_comp[comp]])))**(1/2))
+                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
                 
                 if ng_ratio != None:
                     epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
-                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*const.c_cm)    
+                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
             
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
         if origin=='agn':
-            lne[ind] = 3
+            lnH[ind] = 3
             lzgas[ind] = lzgas_all[ind]
             
             for comp in range(len(Q[0])):
                 
                 epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
                 
-                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*const.c_cm)) 
-                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lne[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
-                
+                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
+                 * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
+
+            # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
             cte[cte==0] = 1e-50
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
-            lu[cte==1e-50] = const.notnum
+            lu[cte==1e-50] = c.notnum
     
 
-    return lu, lne, lzgas
+    return lu, lnH, lzgas
 
 
-def get_une(lms_o, lssfr_o, lzgas_o,filenom,
-            q0=const.q0_orsi, z0=const.Z0_orsi, Lagn=None, ng_ratio=None,
-            Z_central_cor=False,
-            gamma=1.3, T=10000, epsilon_param=[None], epsilon_param_z0=[None],
-            epsilon=0.01,IMF=['Kennicut','Kennicut'],
-            unemod='kashino20', origin='sfr', verbose=True):
+def get_une_sfr(lms, lssfr, lzgas,filenom,
+                q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3, T=10000,
+                ng_ratio=None, epsilon_param=[None], epsilon_param_z0=[None],epsilon=0.01,
+                IMF=['Kroupa','Kroupa'],
+                une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
+    '''
+    Given the global properties of a galaxy or a region
+    (log10(Mstar), log10(sSFR) and log10(Zgas)),
+    characterise the HII region with its
+    ionising parameter, U, and electron density, ne.
+
+    Parameters
+    ----------
+    lms : array of floats
+        Masses of the galaxies per component (log10(M*) (Msun)).
+    lssfr : array of floats
+        sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    lzgas : array of floats
+        Metallicity of the galaxies per component (log10(Z)).
+    q0 : float
+        Ionization parameter constant for Orsi 2014 model: q=q0(z/z0)^-gamma
+    z0 : float
+        Metallicity constant for Orsi 2014 model: q=q0(z/z0)^-gamma
+    gamma : float
+        Exponent for Orsi 2014 model: q=q0(z/z0)^-gamma
+    T : float
+        Typical temperature of HII ionizing regions.
+    epsilon_param : floats
+     Parameters for epsilon calculation.
+    epsilon_param_z0 : floats
+     Parameters for epsilon calculation in the sample of galaxies at redshift 0.
+    epsilon : floats
+     Volume filling-factor of the galaxy.
+    IMF : array of strings
+     Assumed IMF for the input data of each component.
+    une_sfr_nH : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    une_sfr_U : string
+        Model to go from galaxy properties to ionising parameter.
+    verbose : boolean
+        True for printing out messages.
+
+    Returns
+    -------
+    lu, lnH : floats
+    '''
+
+    # Read redshift
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    redshift = header.attrs['redshift']
+    f.close()
+    
+    # ncomp = len(lms[0])
+    
+    #epsilon = None
+    #if epsilon_param_z0 is not None:
+    #    # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
+    #    # epsilon = ng/c.nH_gal
+    #    # epsilon[epsilon>1] = 1
+    #        
+    #    
+    #    # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
+    #    # ng_ratio = n_ratio(ng,ng_z0)
+    #    if redshift==0.8:
+    #        ng_ratio = c.med_to_low
+    #    elif redshift==1.5:
+    #        ng_ratio = c.high_to_low
+    #    else:
+    #        ng_ratio = 1.
+                        
+    if une_sfr_nH not in c.une_sfr_nH:
+        if verbose:
+            print('STOP (gne_une): Unrecognised model to get nH (HII).')
+            print('                Possible options= {}'.format(c.une_sfr_nH))
+        sys.exit()
+    elif (une_sfr_nH == 'kashino20'):
+        lnH = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=True)
+
+    if une_sfr_U not in c.une_sfr_U:
+        if verbose:
+            print('STOP (gne_une): Unrecognised model to get U (HII).')
+            print('                Possible options= {}'.format(c.une_sfr_nH))
+        sys.exit()
+    elif (une_sfr_U == 'kashino20'):
+        lu = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=False)
+    elif (une_sfr_U == 'orsi14'):
+        lu = get_une_orsi14(lzgas,q0,z0,gamma)
+    elif (une_sfr_U == 'panuzzo03_sfr'):
+        Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
+        lu, lnH, lzgas = get_une_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
+        
+    return lu, lnH # epsilon, ng_ratio
+
+
+def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
+                Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
+                T=10000, agn_nH_param=None, epsilon_param_z0=[None],
+                une_agn_nH=None,une_agn_spec='feltre16',
+                une_agn_U='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -988,34 +1050,26 @@ def get_une(lms_o, lssfr_o, lzgas_o,filenom,
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lzgas : floats
      Metallicity of the galaxies per component (log10(Z)).
-    q0 : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    z0 : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    gamma : float
-     Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     Lagn : floats
      Bolometric luminosity of the AGNs (erg/s).
     T : float
      Typical temperature of ionizing regions.
-    epsilon_param : floats
+    agn_nH_param : floats
      Parameters for epsilon calculation.
     epsilon_param_z0 : floats
      Parameters for epsilon calculation in the sample of galaxies at redshift 0.
     epsilon : floats
      Volume filling-factor of the galaxy.
-    IMF : array of strings
-     Assumed IMF for the input data of each component.
-    unemod : string
-     Model to go from galaxy properties to U and ne.
-    origin : string
-     Source of the ionizing photons.
+    une_agn_nH : string
+        Profile assumed for the distribution of gas around NLR AGN.
+    une_agn_spec : string
+        Model for the spectral distribution for AGNs.
     verbose : boolean
      Yes = print out messages.
 
     Returns
     -------
-    Q, lu, lne, lzgas : floats
+    Q, lu, lnH, lzgas : floats
     '''
 
     # Read redshift
@@ -1025,43 +1079,20 @@ def get_une(lms_o, lssfr_o, lzgas_o,filenom,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn,origin=origin)
+    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
     
-    epsilon = None
-    if origin=='agn' and epsilon_param is not None:
-        epsilon = calculate_epsilon(epsilon_param,[const.radius_NLR],
-                                    filenom,nH=const.nH_AGN,
-                                    profile='exponential',verbose=verbose)
-    if origin=='sfr' and epsilon_param_z0 is not None:
-        # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
-        # epsilon = ng/const.nH_gal
-        # epsilon[epsilon>1] = 1
-            
-        
-        # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
-        # ng_ratio = n_ratio(ng,ng_z0)
-        if redshift==0.8:
-            ng_ratio = const.med_to_low
-        elif redshift==1.5:
-            ng_ratio = const.high_to_low
-        else:
-            ng_ratio = 1.
-                    
-    if Z_central_cor and origin=='agn':
-        lzgas = get_Zagn(lms_o,lzgas_o)
-    else:
-        lzgas = np.copy(lzgas_o)
-    
-    if unemod not in const.unemods:
+    epsilon = np.full(np.shape(lzgas_o)[0],c.eNGC1976)
+    if une_agn_nH is not None:
+        epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
+                                    filenom,nH=c.nH_AGN,
+                                    profile=une_agn_nH,verbose=verbose)
+
+    if une_agn_U not in c.une_agn_U:
         if verbose:
-            print('STOP (gne_une): Unrecognised model to get U and ne.')
-            print('                Possible unemod= {}'.format(const.unemods))
+            print('STOP (gne_une): Unrecognised model to get U (AGN).')
+            print('                Possible options= {}'.format(c.une_agn_U))
         sys.exit()
-    elif (unemod == 'kashino20'):
-        lu, lne, lzgas = get_une_kashino20(Q,lms_o,lssfr_o,lzgas,T,ng_ratio,IMF)
-    elif (unemod == 'orsi14'):
-        lu, lne, lzgas = get_une_orsi14(Q,lms_o,lssfr_o,lzgas,T,q0,z0,gamma,ng_ratio)
-    elif (unemod == 'panuzzo03'):
-        lu, lne, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas,T,epsilon,ng_ratio,origin,IMF)
+    elif (une_agn_U == 'panuzzo03'):
+        lu, lnH, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
-    return Q, lu, lne, lzgas, epsilon, ng_ratio
+    return Q, lu, lnH, epsilon, ng_ratio

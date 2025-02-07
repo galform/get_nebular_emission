@@ -402,7 +402,7 @@ def lines_BPT(x, BPT, line):
 #        lne_disk = data['lne'][:,0]
 #        lzgas_disk = data['lz'][:,0]
 #        
-#        minU, maxU = get_limits(propname='U', photmod=photmod)
+#        minU, maxU = get_limits(propname='logUs', photmod=photmod)
 #        minnH, maxnH = get_limits(propname='nH', photmod=photmod)
 #        minZ, maxZ = get_limits(propname='Z', photmod=photmod)
 #        
@@ -735,12 +735,12 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
     (axsz, axsm), (axaz, axam) = gs.subplots(sharex='col', sharey='row')
     
     # Read limits for properties and photoionisation models
-    minUs, maxUs = get_limits(propname='U', photmod=photmod_sfr)
+    minUs, maxUs = get_limits(propname='logUs', photmod=photmod_sfr)
     umins = minUs - 0.5; umaxs = maxUs +0.5
     minZs1, maxZs1 = get_limits(propname='Z', photmod=photmod_sfr)
     minZs = np.log10(minZs1); maxZs = np.log10(maxZs1);
     
-    minUa, maxUa = get_limits(propname='U', photmod=photmod_agn)
+    minUa, maxUa = get_limits(propname='logUs', photmod=photmod_agn)
     umina = minUa - 0.5; umaxa = maxUa +0.5
     minZa1, maxZa1 = get_limits(propname='Z', photmod=photmod_agn)
     minZa = np.log10(minZa1); maxZa = np.log10(maxZa1);
@@ -948,7 +948,7 @@ def test_bpts(root, subvols=1, outpath=None, verbose=True):
     set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
 
     # Read limits for properties and photoionisation models
-    minU, maxU = get_limits(propname='U', photmod=photmod_sfr)
+    minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
     # Prep plots

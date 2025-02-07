@@ -11,11 +11,14 @@ G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
 nH_gal = 100  # cm^-3
 
 zsun = 0.0134 # Asplund 2009
+zsunK20 = 0.014 # Kashino 2020
 ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 Lbolsun = 3.826e33 # erg/s
 Msun    = 1.989e30 # kg
 pc      = 3.086e16 # m
+
+re2rs_exp = 1.678
 
 #--------------------------------------------
 #   Conversion factors:
@@ -27,38 +30,49 @@ yr_to_s   = 365*24*60*60
 boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
 
 #--------------------------------------------
-#   Possible models:
+#   Possible options and models:
 #--------------------------------------------
+inputformats = ['txt','hdf5']
+
+zeq = ['tremonti2004','tremonti2004b','leblanc']
+
+une_sfr_nH = ['kashino20']
+une_sfr_U  = ['kashino20', 'orsi14', 'panuzzo03_sfr']
+
+une_agn_nH   = ['exponential']
+une_agn_spec = ['feltre16']
+une_agn_U    = ['panuzzo03']
+
 photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
            'feltre16': r"data/nebular_data/feltre16_tables/limits_feltre.txt"}
 
-unemods = ['kashino20', 'orsi14', 'panuzzo03']
-
 attmods = ['ratios', 'cardelli89']
-
-inputformats = ['txt','hdf5']
 
 #--------------------------------------------
 #   Orsi et. al. 2014
 #--------------------------------------------
 Z0_orsi = 0.012
 q0_orsi = 2.8e7 # cm/s
+gamma_orsi = 1.3
 #--------------------------------------------
 
-#--------------------------------------------
-#   IMF transformations (Lacey et al. 2016) 
-#--------------------------------------------
-# M1 = (IMF_M2/IMF_M1) * M2 
+#--------------------------------------------------------------
+#   IMF transformations (Tables B1 and B2 in Lacey et al. 2016) 
+#--------------------------------------------------------------
+# log10(M1) = log10(IMF_M2/IMF_M1) + log10(M2) 
 IMF_M = {'Kennicut': 1, 'Salpeter': 0.47, 'Kroupa': 0.74, 'Chabrier': 0.81, 
             'Baldry&Glazebrook': 0.85, 'Top-heavy': 1.11}
 
-# SFR1 = (IMF_SFR2/IMF_SFR1) * SFR2 
-IMF_SFR = {'Kennicut': 1, 'Salpeter': 0.94, 'Kroupa': 1.49, 'Chabrier': 1.57, 
-            'Baldry&Glazebrook': 2.26, 'Top-heavy': 3.13}
+# # log10(SFR1) = log10(IMF_SFR2/IMF_SFR1) + log10(SFR2)
+IMF_SFR = {'Kennicut': 1, 'Salpeter': 0.79, 'Kroupa': 1.19,
+           'Chabrier': 1.26,'Baldry&Glazebrook': 1.56,
+           'Top-heavy': 1.89}
+IMF_SFRins = {'Kennicut': 1, 'Salpeter': 0.94, 'Kroupa': 1.49,
+              'Chabrier': 1.57, 'Baldry&Glazebrook': 2.26,
+              'Top-heavy': 3.13}
 
 phot_to_sfr_kenn = 9.85e52 # phot/s
-
 
 # FOR CONVERSION FROM LYMANN CONTINUUM PHOTONS TO SFR
 # It is assumed that a SFR of 1 Msun/yr produces 9.85 · 10^52 photons/s for Kennicut IMF.
@@ -158,6 +172,9 @@ epsilon_heat = 0.02 # BH heating efficienty
 nH_AGN = 1000 # cm^-3
 radius_NLR = 0.001 # Mpc
 
+# From Osterbrock and Ferland: typical filling factor for NLR AGN
+eNGC1976 = 0.03
+
 #------------------------------------------
 
 # Relationship between epsilon and M and Z
@@ -165,62 +182,20 @@ epsilon_a_sfr = -0.1633
 epsilon_b_sfr = 0.3776
 
 #------------------------------------------
-
-zmet = {
-    "gutkin16" : np.array([0.0001,
-                         0.0002,
-                         0.0005,
-                         0.001,
-                         0.002,
-                         0.004,
-                         0.006,
-                         0.008,
-                         0.010,
-                         0.014,
-                         0.017,
-                         0.020,
-                         0.030,
-                         0.040]),
-    "feltre16" : np.array([0.0001,
-                         0.0002,
-                         0.0005,
-                         0.001,
-                         0.002,
-                         0.004,
-                         0.006,
-                         0.008,
-                         0.014,
-                         0.017,
-                         0.020,
-                         0.030,
-                         0.040,
-                         0.050,
-                         0.060,
-                         0.070])
+nH_bins = {
+    "gutkin16" : np.array([10, 100, 1000, 10000]),
+    "feltre16" : np.array([100, 1000, 10000])
 }
 
-zmet_reduced = {
-    "gutkin16" : np.array([0.0001,
-                         0.002,
-                         0.014,
-                         0.030])
+lus_bins = {
+    "gutkin16" : np.array([-4., -3.5, -3., -2.5, -2., -1.5, -1.]),
+    "feltre16" : np.array([-5., -4.5, -4., -3.5, -3., -2.5, -2.,
+                           -1.5, -1.])
 }
 
 zmet_str = {
-    "gutkin16" : np.array(['0001',
-                           '0002',
-                           '0005',
-                           '001',
-                           '002',
-                           '004',
-                           '006',
-                           '008',
-                           '010',
-                           '014',
-                           '017',
-                           '020',
-                           '030',
-                           '040']),
+    "gutkin16" : np.array(['0001','0002','0005','001','002','004','006',
+                           '008','010','014','017','020','030','040']),
     "feltre16" : np.array(['0001',
                            '0002',
                            '0005',
@@ -239,14 +214,11 @@ zmet_str = {
                            '070'])
 }
 
-zmet_reduced = {
-    "gutkin16" : np.array([0.0001,
-                         0.002,
-                         0.014,
-                         0.030])
+zmet_str_reduced = {
+    "gutkin16" : np.array(['0001','002','014','030']),
 }
 
-lines_model = {
+line_names = {
     "gutkin16" : np.array(['OII3727','Hbeta','OIII4959','OIII5007',
                            'NII6548','Halpha','NII6584','SII6717',
                            'SII6731','NV1240','CIV1548','CIV1551',
@@ -259,7 +231,7 @@ lines_model = {
                            'SiIII1888', 'CIII1907','CIII1910'])
     }
 
-wavelength_model = {
+line_wavelength = {
     "gutkin16" : np.array([3727,4861,4959,5007,6548,6563,6584,
                            6717,6731,1240,1548,1551,1640,1661,
                            1666,1883,1888,1908]),
@@ -272,8 +244,8 @@ def coef_att_line_model_func(z=0):
     line_att_coef = line_att_coef_func(z)
 
     coef_att_line_model = {
-        "gutkin16" : np.array([line_att_coef[line] for line in lines_model["gutkin16"]]),
-        "feltre16" : np.array([line_att_coef[line] for line in lines_model["feltre16"]])
+        "gutkin16" : np.array([line_att_coef[line] for line in line_names["gutkin16"]]),
+        "feltre16" : np.array([line_att_coef[line] for line in line_names["feltre16"]])
         }
 
     return coef_att_line_model

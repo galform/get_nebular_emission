@@ -11,7 +11,7 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
-import src.gne_const as const
+import src.gne_const as c
 
 
 def percentiles(val, data, weights=None):
@@ -163,41 +163,175 @@ def n_gt_x(xedges, array):
     return y
 
 
-def get_interval(val, low, high):
+def locate_interval(val, edges):
     '''
-    Get the index, i, of the interval where low[i]<val<high[i]
+    Get the index, i, of the interval, [), to which val belongs.
+    If outside the limits, using values -1 or the number of bins+1.
 
-    Parameters:
-    val : int or float
-        Value
-    low : array of int or floats
-        Array of the low edges of the intervals
-    high : array of int or floats
-        Array of the high edges of the intervals
-    Returns:
-    ind : integer
-       Index of the interval the value belongs to or -999 if outside
+    Parameters
+    ----------
+    val : int or float or array of ints or floats
+        Value to evaluate
+    edges : array of int or floats
+        Array of the n edges for the (n-1) intervals
+        
+    Returns
+    -------
+    jl : integer
+        Index of the interval, [edges(jl),edges(jl+1)), where val is place.
     '''
 
-    ind = -999
+    n = edges.size
+    jl = np.searchsorted(edges, val, side='right') - 1
+    jl = np.clip(jl, -1, n - 1)
+    return jl
 
-    if (len(low) != len(high)):
-        return ind
 
-    if (val == high[-1] and val >= low[-1]):
-        ind = len(high) - 1
+def interpl_weights(xx,edges):
+    '''
+    Get linear interpolation weights: xd=(x-x1)/(x2-x1)
+    Values outside the edges limits are given the weights
+    corresponding to the minimum and maximum edge values.
+    
+    Parameters
+    ----------
+    xx : float (or int) or array of floats (or int)
+        Values to be evaluated
+    edges : array of floats (or int)
+        Array of the n edges for the (n-1) intervals
+        
+    Returns
+    -------
+    xd : float or list of float (or int)
+        Weights for linear interpolation
+    ix : int or list of ints
+        Lower index of the interval the value belongs to
+    '''
+    # Size of the 1D grid
+    n = edges.size
+
+    # If scalar, turn it into array
+    scalar = False
+    if isinstance(xx, (float, int)): # Floats
+        scalar = True
+        xx = np.array([xx])
+        
+    # Locate intervals and handle boundaries
+    ix = locate_interval(xx, edges)
+
+    # Initialize interpolation weights
+    xd = np.zeros(len(ix))
+    
+    # Calculate interpolation weights
+    ind = np.where((ix>-1) & (ix<n-1))
+    if (np.shape(ind)[1]>0):
+        ii = ix[ind]
+        xd[ind] = (xx[ind] - edges[ii])/(edges[ii + 1] - edges[ii])
+    
+    # Handle boundaries
+    xd[ix > n-2] = 1.0
+    ix = np.clip(ix, 0, n-2)
+
+    outxd = np.asarray(xd)
+    outix = np.asarray(ix,dtype=int)
+    if scalar:
+        outxd = outxd[0]
+        outix = outix[0]
+    return outxd, outix
+
+
+def bilinear_interpl(xx, yy, xedges, yedges, zedges, verbose=False):
+    """
+    Bilinear interpolation. If the points to be interpolated are outside
+    the boundaries of the coordinate grid, the resulting interpolated values
+    are evaluated at the boundary.
+    
+    Parameters
+    ----------
+    xx : 1D array or scalar, shape N
+        x-coordinates for point(s) to be interpolated.
+    yy : 1D array or scalar, shape N
+        y-coordinates for point(s) to be interpolated.
+    xedges : 1D array, shape Nx
+        x-coordinates of data points zp (grid coordinates).
+    yedges : 1D array, shape Ny
+        y-coordinates of data points zp (grid coordinates).
+    zedges : array, shape (Nx, Ny) or (Nx, Ny, M)
+        Data points on grid from which to interpolate.
+    verbose : bool, optional
+        If True, print intermediate calculation steps.
+    
+    Returns
+    -------
+    zz : scalar or array, shape N if 2D zedges or (N,M) if 3D zedges
+        Interpolated values at given point(s).
+    """       
+    # If scalar, turn it into array
+    scalar = False
+    if isinstance(xx, (float, int)): 
+        scalar = True
+        xx = np.array([xx])
+        yy = np.array([yy])
+        
+    # Initialize input validation
+    n = xx.size
+    if (yy.size != n):
+        sys.exit('STOP bilinear_interpl: input sizes different for x and y')
+        
+    # Get the intervals and weights
+    xd, ix = interpl_weights(xx, xedges)
+    yd, iy = interpl_weights(yy, yedges)
+    if verbose: print('xd,ix=', xd, ix, '\nyd,iy=', yd, iy)
+    
+    # Handle both 2D and 3D zedges input
+    if verbose: print(zedges.ndim,'D zedges')
+    if zedges.ndim == 2:
+        zz = np.zeros(n)
+        
+        # Get the four corner values for all points
+        c00 = zedges[ix, iy]
+        c01 = zedges[ix, iy+1]
+        c10 = zedges[ix+1, iy]
+        c11 = zedges[ix+1, iy+1]
+        if verbose: print('cij=', c00, c01, c10, c11)
+
+        # Linear interpolation ove x
+        c0 = c00*(1-xd) + c10*xd
+        c1 = c01*(1-xd) + c11*xd
+        if verbose: print('c0=',c0,'\nc1=',c1)
+
+        # Linear interpolation ove y
+        zz = c0*(1-yd) + c1*yd
+
+        if scalar: 
+            zz = zz[0]
+
+    elif zedges.ndim == 3:
+        m = zedges.shape[2]
+        zz = np.zeros((n, m))
+
+        ## Get the four corner values for each z-layer
+        c00 = zedges[ix, iy, :]
+        c01 = zedges[ix, iy+1, :]
+        c10 = zedges[ix+1, iy, :]
+        c11 = zedges[ix+1, iy+1, :]
+        if verbose: print('c00=',c00,'\nc01=',c01,'\nc10=',c10,'\nc11=',c11)
+        
+        # Linear interpolation over x
+        c0 = c00*(1-xd[:, np.newaxis]) + c10*xd[:, np.newaxis]
+        c1 = c01*(1-xd[:, np.newaxis]) + c11*xd[:, np.newaxis]
+        if verbose: print('c0=',c0,'\nc1=',c1)
+        
+        # Linear interpolation over y
+        zz = c0*(1-yd[:, np.newaxis]) + c1*yd[:, np.newaxis]
+
+        if scalar: 
+            zz = zz[0,:]
+
     else:
-        linds = np.where(val >= low)
-        hinds = np.where(val < high)
+        raise ValueError('bilinear_interpl: zedges must be a 2D or 3D array')
 
-        if (np.shape(linds)[1] > 0 and np.shape(hinds)[1] > 0):
-            lind = linds[0]
-            hind = hinds[0]
-            common = list(set(lind).intersection(hind))
-            if (len(common) == 1):
-                ind = common[0]
-
-    return ind
+    return zz
 
 
 def chi2(obs, model, err2):

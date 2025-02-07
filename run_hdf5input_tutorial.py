@@ -54,11 +54,12 @@ units_L40h2=False
 ####################################################
 
 # All available models can be seen in gne_const module.
-# NEBULAR model connecting global properties to nebular parameters
-unemod_sfr='kashino20'
+# NEBULAR model connecting global properties to ionising properties:
+# nH: number density of Hydrogen (or electrons); U: ionising parameter
+une_sfr_nH='kashino20'
+une_sfr_U='kashino20'
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
-
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
@@ -92,45 +93,50 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
+# nH: number density calculated assuming a profile for the gas ('exponential')
+#     and given a radius for the component.
+#     This is used to calculate the filling factor, using agn_nH_params.
+#     Ideally the scale radius of the bulge and/or disk ('rscale') is given,
+#     but otherwise this can be estimated from either the effective or
+#     half-mass radius ('reff') or simply the radius of the component ('r').
+#     If une_agn_nH=None, a constant filling factor will be assumed.
+une_agn_nH   = ['exponential','reff'] 
+# If une_age_nH is not None, agn_nH_params should specify
+# the location of the cold gas mass (Mg) and a radius.
+# agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
+agn_nH_params = ['data/mgas_disk','data/rhm_disk',
+          'data/mgas_bulge','data/rhm_bulge']
+# spec: model for the spectral distribution of the AGN
+une_agn_spec = 'feltre16'
+# U: model to calculate the ionising parameter
+une_agn_U    = 'panuzzo03'
 
-# All available models can be seen in gne_const module.
-# NEBULAR model connecting global properties to nebular parameters
-unemod_agn = 'panuzzo03'
 # PHOTOIONIZATION model for AGN regions to get line luminosities
 photmod_agn = 'feltre16'
-
-
-# mg_r50 has the location of the following parameters:
-# Cold gas mass (Mg).
-# Baryonic half-mass radius (R50).
-# mg_r50 is a list of lists with either the column number
-# for each parameters or the name of the HDF5 variable.
-# For bulge and disk:
-mg_r50 = ['data/mgas_disk','data/rhm_disk',
-          'data/mgas_bulge','data/rhm_bulge']
     
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
 # The way of obtaining Lagn is indicated in AGNinputs.
 # The calcultions require different black hole (BH) parameters.
 # AGNinputs='Lagn' if Lagn in input
-#            Lagn_params=[Lagn] in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
-# AGNinputs='acc_rate' for a calculation from
+#            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
+#            Lagn_params=[Lagn, Mbh] 
+# AGNinputs='Mdot_hh' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]  
-# AGNinputs='acc_stb' for a calculation from
+#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
+# AGNinputs='Mdot_stb_hh' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh,Mspin] or [Mdot_stb,Mdot_hh,Mbh] 
+#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
 # AGNinputs='radio_mode' for a calculation from
 #            the mass of the hot gas, Mhot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mhot,Mbh,Mspin] or [Mhot,Mbh] 
+#            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
 # AGNinputs='quasar_mode' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
@@ -146,18 +152,14 @@ mg_r50 = ['data/mgas_disk','data/rhm_disk',
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-AGNinputs = 'Lagn'
-Lagn_params=['data/lagn','data/mstar_bulge']
+AGNinputs = 'Lagn'; Lagn_params=['data/lagn','data/mstar_bulge']
 
-# AGN emission calculation is done assuming that the available metallicity 
-    # value is the one corresponding to the NLR, i.e. the metallicity
-    # around the center of the galaxy. 
-# If Z_central_cor is True, the code estimates the value of metallicity around 
-    # the center of the galaxy from the mean value, following the function
-    # Zagn from the gne_une module.
-# If Z_central_cor is False, it is assumed that the metallicity is 
-    # approximatelly uniform in the galaxy.
-Z_central_cor=True
+# Z_central=True indicates that the given Zgas is that for the NLR or
+#                at the center of the gal.
+# Z_central=False indicates that the given Zgas is not central,
+#           Z-gradients from the literature (f(M*_gal)) are used to estimate
+#           the Zgas at the galactic center
+Z_central=False
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -242,14 +244,15 @@ for ivol in range(subvols):
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
-            unemod_sfr=unemod_sfr, photmod_sfr=photmod_sfr,
+            une_sfr_nH=une_sfr_nH, une_sfr_U=une_sfr_U,
+            photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,
-            unemod_agn=unemod_agn, photmod_agn=photmod_agn,
-            mg_r50=mg_r50,
+            AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
+            une_agn_U=une_agn_U,photmod_agn=photmod_agn,
+            agn_nH_params=agn_nH_params,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_central_cor=Z_central_cor,
+            Z_central=Z_central,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,

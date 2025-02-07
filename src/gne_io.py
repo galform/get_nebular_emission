@@ -1,5 +1,5 @@
 """
-.. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. Moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 .. contributions:: Olivia Vidal <ovive.pro@gmail.com>
 .. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
@@ -7,7 +7,7 @@ import h5py
 import sys
 import os
 import numpy as np
-import src.gne_const as const
+import src.gne_const as c
 import math
 
 
@@ -263,7 +263,7 @@ def get_ncomponents(cols):
     Parameters
     ----------
     cols : list
-      List of columns with M*, SFR, Z, per components
+      List of columns with properties per components
 
     Returns
     -------
@@ -283,47 +283,6 @@ def get_ncomponents(cols):
         sys.exit()
         
     return ncomp
-
-
-def locate_interval(val, edges):
-    '''
-    Get the index, i, of the interval with edges.
-
-    Parameters
-    ----------
-    val : int or float
-        Value
-    edges : array of int or floats
-        Array of the edges of the intervals
-        
-    Returns
-    -------
-    ind : integer
-        Index of the interval. If outside: index of the limits
-    '''
-
-    ind = const.notnum
-    low = np.asarray(edges[:-1])
-    high = np.asarray(edges[1:])
-
-    if (val >= high[-1] and val >= low[-1]):
-        ind = len(high)
-    elif (val<=low[0]):
-        ind = 0
-    else:
-        linds = np.where(val >= low)
-        hinds = np.where(val < high)
-
-        if (np.shape(linds)[1] > 0 and np.shape(hinds)[1] > 0):
-            lind = linds[0]
-            hind = hinds[0]
-            common = list(set(lind).intersection(hind))
-
-            if (len(common) == 1):
-                ind = common[0]
-
-    return ind
-
 
 
 def get_selection(infile, outfile, inputformat='hdf5',
@@ -363,14 +322,14 @@ def get_selection(infile, outfile, inputformat='hdf5',
     check_file(infile, verbose=verbose)
 
     if testing:
-        limit = const.testlimit
+        limit = c.testlimit
     else:
         limit = None    
 
-    if inputformat not in const.inputformats:
+    if inputformat not in c.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
-                  'Possible input formats = {}'.format(const.inputformats))
+                  'Possible input formats = {}'.format(c.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
@@ -440,16 +399,17 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
 
     check_file(infile, verbose=verbose)
 
-    if inputformat not in const.inputformats:
+    if inputformat not in c.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
-                  'Possible input formats = {}'.format(const.inputformats))
+                  'Possible input formats = {}'.format(c.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
             ii = 0
             for nomparam in params:
                 if (nomparam is not None):
+                    prop = np.zeros(np.shape(cut))
                     try:
                         ###here what if Pos/vel as matrix?
                         prop = hf[nomparam][cut]
@@ -500,10 +460,10 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
     
     ncomp = get_ncomponents(cols)
     
-    if inputformat not in const.inputformats:
+    if inputformat not in c.inputformats:
         if verbose:
             print('STOP (gne_io): Unrecognised input format.',
-                  'Possible input formats = {}'.format(const.inputformats))
+                  'Possible input formats = {}'.format(c.inputformats))
         sys.exit()
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
@@ -549,11 +509,10 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
 
 def get_sfrdata(infile,cols,selection=None,
                 h0=None,units_h0=False, units_Gyr=False,
-                inputformat='hdf5',IMF=['Kennicut','Kennicut'],
                 inoh = False, LC2sfr=False, mtot2mdisk=True, 
-                testing=False,verbose=False):
+                inputformat='hdf5',testing=False,verbose=False):
     '''
-    Get Mstars, sSFR and (12+log(O/H)) in the adecuate units.
+    Get Mstars, sSFR and Z in the adecuate units.
 
     Parameters
     ----------
@@ -580,8 +539,6 @@ def get_sfrdata(infile,cols,selection=None,
      Attenuation model.
     inoh : boolean
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
-    IMF : array of strings
-       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
     units_h0 : bool
     LC2sfr : boolean
       If True magnitude of Lyman Continuum photons expected as input for SFR.
@@ -606,19 +563,18 @@ def get_sfrdata(infile,cols,selection=None,
         sfr = sfr/h0
     if units_Gyr:
         sfr = sfr/1e9
-
-    ###here TODO transform quantities using IMF
     
     # Set to a default value if negative stellar masses
     ind = np.where((ms<=1.) | (sfr<0) | (zgas<=0))
-    ms[ind] = const.notnum
-    sfr[ind] = const.notnum
-    zgas[ind] = const.notnum
+    ms[ind] = c.notnum
+    sfr[ind] = c.notnum
+    zgas[ind] = c.notnum
     
     ####here is this correct? does not seem to make sense
     #if LC2sfr: # Avoid positive magnitudes of LC photons
     #    ind = np.where(lssfr>0)
-    #    lssfr[ind] = const.notnum ; lzgas[ind] = const.notnum
+    #    lssfr[ind] = c.notnum ; lzgas[ind] = c.notnum
+    # np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
 
     ncomp = get_ncomponents(cols)
         
@@ -637,12 +593,12 @@ def get_sfrdata(infile,cols,selection=None,
         ms = np.column_stack((msdisk,ms[:,1]))     
 
         # Take the log of the total stellar mass
-        lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(const.notnum)
+        lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(c.notnum)
         ind = np.where(ms_tot > 0.)
         lms_tot[ind] = np.log10(ms_tot[ind])
 
         # Take the log of the stellar mass:
-        lms = np.zeros(np.shape(ms)); lms.fill(const.notnum)
+        lms = np.zeros(np.shape(ms)); lms.fill(c.notnum)
         ind = np.where(ms > 0.)
         lms[ind] = np.log10(ms[ind])
 
@@ -651,28 +607,28 @@ def get_sfrdata(infile,cols,selection=None,
             ms_tot = np.sum(ms,axis=1)
     
             # Take the log of the total stellar mass:
-            lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(const.notnum)
+            lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(c.notnum)
             ind = np.where(ms_tot > 0.)
             lms_tot[ind] = np.log10(ms_tot[ind])
     
         # Take the log of the stellar mass:
-        lms = np.zeros(np.shape(ms)); lms.fill(const.notnum)
+        lms = np.zeros(np.shape(ms)); lms.fill(c.notnum)
         ind = np.where(ms > 0.)
         lms[ind] = np.log10(ms[ind])
 
     # Obtain log10(sSFR) in 1/yr and calculate SFR from LC photons if necessary
-    lssfr = np.zeros(np.shape(sfr)); lssfr.fill(const.notnum)
+    lssfr = np.zeros(np.shape(sfr)); lssfr.fill(c.notnum)
     if LC2sfr:
         for comp in range(ncomp):
             ins = np.zeros(len(sfr))
-            ind = np.where(sfr[:, comp] != const.notnum)
+            ind = np.where(sfr[:, comp] != c.notnum)
             ins[ind] = 1.02*(10.**(-0.4*sfr[ind,comp]-4.))
 
             ind = np.where(ins > 0)
             lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp]
     
-            ind = np.where(lssfr[:, comp] == const.notnum)
-            lssfr[ind,comp] = const.notnum
+            ind = np.where(lssfr[:, comp] == c.notnum)
+            lssfr[ind,comp] = c.notnum
             
     else: # If SFR as input
         for comp in range(ncomp):
@@ -684,7 +640,7 @@ def get_sfrdata(infile,cols,selection=None,
         lssfr_tot = np.zeros(len(lssfr))
         ssfr = np.zeros(lssfr.shape)
         for comp in range(ncomp):
-            ind = np.where(lssfr[:,comp]!=const.notnum)
+            ind = np.where(lssfr[:,comp]!=c.notnum)
             ssfr[ind,comp] = 10.**(lssfr[ind,comp])
 
         ins = np.sum(ssfr,axis=1)
@@ -697,21 +653,20 @@ def get_sfrdata(infile,cols,selection=None,
     else:
         lsfr = lssfr + lms
 
-    # Obtain Z=MZcold/Mcold        
-    lzgas = np.zeros(zgas.shape); lzgas.fill(const.notnum)
-    if inoh: ####here
-        # Obtain Z=MZcold/Mcold from 12+log10(O/H)
-        ind = np.where(zgas>0)
-        lzgas[ind] = np.log10(zgas[ind]) + const.ohsun - np.log10(const.zsun)
-    else: #Julen's version to be checked ####here
+    # Obtain log10(Zgas=MZcold/Mcold)        
+    lzgas = np.zeros(zgas.shape); lzgas.fill(c.notnum)
+    if inoh: 
+        # Obtain log10(Zgas) from an input of 12+log10(O/H)
+        lzgas = np.log10(c.zsun) - c.ohsun + zgas
+    else: 
         ind = np.where(zgas>0)
         lzgas[ind] = np.log10(zgas[ind])
 
     if ncomp!=1:
         oh12 = np.zeros(lzgas.shape)
-        lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(const.notnum)
+        lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(c.notnum)
         for comp in range(ncomp):
-            ind = np.where(lzgas[:,comp] != const.notnum)
+            ind = np.where(lzgas[:,comp] != c.notnum)
             oh12[ind,comp] = 10. ** (lzgas[ind,comp])
     
         ins = np.sum(oh12,axis=1)
@@ -721,10 +676,9 @@ def get_sfrdata(infile,cols,selection=None,
     return lms,lssfr,lzgas
 
 
-def get_agndata(infile,cols,selection=None,
-                h0=None,units_h0=False,inputformat='hdf5',
-                IMF=['Kennicut','Kennicut'],
-                testing=False,verbose=False):
+def get_data_agnnH(infile,rtype,cols,selection=None,
+                   h0=None,units_h0=False,inputformat='hdf5',
+                   testing=False,verbose=False):
     '''
     Get Mgas and R50 in the adecuate units.
 
@@ -736,8 +690,6 @@ def get_agndata(infile,cols,selection=None,
      Format of the input file.
     cols : list
       Expected : component1 = total or disk, component2 = bulge
-    IMF : array of strings
-       Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]    
     units_h0 : bool
     verbose : boolean
       If True print out messages
@@ -755,7 +707,16 @@ def get_agndata(infile,cols,selection=None,
         vals = vals/h0
 
     outparams = vals
-    
+
+    if rtype == 'reff':
+        # Transform  reff (exponential): rscale = reff/1.678
+        outparams[1] = outparams[1]/c.re2rs_exp
+        if np.shape(outparams)[0]>2: outparams[3] = outparams[3]/c.re2rs_exp
+    elif rtype == 'r':
+        # Transform  r: rscale = r/2./1.678
+        outparams[1] = outparams[1]/2./c.re2rs_exp
+        if np.shape(outparams)[0]>2: outparams[3] = outparams[3]/2./c.re2rs_exp
+        
     return outparams
 
 
@@ -763,8 +724,10 @@ def get_agndata(infile,cols,selection=None,
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
                     units_h0=False,outpath=None,
-                    unemod_sfr=None, unemod_agn=None,
-                    photmod_sfr=None, photmod_agn=None,
+                    une_sfr_nH=None, une_sfr_U=None,
+                    photmod_sfr=None,
+                    une_agn_nH=None, une_agn_spec=None,
+                    une_agn_U=None, photmod_agn=None,
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -793,12 +756,18 @@ def generate_header(infile,redshift,snap,
         True if input units with h    
     outpath : string
         Path to output
-    unemod_sfr : string
-        Model to go from galaxy properties to U and ne.
-    unemod_agn : string
-        Model to go from galaxy properties to U and ne.
+    une_sfr_nH : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    une_sfr_U : string
+        Model to go from galaxy properties to ionising parameter.
     photmod_sfr : string
         Photoionisation model to be used for look up tables.
+    une_agn_nH : list of 2 strings
+        Profile assumed for the gas around NLR AGN and type of radii.
+    une_agn_spec : string
+        Model for the spectral distribution for AGNs.
+    une_sfr_U : string
+        Model to go from galaxy properties to AGN ionising parameter.
     photmod_agn : string
         Photoionisation model to be used for look up tables.
     attmod : string
@@ -834,9 +803,12 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'vol_Mpc3'] = vol
     head.attrs[u'mp_Msun'] = mp
 
-    if unemod_sfr is not None: head.attrs[u'unemod_sfr'] = unemod_sfr
-    if unemod_agn is not None: head.attrs[u'unemod_agn'] = unemod_agn
+    if une_sfr_nH is not None: head.attrs[u'une_sfr_nH'] = une_sfr_nH
+    if une_sfr_U is not None: head.attrs[u'une_sfr_U'] = une_sfr_U    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
+    if une_agn_nH is not None: head.attrs[u'une_agn_nH'] = une_agn_nH[0]
+    if une_agn_spec is not None: head.attrs[u'une_agn_spec'] = une_agn_spec
+    if une_agn_U is not None: head.attrs[u'une_agn_U'] = une_agn_U
     if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
     if attmod is not None: head.attrs[u'attmod'] = attmod
     hf.close()
@@ -877,12 +849,6 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
      Names of the datasets in the output files for the extra parameters.
     extra_params_labels : strings
      Description labels of the datasets in the output files for the extra parameters.
-    attmod : string
-      Attenuation model.
-    unemod_sfr : string
-      Model to go from galaxy properties to U and ne.
-    photmod_sfr : string
-      Photoionisation model to be used for look up tables.
     '''
 
     # Read information on models
@@ -919,28 +885,28 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
         hfdat.create_dataset('lz_sfr', data=lzgas_sfr, maxshape=(None,None))
         hfdat['lz_sfr'].dims[0].label = 'log10(Z) (dimensionless)'
 
-        for i in range(len(const.lines_model[photmod_sfr])):           
-            hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr', 
+        for i in range(len(c.line_names[photmod_sfr])):           
+            hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr', 
                                  data=nebline_sfr[:,i], maxshape=(None,None))
-            hfdat[const.lines_model[photmod_sfr][i] + '_sfr'].dims[0].label = \
+            hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
                 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
             
             if fluxes_sfr.any():
-                hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_flux', 
+                hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
                                      data=fluxes_sfr[:,i], maxshape=(None,None))
-                hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_sfr_att.any():
-                hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_flux_att', 
+                hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux_att', 
                                      data=fluxes_sfr_att[:,i], maxshape=(None,None))
-                hfdat[const.lines_model[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
 
             
             if nebline_sfr_att.any():
                 if nebline_sfr_att[0,i,0] > 0:
-                    hfdat.create_dataset(const.lines_model[photmod_sfr][i] + '_sfr_att', 
+                    hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
                                          data=nebline_sfr_att[:,i], maxshape=(None,None))
-                    hfdat[const.lines_model[photmod_sfr][i] + '_sfr_att'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
     
     return 
 
@@ -991,27 +957,27 @@ def write_agn_data(filenom,lu_agn,lne_agn,lzgas_agn,
         hfdat.create_dataset('epsilon_agn', data=epsilon_agn[None,:], maxshape=(None,None))
         hfdat['epsilon_agn'].dims[0].label = 'NLRs volume filling factor (dimensionless)'
 
-        for i in range(len(const.lines_model[photmod_agn])):
-            hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn', 
+        for i in range(len(c.line_names[photmod_agn])):
+            hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
                                  data=nebline_agn[0,i][None,:], maxshape=(None,None))
-            hfdat[const.lines_model[photmod_agn][i] + '_agn'].dims[0].label = 'Lines units: egr s^-1'
+            hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = 'Lines units: egr s^-1'
             
             if fluxes_agn.any():
-                hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn_flux', 
+                hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
                                      data=fluxes_agn[0,i][None,:], maxshape=(None,None))
-                hfdat[const.lines_model[photmod_agn][i] + '_agn_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_agn_att.any():
                 if fluxes_agn_att[0,i,0] >= 0:
-                    hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn_flux_att', 
+                    hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
                                          data=fluxes_agn_att[0,i][None,:], maxshape=(None,None))
-                    hfdat[const.lines_model[photmod_agn][i] + '_agn_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                    hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
             
             if nebline_agn_att.any():
                 if nebline_agn_att[0,i,0] >= 0:
-                    hfdat.create_dataset(const.lines_model[photmod_agn][i] + '_agn_att', 
+                    hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
                                          data=nebline_agn_att[0,i][None,:], maxshape=(None,None))
-                    hfdat[const.lines_model[photmod_agn][i] + '_agn_att'].dims[0].label = 'Lines units: egr s^-1'
+                    hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = 'Lines units: egr s^-1'
 
     return 
 
