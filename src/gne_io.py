@@ -263,7 +263,7 @@ def get_ncomponents(cols):
     Parameters
     ----------
     cols : list
-      List of columns with M*, SFR, Z, per components
+      List of columns with properties per components
 
     Returns
     -------

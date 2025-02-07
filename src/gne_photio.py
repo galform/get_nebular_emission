@@ -257,7 +257,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
        Line luminosity per component
        Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
     '''
-
+    
     photmod = 'gutkin16'
 
     # Read line names
@@ -265,9 +265,9 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     nemline = len(line_names)
 
     # Initialize the matrix to store the emission lines
-    ndat = lu.shape[0]
-    ncomp = lu.shape[1]
-    nebline = np.zeros((ndat,nemline,ncomp))
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
 
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
@@ -333,10 +333,10 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
             elif nH[idx] == 10000:
                 kred = k_to_kred.get(k)
                 emline_grid4[kred, l, :] = em_values
-                
+
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
-        ucomp = lu[:,comp]; zcomp=lzgas[:,comp]; nHcomp = lnH[:,comp]
+        ucomp = lu[comp,:]; zcomp=lzgas[comp,:]; nHcomp = lnH[comp,:]
         ind = np.where((ucomp > c.notnum) &
                        (zcomp > c.notnum) &
                        (nHcomp > c.notnum))[0]
@@ -356,7 +356,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
 
         int2_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid2)
         int3_zu = st.bilinear_interpl(zz,uu,zedges,uedges,emline_grid3)
-         
+
         # Interpolate over nH
         nn = nHcomp[ind]
         nHd, inH = st.interpl_weights(nn,nHedges)
@@ -370,7 +370,7 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
         c0[mask2,:] = int3_zu[mask2,:]; c1[mask2,:] = int4_zu[mask2,:] 
 
-        nebline[ind,:,comp] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
+        nebline[comp,:,ind] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
         
     return nebline
 
@@ -406,9 +406,9 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     nemline = len(line_names)
 
     # Initialize the matrix to store the emission lines
-    ndat = lu.shape[0]
-    ncomp = lu.shape[1]
-    nebline = np.zeros((ndat,nemline,ncomp))
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nebline = np.zeros((ncomp,nemline,ndat))
     
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
@@ -466,7 +466,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
-        ucomp = lu[:,comp]; zcomp=lzgas[:,comp]; nHcomp = lnH[:,comp]
+        ucomp = lu[comp,:]; zcomp=lzgas[comp,:]; nHcomp = lnH[comp,:]
         ind = np.where((ucomp > c.notnum) &
                        (zcomp > c.notnum) &
                        (nHcomp > c.notnum))[0]
@@ -496,7 +496,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         c0[mask0,:] = int1_zu[mask0,:]; c1[mask0,:] = int2_zu[mask0,:]
         c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
         
-        nebline[ind,:,comp] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
+        nebline[comp,:,ind] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
                         
     return nebline
 
@@ -540,11 +540,12 @@ def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
             print('                Possible photmod= {}'.format(c.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_gutkin16(lu,lnH,lzgas,xid_phot=xid_phot,co_phot=co_phot,
-                                   imf_cut_phot=imf_cut_phot,verbose=verbose)
+        nebline = get_lines_gutkin16(lu,lnH,lzgas,xid_phot=xid_phot,
+                                     co_phot=co_phot,imf_cut_phot=imf_cut_phot,
+                                     verbose=verbose)
     elif (photmod == 'feltre16'):
         nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 
-    return nebline.T
+    return nebline
 

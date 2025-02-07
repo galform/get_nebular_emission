@@ -229,11 +229,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lu_o_sfr = np.copy(lu_sfr)
     lnH_o_sfr = np.copy(lnH_sfr)
     lzgas_o_sfr = np.copy(lzgas)
+
     ###here why do we need to clean_photarray?
-    #clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
+    clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
 
     # Obtain spectral emission lines from HII regions
-    nebline_sfr = get_lines(lu_sfr,lnH_sfr,lzgas,photmod=photmod_sfr,
+    nebline_sfr = get_lines(lu_sfr.T,lnH_sfr.T,lzgas.T,photmod=photmod_sfr,
                             xid_phot=xid_sfr, co_phot=co_sfr,
                             imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
@@ -243,7 +244,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         sfr = np.zeros(shape=np.shape(lssfr))
         for comp in range(ncomp):
             sfr[:,comp] = 10**(lms[:,comp]+lssfr[:,comp])
-            nebline_sfr[comp] = nebline_sfr[comp]*c.Lbolsun*sfr[:,comp]
+            nebline_sfr[comp,:,:] = nebline_sfr[comp,:,:]*c.Lbolsun*sfr[:,comp]
 
     if verbose:
         print(' Emission calculated.')
@@ -341,8 +342,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lnH_o_agn = np.copy(lnH_agn)
         lzgas_o_agn = np.copy(lzgas_agn) 
         ###here it doesn't make sense that nebline_agn has several components
-        #clean_photarray(lu_agn, lnH_agn, lzgas_agn, photmod=photmod_agn)            
-        nebline_agn = get_lines(lu_agn,lnH_agn,lzgas_agn,photmod=photmod_agn,
+        clean_photarray(lu_agn, lnH_agn, lzgas_agn, photmod=photmod_agn)            
+        nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
         

@@ -187,7 +187,7 @@ def locate_interval(val, edges):
     return jl
 
 
-def interpl_weights(xxin,edges):
+def interpl_weights(xx,edges):
     '''
     Get linear interpolation weights: xd=(x-x1)/(x2-x1)
     Values outside the edges limits are given the weights
@@ -212,12 +212,9 @@ def interpl_weights(xxin,edges):
 
     # If scalar, turn it into array
     scalar = False
-    if isinstance(xxin, (float, int)): # Floats
+    if isinstance(xx, (float, int)): # Floats
         scalar = True
-        xxin = np.array([xxin])
-
-    # Clip input values to edges range
-    xx = np.clip(xxin, edges[0], edges[-1])
+        xx = np.array([xx])
         
     # Locate intervals and handle boundaries
     ix = locate_interval(xx, edges)
@@ -280,7 +277,7 @@ def bilinear_interpl(xx, yy, xedges, yedges, zedges, verbose=False):
     n = xx.size
     if (yy.size != n):
         sys.exit('STOP bilinear_interpl: input sizes different for x and y')
-    
+        
     # Get the intervals and weights
     xd, ix = interpl_weights(xx, xedges)
     yd, iy = interpl_weights(yy, yedges)
