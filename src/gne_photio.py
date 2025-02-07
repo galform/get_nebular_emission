@@ -40,55 +40,7 @@ def get_zfile(zmet_str, photmod='gutkin16'):
         zfile = None
 
     return zfile
-
-
-def clean_photarray(lu, lnH, lzgas, photmod='gutkin16', verbose=True):
-
-    '''
-    Given the model, take the values outside the limits and give them the apropriate
-    value inside the limits depending on the model.
-
-    Parameters
-    ----------
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lu : floats
-     U of the galaxies per component.
-    lnH : floats
-     ne of the galaxies per component (cm^-3).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    photomod : string
-     Name of the considered photoionisation model.
-    verbose : boolean
-     If True print out messages.
-
-    Returns
-    -------
-    lu,lnH,lzgas : floats
-    '''
-
-    minU, maxU = get_limits(propname='logUs', photmod=photmod)
-    minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-    minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-
-    minnH = np.log10(minnH); maxnH = np.log10(maxnH)
-    minZ = np.log10(minZ); maxZ = np.log10(maxZ)
-
-    for i in range(lu.shape[1]):        
-        lu[:,i][(lu[:,i] > maxU)&(lu[:,i] > c.notnum)] = maxU
-        lu[:,i][(lu[:,i] < minU)&(lu[:,i] > c.notnum)] = minU
-        
-        lnH[:,i][(lnH[:,i] > maxnH)&(lnH[:,i] > c.notnum)] = maxnH
-        lnH[:,i][(lnH[:,i] < minnH)&(lnH[:,i] > c.notnum)] = minnH
-        
-        lzgas[:,i][(lzgas[:,i] > maxZ)&(lzgas[:,i] > c.notnum)] = maxZ
-        lzgas[:,i][(lzgas[:,i] < minZ)&(lzgas[:,i] > c.notnum)] = minZ
                 
-    return lu, lnH, lzgas
-
 
 def get_limits(propname, photmod='gutkin16',verbose=True):
     '''
@@ -544,6 +496,25 @@ def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
                                      co_phot=co_phot,imf_cut_phot=imf_cut_phot,
                                      verbose=verbose)
     elif (photmod == 'feltre16'):
+        limits_by_hand = True
+        if limits_by_hand:
+            minU, maxU = get_limits(propname='logUs', photmod=photmod)
+            minnH, maxnH = get_limits(propname='nH', photmod=photmod)
+            minZ, maxZ = get_limits(propname='Z', photmod=photmod)
+        
+            minnH = np.log10(minnH); maxnH = np.log10(maxnH)
+            minZ = np.log10(minZ); maxZ = np.log10(maxZ)
+
+            for i in range(lu.shape[0]):        
+                lu[i,:][(lu[i,:] > maxU)&(lu[i,:] > c.notnum)] = maxU
+                lu[i,:][(lu[i,:] < minU)&(lu[i,:] > c.notnum)] = minU
+                
+                lnH[i,:][(lnH[i,:] > maxnH)&(lnH[i,:] > c.notnum)] = maxnH
+                lnH[i,:][(lnH[i,:] < minnH)&(lnH[i,:] > c.notnum)] = minnH
+            
+                lzgas[i,:][(lzgas[i,:] > maxZ)&(lzgas[i,:] > c.notnum)] = maxZ
+                lzgas[i,:][(lzgas[i,:] < minZ)&(lzgas[i,:] > c.notnum)] = minZ
+
         nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 

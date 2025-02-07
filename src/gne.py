@@ -10,7 +10,7 @@ from src.gne_une import get_une_sfr, get_une_agn
 from src.gne_Z import correct_Z, correct_Zagn
 from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as c
-from src.gne_photio import get_lines, get_limits, clean_photarray, calculate_flux
+from src.gne_photio import get_lines, get_limits, calculate_flux
 from src.gne_att import attenuation
 from src.gne_plots import make_testplots
 
@@ -230,9 +230,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lnH_o_sfr = np.copy(lnH_sfr)
     lzgas_o_sfr = np.copy(lzgas)
 
-    ###here why do we need to clean_photarray?
-    #clean_photarray(lu_sfr, lnH_sfr, lzgas, photmod=photmod_sfr)
-
     # Obtain spectral emission lines from HII regions
     nebline_sfr = get_lines(lu_sfr.T,lnH_sfr.T,lzgas.T,photmod=photmod_sfr,
                             xid_phot=xid_sfr, co_phot=co_sfr,
@@ -341,8 +338,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lu_o_agn = np.copy(lu_agn)
         lnH_o_agn = np.copy(lnH_agn)
         lzgas_o_agn = np.copy(lzgas_agn) 
-        ###here it doesn't make sense that nebline_agn has several components
-        clean_photarray(lu_agn, lnH_agn, lzgas_agn, photmod=photmod_agn)            
+
         nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
