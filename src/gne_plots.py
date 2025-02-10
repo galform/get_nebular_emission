@@ -699,7 +699,7 @@ def lines_BPT(x, BPT, line):
 #
 
 
-def test_umz(root, subvols=1, outpath=None, verbose=True):
+def plot_umz(root, subvols=1, outpath=None, verbose=True):
     '''
     Make plots of the ionizing parameter versus stellar mass and Zgas,
     for SF regions and AGNs.
@@ -1264,9 +1264,9 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
 
     # Get output file for BPT plot
-    umz = test_umz(root,subvols=subvols,verbose=verbose)
+    umz = plot_umz(root,subvols=subvols,verbose=verbose)
     
     # Get output file for BPT plot
-    bpt = test_bpts(root,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
     
     return
