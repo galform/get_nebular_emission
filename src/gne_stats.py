@@ -11,8 +11,8 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
+from scipy.ndimage import gaussian_filter
 import src.gne_const as c
-
 
 def percentiles(val, data, weights=None):
     """
@@ -151,6 +151,73 @@ def convert_to_stdev(grid):
     grid_cumsum /= grid_cumsum[-1]
 
     return grid_cumsum[i_unsort].reshape(shape)
+
+
+# Common sigma level probabilities (tabulated)
+SIGMA_PROBS = {
+    1: 0.682689492137086,    # 1 sigma
+    2: 0.954499736103642,    # 2 sigma
+    3: 0.997300203936740,    # 3 sigma
+    4: 0.999936657516334,    # 4 sigma
+    5: 0.999999426696856,    # 5 sigma
+    6: 0.999999998026825     # 6 sigma
+}
+
+def calculate_sigma_levels(xx, yy, n_grid=100, smooth=0., n_levels=3):
+    """
+    Calculate density contours for given number of sigma levels.
+    
+    Parameters:
+    -----------
+    xx, yy : array-like
+        Input coordinates
+    n_grid : int
+        Number of bins for 2D histogram
+    smooth : float
+        Sigma parameter for Gaussian smoothing
+    n_levels : int
+        Number of sigma levels to calculate (1 to 6)
+    """
+    # Validate and get appropriate sigma levels
+    if not 1 <= n_levels <= 6:
+        raise ValueError("n_levels must be between 1 and 6")
+    
+    # Get the first n_levels from the tabulated values
+    sigma_probs = {k: SIGMA_PROBS[k] for k in range(1, n_levels + 1)}
+    
+    # Create the grid
+    xmin, xmax = xx.min(), xx.max()
+    ymin, ymax = yy.min(), yy.max()
+    print(xmin,xmax,ymin,ymax); exit()    ###here
+    # Calculate 2D histogram
+    zi, xedges, yedges = np.histogram2d(xx,yy,bins=n_grid,
+                                       range=[[xmin, xmax], [ymin, ymax]])
+
+    # Create mesh grid from bin centers
+    xi = (xedges[:-1] + xedges[1:])/2.
+    yi = (yedges[:-1] + yedges[1:])/2.
+    xi, yi = np.meshgrid(xi, yi)
+    
+    # Smooth the histogram
+    #z = gaussian_filter(hist.T, sigma=smooth)
+    zi = np.z
+    
+    # Calculate probability levels
+    sorted_z = np.sort(z.flatten())
+    total = sorted_z.sum()
+    cumsum = np.cumsum(sorted_z)
+    
+    # Get levels for each sigma value
+    levels = []
+    for sigma_prob in sorted(sigma_probs.values(), reverse=True):
+        idx = np.searchsorted(cumsum/total, sigma_prob)
+        levels.append(sorted_z[idx])
+
+    # Reverse levels (highest density first)
+    levels.reverse()
+    
+    return xi, yi, z, levels
+
 
 
 def n_gt_x(xedges, array):

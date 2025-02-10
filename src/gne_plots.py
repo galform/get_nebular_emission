@@ -10,8 +10,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import cm
 import src.gne_io as io
-from src.gne_stats import perc_2arrays
-import src.gne_const as const
+from src.gne_stats import perc_2arrays,calculate_sigma_levels
+import src.gne_const as c
 #from src.gne_io import get_nheader, check_file
 from src.gne_photio import get_limits #,get_lines_Gutkin
 #from numpy import random
@@ -23,6 +23,7 @@ import src.gne_style
 plt.style.use(src.gne_style.style1)
 
 cmap = 'jet'
+
 
 def lines_BPT(x, BPT, line):
     
@@ -76,7 +77,7 @@ def lines_BPT(x, BPT, line):
 
 
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
-#              colsGSM=[0,1,2,3], labelObs=None, specific=False, h0=const.h, volume=const.vol_pm, verbose=False):
+#              colsGSM=[0,1,2,3], labelObs=None, specific=False, h0=c.h, volume=c.vol_pm, verbose=False):
 #
 #    '''
 #    
@@ -281,12 +282,12 @@ def lines_BPT(x, BPT, line):
 #
 #        with h5py.File(inputdata[ii],'r') as file:
 #            data = file['data']          
-#            lms = np.log10((10**data['lms'][:,0])/const.IMF_M['Chabrier']+10**data['lms'][:,1]*const.IMF_M['Top-heavy']/const.IMF_M['Chabrier']) #+ np.log10(h0)
+#            lms = np.log10((10**data['lms'][:,0])/c.IMF_M['Chabrier']+10**data['lms'][:,1]*c.IMF_M['Top-heavy']/c.IMF_M['Chabrier']) #+ np.log10(h0)
 #            if specific:
 #                lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
 #            else: 
 #                lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + lms
-#                lsfr = lsfr/const.IMF_SFR['Chabrier']
+#                lsfr = lsfr/c.IMF_SFR['Chabrier']
 #            # lms = lms + np.log10(h0)     
 #            del data
 #
@@ -297,7 +298,7 @@ def lines_BPT(x, BPT, line):
 #        gsmf = H / volume / dm  # In Mpc^3/h^3
 #
 #        H, bins_edges = np.histogram(lsfr, bins=np.append(sbins, smax))
-#        sfrf = H / volume / ds # / const.h**-3
+#        sfrf = H / volume / ds # / c.h**-3
 #
 #        H, xedges, yedges = np.histogram2d(lsfr, lms,
 #                                           bins=([np.append(sbins, smax),
@@ -308,13 +309,13 @@ def lines_BPT(x, BPT, line):
 #        # Plot SMF vs SFR
 #
 #        matplotlib.rcParams['contour.negative_linestyle'] = lsty[ii]
-#        zz = np.zeros(shape=(len(shist), len(mhist))); zz.fill(const.notnum)
+#        zz = np.zeros(shape=(len(shist), len(mhist))); zz.fill(c.notnum)
 #        ind = np.where(smf > 0.)
 #        zz[ind] = np.log10(smf[ind])
 #        
 #        # print(zz[ind])
 #
-#        ind = np.where(zz > const.notnum)
+#        ind = np.where(zz > c.notnum)
 #
 #        if (np.shape(ind)[1] > 1):
 #
@@ -390,7 +391,7 @@ def lines_BPT(x, BPT, line):
 #    Plot of several BPT diagrams.
 #    '''
 #    
-#    set_cosmology(omega0=const.omega0, omegab=const.omegab,lambda0=const.lambda0,h0=const.h)
+#    set_cosmology(omega0=c.omega0, omegab=c.omegab,lambda0=c.lambda0,h0=c.h)
 #    
 #    for num in range(len(infile)):
 #    
@@ -560,10 +561,10 @@ def lines_BPT(x, BPT, line):
 #                print(str(i+1) + ' de 4.')     
 #        
 #        if plot_phot:       
-#            if photmod not in const.photmods:
+#            if photmod not in c.photmods:
 #                if verbose:
 #                    print('STOP (gne_photio.test_bpt): Unrecognised model to get emission lines.')
-#                    print('                Possible photmod= {}'.format(const.photmods))
+#                    print('                Possible photmod= {}'.format(c.photmods))
 #                sys.exit()
 #            elif (photmod == 'gutkin16'):
 #                
@@ -848,7 +849,7 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
         u = lusfr[:,i]
         z = lzsfr[:,i]
 
-        ind = np.where((u>const.notnum) & (z>const.notnum))
+        ind = np.where((u>c.notnum) & (z>c.notnum))
         if (np.shape(ind)[1]>len(zbins)):
             for isub in range(2):
                 arr = z[ind]
@@ -857,7 +858,7 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
                 med = perc_2arrays(zbins, arr, u[ind], 0.5)        
                 upq = perc_2arrays(zbins, arr, u[ind], 0.84)
                 low = perc_2arrays(zbins, arr, u[ind], 0.16)
-                jnd = np.where(med>const.notnum)
+                jnd = np.where(med>c.notnum)
                 if (np.shape(jnd)[1]>1):
                     el = med[jnd] - low[jnd]
                     eh = upq[jnd] - med[jnd]
@@ -876,7 +877,7 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
             u = luagn[:,i]
             z = lzagn[:,i]
 
-            ind = np.where((u>const.notnum) & (z>const.notnum))
+            ind = np.where((u>c.notnum) & (z>c.notnum))
             if (np.shape(ind)[1]>len(zbins)):
                 for isub in range(2):
                     arr = z[ind]
@@ -885,7 +886,7 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
                     med = perc_2arrays(zbins, arr, u[ind], 0.5)        
                     upq = perc_2arrays(zbins, arr, u[ind], 0.84)
                     low = perc_2arrays(zbins, arr, u[ind], 0.16)
-                    jnd = np.where(med>const.notnum)
+                    jnd = np.where(med>c.notnum)
                     if (np.shape(jnd)[1]>1):
                         el = med[jnd] - low[jnd]
                         eh = upq[jnd] - med[jnd]
@@ -914,7 +915,73 @@ def test_umz(root, subvols=1, outpath=None, verbose=True):
     return plotnom
 
 
-def test_bpts(root, subvols=1, outpath=None, verbose=True):
+def get_obs_bpt(redshift,bpt):
+    '''
+    Get observational data for BPT diagrams at a given redshift
+    
+    Parameters
+    ----------
+    redshift : float
+       Redshift of interest
+    bpt: string
+        Type of BPT diagram: 'NII' (OIII/Hbeta vs N2/Ha)
+        or 'SII' (OIII/Hbeta vs S2/Ha)
+
+    Returns
+    -------
+    xobs, yobs : array of floats
+       Ratios for each observed spectral emission line
+    obsdata : boolean
+       True if there is any observational data at the given redshift
+    '''
+
+    xobs = -999.; yobs = -999.; obsdata = False
+    
+    # Use different data sets for different redshifts
+    if redshift <= 0.2:
+        obsdata = True
+        obsfile = 'data/observational_data/favole2024.txt'
+        l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(15,9),unpack=True)
+        xx, yy = [np.zeros(len(l1)) for i in range(2)]
+        ind = np.where((l1>0.) & (l2>0.))
+        if (np.shape(ind)[1]>0): #O3/Hb
+            yy[ind] = np.log10(l1[ind]/l2[ind])
+            
+        if bpt=='NII': #N2/Ha
+            l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(18,6),unpack=True)
+            ind = np.where((l1>0.) & (l2>0.))
+            if (np.shape(ind)[1]>0):
+                xx[ind] = np.log10(l1[ind]/l2[ind]) 
+        elif bpt=='SII': #S2/Ha
+            l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(21,6),unpack=True)
+            ind = np.where((l1>0.) & (l2>0.))
+            if (np.shape(ind)[1]>0):
+                xx[ind] = np.log10(l1[ind]/l2[ind]) 
+
+    elif 1.45 <= redshift <= 1.75:
+        obsdata = True
+        if bpt=='NII':
+            obsfile = 'data/observational_data/NII_Kashino.txt'
+            yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
+            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+                
+        elif bpt=='SII':
+            obsfile = 'data/observational_data/SII_Kashino.txt'
+            yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
+            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+
+    if obsdata:
+        ind = np.where((xx>c.notnum) & (yy>c.notnum))
+        if (np.shape(ind)[1]>0):
+            xobs = xx[ind]
+            yobs = yy[ind]
+        else:
+            obsdata = False
+
+    return xobs,yobs,obsdata
+
+
+def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
     
@@ -970,35 +1037,14 @@ def test_bpts(root, subvols=1, outpath=None, verbose=True):
             axs.set_xlim(xmins[ii], xmaxs[ii])
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
-        
-        # Add obs. data and further cuts if adequate
-        if redshift <= 0.2:
-            obsdata = True
-            obsfile = 'data/observational_data/favole2024.txt'
-            data = np.loadtxt(obsfile,skiprows=1,usecols=(15,9))
-            yobs = np.log10(data[:,0]/data[:,1]) #O3/Hb
-            if bpt=='NII':
-                data = np.loadtxt(obsfile,skiprows=1,usecols=(18,6))
-                xobs = np.log10(data[:,0]/data[:,1]) #N2/Ha
-                
-            elif bpt=='SII':
-                data = np.loadtxt(obsfile,skiprows=1,usecols=(21,6))
-                xobs = np.log10(data[:,0]/data[:,1]) #S2/Ha
 
-        elif 1.45 <= redshift <= 1.75:
-            obsdata = True
-            if bpt=='NII':
-                obsfile = 'data/observational_data/NII_Kashino.txt'
-                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-                
-            elif bpt=='SII':
-                obsfile = 'data/observational_data/SII_Kashino.txt'
-                yobs = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-                xobs = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-
+        xobs, yobs, obsdata = get_obs_bpt(redshift,bpt)
         if obsdata and bpt=='NII':
-            axn.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
+            #xi,yi,z,levels = calculate_sigma_levels(xobs,yobs,n_grid=100,n_levels=3)
+            #contour = axn.contourf(xi, yi, z, levels=levels,
+            #           colors=['darkgrey']*3)
+            #           #alpha=[0.8, 0.5, 0.2])
+            axn.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)                       
         elif obsdata and bpt=='SII':
             axs.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
 
