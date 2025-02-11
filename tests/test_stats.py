@@ -6,6 +6,27 @@ import numpy as np
 import src.gne_stats as st
 
 class TestPredict(unittest.TestCase):
+    def test_get_cumulative_2Ddensity(self):
+        # Generate a 2D Gaussian
+        std1 = 1
+        np.random.seed(42) 
+        data = np.random.normal(0, std1, size=[10000, 2])
+        x = data[:,0]; y = data[:,1]
+
+        # Test for a given grid
+        ng = 50
+        xout, yout, zout = st.get_cumulative_2Ddensity(x,y, n_grid=ng)
+        self.assertEqual(xout.size, ng*ng)
+        self.assertEqual(yout.size, ng*ng)
+        self.assertEqual(zout.size, ng*ng)
+
+        r = np.sqrt(xout**2 + yout**2)
+        mask = np.abs(r - 1.0) < 0.1
+        values_at_1sigma = zout[mask]
+        expected_value = 1 - np.exp(-0.5)  # ≈ 0.39 (2D Gaussian)
+        mean_value = np.mean(values_at_1sigma)
+        self.assertAlmostEqual(mean_value, expected_value, delta=0.05)
+        
     def test_locate_interval(self):
         edges = np.array([0,1,2,3,4])
         self.assertEqual(st.locate_interval(0.5,edges),0)
@@ -20,7 +41,6 @@ class TestPredict(unittest.TestCase):
         i = 0
         for vexp in [0,-1,2,2]:
             self.assertEqual(vals[i],vexp); i += 1
-
         
     def test_interpl_weights(self):
         edges = np.array([0,1,2])

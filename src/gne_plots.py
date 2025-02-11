@@ -9,14 +9,12 @@ import h5py
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import cm
-import src.gne_io as io
-from src.gne_stats import perc_2arrays,calculate_sigma_levels
 import src.gne_const as c
+import src.gne_io as io
+import src.gne_stats as st 
 #from src.gne_io import get_nheader, check_file
 from src.gne_photio import get_limits #,get_lines_Gutkin
 #from numpy import random
-#from scipy.stats import gaussian_kde
-#import sys
 #from cosmology import logL2flux, set_cosmology
 from src.gne_cosmology import set_cosmology,emission_line_luminosity
 import src.gne_style
@@ -855,9 +853,9 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                 arr = z[ind]
                 if isub == 1: arr = m[ind]
 
-                med = perc_2arrays(zbins, arr, u[ind], 0.5)        
-                upq = perc_2arrays(zbins, arr, u[ind], 0.84)
-                low = perc_2arrays(zbins, arr, u[ind], 0.16)
+                med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
+                upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
+                low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
                 jnd = np.where(med>c.notnum)
                 if (np.shape(jnd)[1]>1):
                     el = med[jnd] - low[jnd]
@@ -883,9 +881,9 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                     arr = z[ind]
                     if isub == 1: arr = m[ind]
 
-                    med = perc_2arrays(zbins, arr, u[ind], 0.5)        
-                    upq = perc_2arrays(zbins, arr, u[ind], 0.84)
-                    low = perc_2arrays(zbins, arr, u[ind], 0.16)
+                    med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
+                    upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
+                    low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
                     jnd = np.where(med>c.notnum)
                     if (np.shape(jnd)[1]>1):
                         el = med[jnd] - low[jnd]
@@ -1040,11 +1038,13 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
 
         xobs, yobs, obsdata = get_obs_bpt(redshift,bpt)
         if obsdata and bpt=='NII':
-            #xi,yi,z,levels = calculate_sigma_levels(xobs,yobs,n_grid=100,n_levels=3)
-            #contour = axn.contourf(xi, yi, z, levels=levels,
-            #           colors=['darkgrey']*3)
-            #           #alpha=[0.8, 0.5, 0.2])
             axn.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)                       
+            x,y,z = st.calculate_sigma_contours(xobs,yobs,n_grid=100)
+            #levels = c.sigma_probs[0:5]
+            #contour = axn.contourf(x, y, z, levels=[0,0.68, 0.95, 0.997],
+            #                       colors=['red']*3,alpha=[0.8, 0.4, 0.2])
+            contour = axn.contour(x, y, z, levels=[0.68, 0.95, 0.997],
+                                  colors=['blue']*len(levels))
         elif obsdata and bpt=='SII':
             axs.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
 
