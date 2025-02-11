@@ -6,7 +6,6 @@
 import h5py
 import numpy as np
 import sys
-#import warnings
 import src.gne_io as io
 import src.gne_const as c
 import src.gne_stats as st
@@ -80,7 +79,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
 
     # Check if the limits file exists:
     io.check_file(infile, verbose=verbose)
-    # print(infile)
+    #print(infile)
 
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
@@ -293,7 +292,8 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                        (zcomp > c.notnum) &
                        (nHcomp > c.notnum))[0]
         if (ind.size < 1):
-            print('WARNING (get_lines_gutkin16): no adequate log(Us) found')
+            print('WARNING (get_lines_gutkin16):',
+                  'no adequate log(Us)+ found for component',comp)
             return nebline
         
         # Initialize matrices with interpolated values on Z and U
@@ -312,6 +312,10 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         # Interpolate over nH
         nn = nHcomp[ind]
         nHd, inH = st.interpl_weights(nn,nHedges)
+        if verbose:
+            print(comp,'<logUs>=',np.average(uu),
+                  '<logZ>=',np.average(zz),
+                  '<lognH>=',np.average(nn))        
 
         c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
 
@@ -361,7 +365,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     ndat = lu.shape[1]
     ncomp = lu.shape[0]
     nebline = np.zeros((ncomp,nemline,ndat))
-    
+
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
     nzmet, zmets, zedges = get_Zgrid(zmet_str)
@@ -379,6 +383,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
     emline_grid1 = np.zeros((nzmet,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
+
     for k, zname in enumerate(zmet_str):
         infile = get_zfile(zname,photmod=photmod)
         io.check_file(infile,verbose=True)
@@ -391,7 +396,7 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         nH = data[:, 2]         # nh
         alpha = data[:, 3]      # alpha
         emission_lines = data[:, 4:]  # All emission line data
-
+        
         # Create mask for matching conditions
         mask = (xid == xid_phot) & (alpha == alpha_phot)
         filtered_indices = np.where(mask)[0]
@@ -423,9 +428,10 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                        (zcomp > c.notnum) &
                        (nHcomp > c.notnum))[0]
         if (ind.size < 1):
-            print('WARNING (get_lines_feltre16): no adequate log(Us) found')
+            print('WARNING (get_lines_feltre16):',
+                  'no adequate log(Us)+ found for component',comp)
             return nebline
-        
+
         # Initialize matrices with interpolated values on Z and U
         uu = ucomp[ind]
         zz = zcomp[ind]
@@ -440,7 +446,11 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         # Interpolate over nH
         nn = nHcomp[ind]
         nHd, inH = st.interpl_weights(nn,nHedges)
-        
+        if verbose:
+            print(comp,'<logUs>=',np.average(uu),
+                  '<logZ>=',np.average(zz),
+                  '<lognH>=',np.average(nn))        
+
         c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
         
         mask0 = (inH == 0)
@@ -496,25 +506,6 @@ def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
                                      co_phot=co_phot,imf_cut_phot=imf_cut_phot,
                                      verbose=verbose)
     elif (photmod == 'feltre16'):
-        limits_by_hand = True
-        if limits_by_hand:
-            minU, maxU = get_limits(propname='logUs', photmod=photmod)
-            minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-            minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-        
-            minnH = np.log10(minnH); maxnH = np.log10(maxnH)
-            minZ = np.log10(minZ); maxZ = np.log10(maxZ)
-
-            for i in range(lu.shape[0]):        
-                lu[i,:][(lu[i,:] > maxU)&(lu[i,:] > c.notnum)] = maxU
-                lu[i,:][(lu[i,:] < minU)&(lu[i,:] > c.notnum)] = minU
-                
-                lnH[i,:][(lnH[i,:] > maxnH)&(lnH[i,:] > c.notnum)] = maxnH
-                lnH[i,:][(lnH[i,:] < minnH)&(lnH[i,:] > c.notnum)] = minnH
-            
-                lzgas[i,:][(lzgas[i,:] > maxZ)&(lzgas[i,:] > c.notnum)] = maxZ
-                lzgas[i,:][(lzgas[i,:] < minZ)&(lzgas[i,:] > c.notnum)] = minZ
-
         nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
                                    alpha_phot=alpha_phot,verbose=verbose)
 

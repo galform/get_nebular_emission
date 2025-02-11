@@ -244,7 +244,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             nebline_sfr[comp,:,:] = nebline_sfr[comp,:,:]*c.Lbolsun*sfr[:,comp]
 
     if verbose:
-        print(' Emission calculated.')
+        print(' Emission lines calculated.')
             
     if att:
         att_param = io.read_data(infile,cut,
@@ -349,7 +349,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
        
         if verbose:
-            print(' Emission calculated.')
+            print(' Emission lines calculated.')
 
         if att:
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 

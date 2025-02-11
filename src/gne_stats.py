@@ -11,8 +11,8 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
+from scipy.ndimage import gaussian_filter
 import src.gne_const as c
-
 
 def percentiles(val, data, weights=None):
     """
@@ -135,22 +135,54 @@ def av_2arrays(xbins, xarray, yarray, weights, nmin):
     return av_2arrays
 
 
-def convert_to_stdev(grid):
+def get_cumulative_2Ddensity(xin, yin, n_grid=100):
     """
-    From Coleman Krawczyk
-    Based on https://pypi.python.org/simple/astroml/
-    Given a grid of values, convert them to cumulative standard deviation.
-    This is useful for drawing contours with standard deviations as the levels.
-    """
-    shape = grid.shape
-    grid = grid.ravel()
-    # Obtain indices to sort and unsort the flattened array
-    i_sort = np.argsort(grid)[::-1]
-    i_unsort = np.argsort(i_sort)
-    grid_cumsum = grid[i_sort].cumsum()
-    grid_cumsum /= grid_cumsum[-1]
+    Calculate the normalised cumulative values for a 2D distribution.
+    Useful for then plotting contours with percentiles.
+    
+    Parameters:
+    -----------
+    xin, yin : 1D array 
+        Input coordinates
+    n_grid : int
+        Number of bins for 2D histogram
 
-    return grid_cumsum[i_unsort].reshape(shape)
+    Returns:
+    --------
+    xx, yy : 1D array
+        Centers of the output grid
+    zz : 1D array
+        Normalised (to 1) cumulative density
+    """
+    # Create the grid
+    xmin, xmax = xin.min(), xin.max()
+    ymin, ymax = yin.min(), yin.max()
+    xylims = [[xmin, xmax], [ymin, ymax]]
+    
+    # Calculate the 2D histogram and edges of the grid
+    hist2D, xedges, yedges = np.histogram2d(xin,yin,bins=n_grid,range=xylims)
+
+    # Create mesh grid from bin centers
+    xx = (xedges[:-1] + xedges[1:])/2.
+    yy = (yedges[:-1] + yedges[1:])/2.
+    xx, yy = np.meshgrid(xx, yy)
+
+    # Flatten the 2D histogram into a 1D array
+    hist = hist2D.ravel()
+    
+    # Sort in descending order
+    i_sort = np.argsort(hist)[::-1]
+    hsort = hist[i_sort]
+
+    # Normalised (max=1) the cumulative distribution
+    hcumsum = hsort.cumsum()
+    hcumsum /= hcumsum[-1]
+
+    # Return density in adequate shape
+    shape = hist2D.shape
+    i_unsort = np.argsort(i_sort)
+    zz = hcumsum[i_unsort].reshape(shape).T
+    return xx, yy, zz
 
 
 def n_gt_x(xedges, array):
