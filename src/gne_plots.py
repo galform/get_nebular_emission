@@ -8,6 +8,7 @@ import os.path
 import h5py
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib import colors as mcol
 from matplotlib.pyplot import cm
 import src.gne_const as c
 import src.gne_io as io
@@ -21,6 +22,16 @@ import src.gne_style
 plt.style.use(src.gne_style.style1)
 
 cmap = 'jet'
+
+
+def contour2Dsigma(n_levels=None):
+    levels=c.sigma_2Dprobs.copy()
+    nl = len(levels); levels.insert(0,0)
+    alphas = np.linspace(0.2, 1, nl)[::-1].tolist()
+    colors = [(*mcol.to_rgba('darkgrey', alpha=a),)
+              for a in alphas]
+    
+    return levels,colors
 
 
 def lines_BPT(x, BPT, line):
@@ -1038,15 +1049,13 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
 
         xobs, yobs, obsdata = get_obs_bpt(redshift,bpt)
         if obsdata and bpt=='NII':
-            axn.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)                       
-            x,y,z = st.calculate_sigma_contours(xobs,yobs,n_grid=100)
-            #levels = c.sigma_probs[0:5]
-            #contour = axn.contourf(x, y, z, levels=[0,0.68, 0.95, 0.997],
-            #                       colors=['red']*3,alpha=[0.8, 0.4, 0.2])
-            contour = axn.contour(x, y, z, levels=[0.68, 0.95, 0.997],
-                                  colors=['blue']*len(levels))
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
+            levels,colors= contour2Dsigma()
+            contour = axn.contourf(x, y, z, levels=levels,colors=colors)
         elif obsdata and bpt=='SII':
-            axs.scatter(xobs,yobs, s=20, c='darkgrey', alpha=0.8)
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
+            levels,colors= contour2Dsigma()
+            contour = axs.contourf(x, y, z, levels=levels,colors=colors)
 
     # Read data in each subvolume and add data to plots
     seltot = 0
