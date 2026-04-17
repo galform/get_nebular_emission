@@ -44,12 +44,12 @@ class TestPredict(unittest.TestCase):
     def test_Lagn_M16(self):
         mdot0 = c.yr_to_s/(c.c*c.c*1e7*c.Msun)
         val0 = c.e_r_agn*(1-c.e_f_agn)
-        self.assertAlmostEqual(agn.get_Lagn_M16(mdot0),val0,3)
+        self.assertAlmostEqual(agn.get_Lagn_M17(mdot0),val0,3)
 
         nlen = 3
         y,val = [np.zeros(nlen) for i in range(2)]
         y.fill(mdot0); val.fill(val0)
-        assert_allclose(agn.get_Lagn_M16(y),val,rtol=0.001)
+        assert_allclose(agn.get_Lagn_M17(y),val,rtol=0.001)
 
         
     def test_Lagn_H14(self):

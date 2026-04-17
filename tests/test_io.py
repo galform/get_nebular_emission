@@ -92,7 +92,8 @@ class TestStringMethods(unittest.TestCase):
         # So 'output/test' becomes 'output' before adding /iz.../
         expath = 'output/test'
         h0 = 0.7
-        filenom = io.generate_header(hf5file,0,100,h0,0.4,0.3,0.6,1,1e8,
+        filenom = io.generate_header(hf5file,0,100,h0,0.4,0.3,0.6,
+                                     1e8,100,1e6,
                                      outpath=expath,verbose=False)
         # Updated expectation: get_outnom strips 'test' from path
         self.assertEqual(filenom,'output/test/iz61/ivol0/'+nom+'.hdf5')
@@ -356,6 +357,79 @@ class TestStringMethods(unittest.TestCase):
         assert_allclose(ms_single_hdf5[0,:], ms_hdf5[0,:], rtol=1e-12,
                         err_msg="Single component should match first one")
 
+
+    def test_read_and_add(self):
+        """Test read_and_add function for various data shapes."""
+        # Create temporary HDF5 file with test datasets
+        self.temp_dir = tempfile.mkdtemp()
+        self.test_file = os.path.join(self.temp_dir, 'test_read_add.hdf5')
+        
+        with h5py.File(self.test_file, 'w') as hf:
+            # 1D dataset
+            hf.create_dataset('prop_1d', data=np.array([1.0, 2.0, 3.0, 4.0]))      
+            # 2D dataset with shape (n, 2) - expected case
+            hf.create_dataset('prop_2d_2cols', 
+                              data=np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]))      
+            # 2D dataset with shape (n, 3) - unexpected case
+            hf.create_dataset('prop_2d_3cols',
+                              data=np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]))      
+            # 2D dataset with shape (n, 1)
+            hf.create_dataset('prop_2d_1col',
+                              data=np.array([[1.0], [2.0], [3.0]]))
+        
+        with h5py.File(self.test_file, 'r') as f:
+            # Test 1D data - should return unchanged
+            result_1d = io.read_and_add(f, 'prop_1d', verbose=False)
+            self.assertEqual(result_1d.shape, (4,))
+            assert_allclose(result_1d, np.array([1.0, 2.0, 3.0, 4.0]))
+            
+            # Test 2D with 2 columns - should sum along axis=1
+            result_2d_2 = io.read_and_add(f, 'prop_2d_2cols', verbose=False)
+            self.assertEqual(result_2d_2.shape, (3,))
+            assert_allclose(result_2d_2, np.array([3.0, 7.0, 11.0]))
+            
+            # Test 2D with 3 columns - should still sum
+            result_2d_3 = io.read_and_add(f, 'prop_2d_3cols', verbose=False)
+            self.assertEqual(result_2d_3.shape, (2,))
+            assert_allclose(result_2d_3, np.array([6.0, 15.0]))
+            
+            # Test 2D with 1 column - should sum (effectively flatten)
+            result_2d_1 = io.read_and_add(f, 'prop_2d_1col', verbose=False)
+            self.assertEqual(result_2d_1.shape, (3,))
+            assert_allclose(result_2d_1, np.array([1.0, 2.0, 3.0]))
+        
+        # Test verbose output (capture stdout to verify warning)
+        import io as io_module
+        from contextlib import redirect_stdout
+        
+        with h5py.File(self.test_file, 'r') as f:
+            # Test warning for 3 columns
+            captured = io_module.StringIO()
+            with redirect_stdout(captured):
+                io.read_and_add(f, 'prop_2d_3cols', verbose=True)
+            output = captured.getvalue()
+            self.assertIn('[WARN]', output)
+            self.assertIn('prop_2d_3cols', output)
+            self.assertIn('(2, 3)', output)
+            
+            # Test no warning for 2 columns
+            captured = io_module.StringIO()
+            with redirect_stdout(captured):
+                io.read_and_add(f, 'prop_2d_2cols', verbose=True)
+            output = captured.getvalue()
+            self.assertEqual(output, '')
+            
+            # Test no warning for 1D
+            captured = io_module.StringIO()
+            with redirect_stdout(captured):
+                io.read_and_add(f, 'prop_1d', verbose=True)
+            output = captured.getvalue()
+            self.assertEqual(output, '')
+        
+        # Cleanup
+        if os.path.exists(self.test_file):
+            os.remove(self.test_file)
+        os.rmdir(self.temp_dir)
         
 if __name__ == '__main__':
     unittest.main()

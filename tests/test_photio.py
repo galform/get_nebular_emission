@@ -23,8 +23,9 @@ class TestPredict(unittest.TestCase):
         cls.hf5file = cls.opath + cls.root + '.hdf5'
         cls.expath = 'output/test/'
         cls.zz = 0.
-        cls.filenom = io.generate_header(cls.hf5file, cls.zz, 100, 0.7,
-                                         0.4, 0.3, 0.6, 1, 1e8,
+        cls.filenom = io.generate_header(cls.hf5file, cls.zz, 100,
+                                         0.7, 0.4, 0.3, 0.6,
+                                         1e8, 100, 1e6,
                                          outpath=cls.expath, verbose=False)
         cls.noms = ['photmod_sfr','xid_sfr','co_sfr','imf_cut_sfr','nH_sfr_cm3',
                     'photmod_NLR','xid_NLR','alpha_NLR','nH_NLR_cm3']

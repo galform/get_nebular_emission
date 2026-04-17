@@ -109,6 +109,67 @@ def get_outroot(snap,ending,outpath=None,verbose=False):
     return root, endf
 
 
+def get_metadata(filenom, verbose=True):
+    """
+    Extract cosmology and metadata from line file.
+    
+    Parameters
+    ----------
+    filenom : string
+        Path to line file
+    verbose : boolean
+        If True print out messages
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - redshift, omega0, omegab, lambda0, h0
+        - vol
+        - photmod_sfr, photmod_agn (if AGN exists)
+        - AGN : boolean flag
+    """
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    boxside = header.attrs['boxside_Mpc']
+    veff = header.attrs['eff_vol_Mpc3']
+
+    metadata = {
+        'redshift': header.attrs['redshift'],
+        'omega0': header.attrs['omega0'],
+        'omegab': header.attrs['omegab'],
+        'lambda0': header.attrs['lambda0'],
+        'h0': header.attrs['h0'],
+        'vol_eff': veff,
+        'photmod_sfr': header.attrs['photmod_sfr'],
+        'AGN': 'agn_data' in f.keys(),
+        'att': 'attmod' in header.attrs,
+    }
+    # AGN info
+    if metadata['AGN']:
+        metadata['photmod_agn'] = header.attrs['photmod_NLR']
+    # Attenuation info
+    if metadata['att']:
+        metadata['attmod'] = header.attrs['attmod']
+    # Flux info
+    fsfr = f['sfr_data']
+    required_flux_datasets =['Halpha_sfr_flux','Hbeta_sfr_flux',
+                             'NII6584_sfr_flux','OIII5007_sfr_flux']
+    metadata['flux'] = any(dataset in fsfr for dataset
+                           in required_flux_datasets)
+    f.close()
+
+    # Message if reduced samples at input 
+    eff_boxside = pow(veff, 1./3.)
+    effdiff = abs(eff_boxside - boxside)
+    if effdiff>1e-5 and verbose:
+        effp = 100*veff/(boxside**3)
+        print(f'    Side of the effective box = {eff_boxside:.1f} Mpc;') 
+        print(f'     out of the original {boxside:.1f} Mpc ({effp:.1f}%)\n')
+    
+    return metadata
+
+
 def get_plotfile(root,ending,plot_type):
     '''
     Get the path and name to a plot
@@ -273,7 +334,8 @@ def get_nheader(infile,firstchar=None):
 
 
 def generate_header(infile,redshift,snap,
-                    h0,omega0,omegab,lambda0,vol,mp,
+                    h0,omega0,omegab,lambda0,
+                    mp,boxside,effvol,
                     units_h0=False,outpath=None,
                     out_ending=None,verbose=True):
     """
@@ -295,16 +357,18 @@ def generate_header(infile,redshift,snap,
         Baryonic density at z=0
     lambda0 : float
         Cosmological constant z=0
-    vol : float
-        Simulation volume
     mp : float
         Simulation resolution, particle mass
+    boxside : float
+        Side of the simulation box
+    effvol : float
+        Simulation effective volume (if downsampled in input)
     units_h0: boolean
         True if input units with h
     outpath : string
         Path to output
     out_ending : string
-        Name for output file
+        Name for output file, if different from root
     verbose : bool
         True for messages
  
@@ -320,8 +384,9 @@ def generate_header(infile,redshift,snap,
 
     # Change units if required
     if units_h0:
-        vol = vol/(h0*h0*h0)
         mp = mp/h0
+        boxside = boxside/h0
+        effvol = effvol/(h0*h0*h0)
 
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
@@ -335,10 +400,11 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'omega0'] = omega0
     head.attrs[u'omegab'] = omegab
     head.attrs[u'lambda0'] = lambda0
-    head.attrs[u'vol_Mpc3'] = vol
     head.attrs[u'mp_Msun'] = mp
+    head.attrs[u'boxside_Mpc'] = boxside
+    head.attrs[u'eff_vol_Mpc3'] = effvol
     hf.close()
-    
+
     return filenom
 
 
@@ -548,6 +614,38 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
         outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
 
     return outparams
+
+
+def read_and_add(f, prop_name, verbose=True):
+    """
+    Read property from HDF5, add if shape is (n, 2).
+    
+    Parameters
+    ----------
+    f : h5py.File
+        Open HDF5 file object.
+    prop_name : str
+        Name of the dataset to read.
+    verbose : bool
+        If True, print warnings about unexpected shapes.
+        
+    Returns
+    -------
+    numpy.ndarray
+        1D array of summed values or original data if already 1D.
+    """
+    data = f[prop_name][:]
+    result = data
+    
+    # Check if it's 2D and has exactly 2 columns
+    if data.ndim == 2:
+        result = np.sum(data, axis=1)
+        if data.shape[1] != 2:
+            # Unexpected case: 2D but not 2 columns
+            if verbose:
+                print(f"  [WARN] '{prop_name}': Detected shape {data.shape}. Expected (n, 2) for summation.")        
+        
+    return result
 
 
 def get_ncomponents(cols):

@@ -118,10 +118,10 @@ def acc_rate_radio(Mhot, Mbh, kagn=c.kagn, kagn_exp=c.kagn_exp):
     return acc_rate # Msun/yr
 
 
-def get_Lagn_M16(Mdot):
+def get_Lagn_M17(Mdot):
     '''
     Calculate the AGN bolometric luminosity
-    following Sec.7 and Table 1 in McCarthy+2016
+    following Sec.7 and Table 1 in McCarthy+2017
 
     Parameters
     ----------
@@ -130,18 +130,18 @@ def get_Lagn_M16(Mdot):
      
     Returns
     -------
-    LagnM16 : array of floats
+    LagnM17 : array of floats
     '''
 
-    LagnM16 = c.e_r_agn*(1-c.e_f_agn)*Mdot*c.c*c.c * (1e7*c.Msun/c.yr_to_s)
+    LagnM17 = c.e_r_agn*(1-c.e_f_agn)*Mdot*c.c*c.c * (1e7*c.Msun/c.yr_to_s)
 
-    return LagnM16 #erg/s
+    return LagnM17 #erg/s
 
 
 def get_Lagn_H14(Mdot,Mbh):
     '''
     Calculate the AGN bolometric luminosity
-    following Sec.4.1 from Hirschmann+2014, and McCarthy+16
+    following Sec.4.1 from Hirschmann+2014, and McCarthy+17
 
     Parameters
     ----------
@@ -160,13 +160,13 @@ def get_Lagn_H14(Mdot,Mbh):
 
     if isinstance(fedd, (float, int)): # Floats
         if fedd>0.1:
-            LagnH14 = get_Lagn_M16(Mdot)
+            LagnH14 = get_Lagn_M17(Mdot)
         else:
             LagnH14 = 10.*get_Ledd(Mbh)*(Mdot/Mdot_edd)**2
     
     else: # Arrays
         LagnH14 = 10.*get_Ledd(Mbh)*(Mdot/Mdot_edd)**2
-        LagnH14[fedd>0.1] = get_Lagn_M16(Mdot[fedd>0.1])
+        LagnH14[fedd>0.1] = get_Lagn_M17(Mdot[fedd>0.1])
 
     return LagnH14 #erg/s
 
@@ -250,7 +250,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
     vals = read_data(infile,cut,inputformat=inputformat,
                      params=params,
                      testing=testing,verbose=verbose)
-    
+
     if Lagn_inputs=='Lagn':
         Lagn = vals[0]
         if units_L==1:

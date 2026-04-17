@@ -22,8 +22,9 @@ class TestPredict(unittest.TestCase):
         cls.hf5file = cls.opath + cls.root + '.hdf5'
         cls.expath = 'output/test/'
         cls.zz = 0.
-        cls.filenom = io.generate_header(cls.hf5file, cls.zz, 100, 0.7,
-                                         0.4, 0.3, 0.6, 1, 1e8,
+        cls.filenom = io.generate_header(cls.hf5file, cls.zz, 100,
+                                         0.7, 0.4, 0.3, 0.6,
+                                         1e8, 100, 1e6,
                                          outpath=cls.expath, verbose=False)
         cls.noms = ['model_U_NLR','model_spec_NLR','alpha_NLR',
                     'T_NLR_K','epsilon_NLR','nH_NLR_cm3']

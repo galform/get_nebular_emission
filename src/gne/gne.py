@@ -15,7 +15,8 @@ from gne.gne_stats import components2tot
 from gne.gne_photio import get_lines, get_limits
 from gne.gne_plots import make_testplots
 
-def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
+def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
+        mp,boxside,effvol,
         inputformat='hdf5',outpath=None,out_ending=None,
         units_h0=False,units_Gyr=False,units_L=0,
         model_nH_sfr='kashino19',model_U_sfr='kashino19',
@@ -154,7 +155,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     # Generate header in the output file from input
     outfile = io.generate_header(infile,redshift,snap,
-                                 h0,omega0,omegab,lambda0,vol,mp,
+                                 h0,omega0,omegab,lambda0,
+                                 mp,boxside,effvol,
                                  units_h0,outpath=outpath,
                                  out_ending=out_ending,
                                  verbose=verbose)
