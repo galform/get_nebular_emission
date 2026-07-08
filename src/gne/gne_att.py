@@ -239,12 +239,9 @@ def gne_att(infile, outpath=None,out_ending=None,
     verbose : boolean
        If True print out messages.
     '''
-    # Add attenuation information to the line file
+    # Get emission lines
     lfile= io.get_outnom(infile,dirf=outpath,nomf=out_ending,
                          verbose=verbose)
-    nattrs = io.add2header(lfile,['attmod'],[attmod],verbose=verbose)
-
-    # Get emission lines
     f = h5py.File(lfile, 'r') 
     header = f['header']
     zz = header.attrs['redshift']
@@ -269,7 +266,12 @@ def gne_att(infile, outpath=None,out_ending=None,
         att_ratios= {rr+name: f['data/'+rr+name][:]
                      for name in att_rlines}
     else: 
-        mgasr_type = io.decode_string_list(header.attrs['mgasr_type'])
+        mgasr_type_attr = header.attrs.get('mgasr_type')
+        if mgasr_type_attr is not None:
+            mgasr_type = io.decode_string_list(mgasr_type_attr)
+        else:
+            if verbose: print('WARNING: No attenuation calculation, as no gas information found in '+infile)
+            return
 
         lzgas = f[group+'/lz_sfr'][:]  # log10(Z_cold_gas)
         lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
@@ -291,6 +293,9 @@ def gne_att(infile, outpath=None,out_ending=None,
             lzgas_agn = f[group_agn+'/lz_agn'][:] # log10(Z_cold_gas)
     f.close()
 
+    # Add attenuation information to the line file
+    nattrs = io.add2header(lfile,['attmod'],[attmod],verbose=verbose)
+    
     # Get wavelengths and prep attenuation coefficients
     wavelengths = c.line_wavelength[photmod_sfr]
     coeff = np.full(neblines.shape,c.notnum)

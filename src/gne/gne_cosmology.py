@@ -147,7 +147,7 @@ def set_cosmology(omega0=None,omegab=None,lambda0=None,h0=None, \
         r_comoving[i] = r_comoving[i-1] + romberg(f,z1,z2)
 
     global kmpersec_to_mpchpergyr
-    kmpersec_to_mpchpergyr = c.kilo * (Gyr/Mpc) * h
+    kmpersec_to_mpchpergyr = c.kilo*(Gyr/Mpc)*h
 
     return
 
@@ -433,7 +433,7 @@ def comoving_volume(z, verbose=False):
     if (z<zlow_lim):
         return 0.0
     
-    dr = comoving_distance(z)*Mpc/(c/H100) #Unitless: DC/DH
+    dr = comoving_distance(z)*Mpc/(c.c/H100) #Unitless: DC/DH
     x = np.sqrt(np.abs(WK))*dr
     if np.ndim(z) > 0:
         ratio = np.ones_like(z)*-1.0
@@ -463,7 +463,7 @@ def comoving_volume(z, verbose=False):
                 y = -y
             ratio = 1.0 + y/5.0 + np.power(y,2)*(2.0/105.0)
 
-    vol = 4.0*np.pi*ratio*np.power((c/H100)*dr/Mpc,3)/3.0
+    vol = 4.0*np.pi*ratio*np.power((c.c/H100)*dr/Mpc,3)/3.0
 
     if verbose:
         print('cV (z={:.1f}) = {:.4e} (Mpc/h)^-3'.format(z,vol))
@@ -503,8 +503,8 @@ def dVdz(z):
     """
     dVdz() : returns the comoving volume element dV/dz
              at redshift, z, for all sky (Mpc/h)^3.
-             dV = (c/H100)*(1+z)**2*D_A**2/E(z) dz dOmega
-             f(z) = (c/H100)/E(z)
+             dV = (c.c/H100)*(1+z)**2*D_A**2/E(z) dz dOmega
+             f(z) = (c.c/H100)/E(z)
              ==> dV/dz(z,all sky) = 4*PI*f(z)*(1+z)**2*D_A**2
              
     USAGE: dVdz = dVdz(z)
@@ -563,7 +563,7 @@ def band_corrected_distance_modulus(z):
     if (z < zlow_lim):
         bcdm = 0.0
     else:
-        dref = 10.0/mega # 10pc in Mpc
+        dref = 10.0/c.mega # 10pc in Mpc
         dL = luminosity_distance(z)
         bcdm = 5.0*np.log10(dL/dref) - 2.5*np.log10(1.0+z)
     return bcdm
@@ -711,7 +711,7 @@ def ndeg2nV(ndeg,z1,z2,verbose=False):
     nV = ndeg*dz*asky/dV
     
     if verbose:
-        print('n (dz={:.1f}) = {:.4e} (Mpc/h)^-3'.format(dz,nV))
+        print(f'{ndeg} deg-2 (dz={dz:.1f}) = {nV:.4e} (Mpc/h)^-3')
     
     return nV
 

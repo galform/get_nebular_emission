@@ -225,7 +225,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
 
     # Change units into erg/s 
     if (photmod_sfr == 'gutkin16'):
-        # Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
+        # Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr (Cha IMF)
         sfr = np.zeros(shape=np.shape(lssfr))
         for comp in range(ncomp):
             sfr[:,comp] = 10**(lms[:,comp]+lssfr[:,comp])
@@ -270,7 +270,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
                              extra_params_names=['h_gas'],
                              extra_params_labels=['Scalelength(Mpc)'],
                              verbose=verbose)
-    
+
     #----------------NLR AGN calculation------------------------
     if AGN:
         if verbose: print('AGN:')

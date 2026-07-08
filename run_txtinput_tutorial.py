@@ -127,11 +127,11 @@ model_U_agn    = 'panuzzo03'
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
-#mgas_r = None
+#mgas_r = [None]
 mgas_r = [[11,23],[12,21]]
 
 # If mgas_r given, the type of component needs to be specified
-# mgasr_type = 'disc', 'bulge' or None
+# mgasr_type = ['disc', 'bulge' or None]
 mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:

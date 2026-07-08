@@ -120,6 +120,35 @@ class TestPredict(unittest.TestCase):
         vals = st.components2tot(xx, log10input=False)
         np.testing.assert_allclose(vals,expected, atol=0.001)
 
+    def test_n_gt_x(self):
+        # Simple 1D array
+        xedges = np.array([0, 1, 2, 3])
+        array = np.array([0, 1, 2, 3, 4])
+        expected = np.array([4, 3, 2, 1])
+        vals = st.n_gt_x(xedges, array)
+        np.testing.assert_allclose(vals, expected)
+        
+        # All elements above all edges
+        xedges = np.array([-2, -1])
+        array = np.array([0, 1, 2])
+        expected = np.array([3, 3])
+        vals = st.n_gt_x(xedges, array)
+        np.testing.assert_allclose(vals, expected)
+        
+        # No elements above any edge
+        xedges = np.array([10, 20])
+        array = np.array([0, 1, 2, 3])
+        expected = np.array([0, 0])
+        vals = st.n_gt_x(xedges, array)
+        np.testing.assert_allclose(vals, expected)
+                
+        # Array with duplicates
+        xedges = np.array([1, 2])
+        array = np.array([1, 1, 2, 2, 3])
+        expected = np.array([3, 1])
+        vals = st.n_gt_x(xedges, array)
+        np.testing.assert_allclose(vals, expected)
+    
         
     def test_safe_sum(self):
         arrays = [np.array([1,2,c.notnum]),np.array([2,3,4])]

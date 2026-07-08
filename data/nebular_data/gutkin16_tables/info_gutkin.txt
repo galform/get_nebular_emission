@@ -10,4 +10,4 @@ http://www.iap.fr/neogal/ewExternalFiles/README-1.txt
 [nh] = [cm**-3] ; hydrogen density
 [(C/O)/(C/O)sol]= dimensionless where (C/O)sol=0.44
 [mup] = [M_sun]; upper mass cutoff of the IMF
-[intensities of emission lines] = [Lbol_sun per unit SFR in 10^8yr]; calculated assuming constant SFR during 10^8yr and a Chabrier IMF. Lbol_sun = 3.826E+33egr s^-1
+[intensities of emission lines] = [Lbol_sun (erg/s) per unit SFR in 10^8yr]; calculated assuming constant SFR during 10^8yr and a Chabrier IMF. Lbol_sun = 3.826E+33 egr/s.

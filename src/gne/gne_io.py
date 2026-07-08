@@ -10,21 +10,6 @@ import glob
 import numpy as np
 import gne.gne_const as c
 
-def stop_if_no_file(infile):
-    '''
-    It stops the program if a file does not exists
-
-    Parameters
-    -------
-    infile : string
-        Input file
-    '''
-    
-    if (not os.path.isfile(infile)):
-        print('STOP: no input file {}'.format(infile)) 
-        sys.exit()
-    return
-
 
 def check_file(infile,verbose=False):
     '''
@@ -131,26 +116,38 @@ def get_metadata(filenom, verbose=True):
     """
     f = h5py.File(filenom, 'r')
     header = f['header']
-    boxside = header.attrs['boxside_Mpc']
-    veff = header.attrs['eff_vol_Mpc3']
+    attrs = header.attrs
+    # Volume with fallback
+    if 'eff_vol_Mpc3' in attrs:
+        veff = attrs['eff_vol_Mpc3']
+    elif 'vol_Mpc3' in attrs:
+        veff = attrs['vol_Mpc3']
+    else:
+        raise KeyError("No volume field in header.attrs")
+
+    # Box side with calculation fallback
+    if 'boxside_Mpc' in attrs:
+        boxside = attrs['boxside_Mpc']
+    else:
+        boxside = pow(veff, 1/3)
 
     metadata = {
-        'redshift': header.attrs['redshift'],
-        'omega0': header.attrs['omega0'],
-        'omegab': header.attrs['omegab'],
-        'lambda0': header.attrs['lambda0'],
-        'h0': header.attrs['h0'],
+        'redshift': attrs['redshift'],
+        'omega0': attrs['omega0'],
+        'omegab': attrs['omegab'],
+        'lambda0': attrs['lambda0'],
+        'h0': attrs['h0'],
         'vol_eff': veff,
-        'photmod_sfr': header.attrs['photmod_sfr'],
+        'photmod_sfr': attrs['photmod_sfr'],
         'AGN': 'agn_data' in f.keys(),
-        'att': 'attmod' in header.attrs,
+        'att': 'attmod' in attrs,
     }
     # AGN info
     if metadata['AGN']:
-        metadata['photmod_agn'] = header.attrs['photmod_NLR']
+        metadata['photmod_agn'] = attrs['photmod_NLR']
     # Attenuation info
     if metadata['att']:
-        metadata['attmod'] = header.attrs['attmod']
+        metadata['attmod'] = attrs['attmod']
     # Flux info
     fsfr = f['sfr_data']
     required_flux_datasets =['Halpha_sfr_flux','Hbeta_sfr_flux',
@@ -165,7 +162,7 @@ def get_metadata(filenom, verbose=True):
     if effdiff>1e-5 and verbose:
         effp = 100*veff/(boxside**3)
         print(f'    Side of the effective box = {eff_boxside:.1f} Mpc;') 
-        print(f'     out of the original {boxside:.1f} Mpc ({effp:.1f}%)\n')
+        print(f'     out of the original {boxside:.1f} Mpc ({effp:.1f}% in volume)\n')
     
     return metadata
 

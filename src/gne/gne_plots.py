@@ -22,6 +22,7 @@ warnings.filterwarnings('ignore', message='Input line .* contained no data')
 import gne.gne_const as c
 import gne.gne_io as io
 import gne.gne_stats as st
+import gne.gne_plot_obs as obs
 from gne.gne_stats import n_gt_x
 from gne.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
 from gne.gne_cosmology import set_cosmology
@@ -30,7 +31,7 @@ import gne.gne_style
 plt.style.use(gne.gne_style.style1)
 
 cmap = 'jet'
-n4contour = 1000
+n4contour = 3000
 min_Lbol = 42 # Based on Griffin+2020, fig 14
 max_Lbol = 50
 min_Ms = 8    # To be obtained from sim. res. ###here
@@ -54,57 +55,6 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
               for a in alphas]
 
     return levels,colors
-
-
-def lines_BPT(x, BPT, line):
-    '''
-    
-    Boundary lines for the distinction of ELG types in BPT diagrams.
-    It assummes OIII/Hb on the y axis.
- 
-    Parameters
-    ----------
-    
-    x : floats
-       Array of points on the x axis to define the lines. 
-       It should correspond to the wanted BPT.
-    BPT : string
-       Key corresponding to the wanted x axis for the BPT.
-    line : string
-       Key corresponding to the wanted boundary line for the BPT.
-    
-    Returns
-    -------
-    boundary : floats
-    Values of the boundary line in the desired range.
-    '''
-
-    boundary = np.zeros(len(x)); boundary.fill(-999.)
-    
-    if BPT=='NII':
-        if line=='Kauffmann2003':
-            x0 = 0.05
-            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.3
-        elif line=='Kewley2001':
-            x0 = 0.47
-            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.19
-        elif line=='LINER_NIIlim':
-            boundary = np.log10(0.6) # Kauffmann 2003
-        elif line=='LINER_OIIIlim':
-            boundary = np.log10(3) # Kauffmann 2003
-    elif BPT=='SII':
-        if line=='Kewley2001':
-            x0 = 0.32
-            boundary[x<x0] = 0.72/(x[x<x0] - x0) + 1.3
-        elif line=='Kewley2006':
-            boundary = 1.89*x + 0.76
-    else:
-        print('STOP (gne_plots.lines_BPT): ',
-              'BPT plot not recognized.')
-        return None
-            
-    return boundary
-
 
 
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
@@ -507,10 +457,10 @@ def lines_BPT(x, BPT, line):
 #                    
 #                    x = np.arange(xmin, xmax+0.1, 0.03)
 #                    
-#                    SFR_Composite = lines_BPT(x,'NII','SFR_Composite')
-#                    Composite_AGN = lines_BPT(x,'NII','Composite_AGN')
-#                    LINER_NIIlim = lines_BPT(x,'NII','LINER_NIIlim')
-#                    LINER_OIIIlim = lines_BPT(x,'NII','LINER_OIIIlim')
+#                    SFR_Composite = obs.lines_BPT(x,'NII','SFR_Composite')
+#                    Composite_AGN = obs.lines_BPT(x,'NII','Composite_AGN')
+#                    LINER_NIIlim = obs.lines_BPT(x,'NII','LINER_NIIlim')
+#                    LINER_OIIIlim = obs.lines_BPT(x,'NII','LINER_OIIIlim')
 #                    
 #                    plt.plot(x[x<0.05],SFR_Composite[x<0.05],'k--',markersize=3)
 #                    plt.plot(x[x<0.47],Composite_AGN[x<0.47],'k.',markersize=3)
@@ -524,8 +474,8 @@ def lines_BPT(x, BPT, line):
 #                    
 #                    x = np.arange(xmin, xmax+0.1, 0.03)
 #                    
-#                    SFR_AGN = lines_BPT(x,'SII','SFR_AGN')
-#                    Seyfert_LINER = lines_BPT(x,'SII','Seyfert_LINER')
+#                    SFR_AGN = obs.lines_BPT(x,'SII','SFR_AGN')
+#                    Seyfert_LINER = obs.lines_BPT(x,'SII','Seyfert_LINER')
 #                    
 #                    plt.plot(x[x<0.32], SFR_AGN[x<0.32], 'k.', markersize=3)
 #                    
@@ -951,7 +901,7 @@ def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
     first_vol = True
 
     for ivol in list_subvols:
-        filenom = os.path.join(root+'0',endf) #; print(filenom); exit()
+        filenom = os.path.join(root+ivol,endf) #; print(filenom); exit()
         f = h5py.File(filenom, 'r'); header = f['header']
 
         # Read information from file
@@ -1069,71 +1019,6 @@ def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
     return plotnom
 
 
-def get_obs_bpt(redshift,bpt):
-    '''
-    Get observational data for BPT diagrams at a given redshift
-    
-    Parameters
-    ----------
-    redshift : float
-       Redshift of interest
-    bpt: string
-        Type of BPT diagram: 'NII' (OIII/Hbeta vs N2/Ha)
-        or 'SII' (OIII/Hbeta vs S2/Ha)
-
-    Returns
-    -------
-    xobs, yobs : array of floats
-       Ratios for each observed spectral emission line
-    obsdata : boolean
-       True if there is any observational data at the given redshift
-    '''
-
-    xobs = -999.; yobs = -999.; obsdata = False
-
-    # Use different data sets for different redshifts
-    if redshift <= 0.2:
-        obsdata = True
-        obsfile = os.path.join(c.obs_data_dir,'favole2024.txt')
-        l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(15,9),unpack=True)
-        xx, yy = [np.zeros(len(l1)) for i in range(2)]
-        ind = np.where((l1>0.) & (l2>0.))
-        if (np.shape(ind)[1]>0): #O3/Hb
-            yy[ind] = np.log10(l1[ind]/l2[ind])
-            
-        if bpt=='NII': #N2/Ha
-            l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(18,6),unpack=True)
-            ind = np.where((l1>0.) & (l2>0.))
-            if (np.shape(ind)[1]>0):
-                xx[ind] = np.log10(l1[ind]/l2[ind]) 
-        elif bpt=='SII': #S2/Ha
-            l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(21,6),unpack=True)
-            ind = np.where((l1>0.) & (l2>0.))
-            if (np.shape(ind)[1]>0):
-                xx[ind] = np.log10(l1[ind]/l2[ind]) 
-
-    elif 1.45 <= redshift <= 1.75:
-        obsdata = True
-        if bpt=='NII':
-            obsfile = os.path.join(c.obs_data_dir,'NII_Kashino.txt')
-            yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-                
-        elif bpt=='SII':
-            obsfile = os.path.join(c.obs_data_dir,'SII_Kashino.txt')
-            yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-
-    if obsdata:
-        ind = np.where((xx>c.notnum) & (yy>c.notnum))
-        if (np.shape(ind)[1]>0):
-            xobs = xx[ind]
-            yobs = yy[ind]
-        else:
-            obsdata = False
-
-    return xobs,yobs,obsdata
-
 
 def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
                          alpha=-1.7,verbose=True):
@@ -1173,7 +1058,7 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
-        xobs, yobs, obsdata = get_obs_bpt(0.,bpt)
+        xobs, yobs, obsdata = obs.get_obs_bpt(0.,bpt)
         if obsdata and bpt=='NII':
             x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
             levels,colors= contour2Dsigma()
@@ -1187,17 +1072,17 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
         # Lines
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
         if bpt=='NII':
-            yline = lines_BPT(xline,bpt,'Kauffmann2003')
+            yline = obs.lines_BPT(xline,bpt,'Kauffmann2003')
             axn.plot(xline,yline,'k--')
 
-            yline = lines_BPT(xline,bpt,'Kewley2001')
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
             axn.plot(xline,yline,'k-')
             
         elif bpt=='SII':
-            yline = lines_BPT(xline,bpt,'Kewley2001')
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
             axs.plot(xline,yline,'k-')
 
-            ylinel = lines_BPT(xline,bpt,'Kewley2006')
+            ylinel = obs.lines_BPT(xline,bpt,'Kewley2006')
             axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
 
@@ -1345,8 +1230,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
     # Prep plots
-    fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15),
-                                   layout='constrained')
+    fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15))
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
     xmaxs = [0.8,0.9]
@@ -1364,7 +1248,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
-        xobs, yobs, obsdata = get_obs_bpt(redshift,bpt)
+        xobs, yobs, obsdata = obs.get_obs_bpt(redshift,bpt)
         if obsdata and bpt=='NII':
             x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
             levels,colors= contour2Dsigma()
@@ -1376,7 +1260,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
     # Read data in each subvolume and add data to plots
     seltot = 0
-    chatot = None
+    chatot=None; O3Hb_tot=None; N2Ha_tot=None; S2Ha_tot=None 
     for ivol in subvols:
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
@@ -1445,7 +1329,6 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             print('STOP BPT plots: not enough adequate data')
             return None
 
-        # For colourbar
         if AGN:
             Halpha_ratio = Ha_agn[ind]/Ha[ind]
         else:
@@ -1503,32 +1386,18 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         seltot = seltot + np.shape(sel)[1]
 
         # Model spectral line ratios
-        yy = O3Hb[sel] #O3/Hb
-        cha = Halpha_ratio[sel]
-
-        xx = N2Ha[sel] #N2/Ha
-        axn.scatter(xx,yy, c=cha,s=50, marker='o', cmap=cmap)
-
-        xx = S2Ha[sel] #S2/Ha
-        axs.scatter(xx,yy, c=cha,s=50, marker='o', cmap=cmap)
-
-        # Join all data for the colourbar
         if chatot is None:
-            chatot = cha
+            chatot = Halpha_ratio[sel]
+            O3Hb_tot = O3Hb[sel] 
+            N2Ha_tot = N2Ha[sel]
+            S2Ha_tot = S2Ha[sel] 
         else:
-            chatot = np.append(chatot,cha)
+            chatot = np.append(chatot,Halpha_ratio[sel])
+            O3Hb_tot = np.append(O3Hb_tot, O3Hb[sel])
+            N2Ha_tot = np.append(N2Ha_tot, N2Ha[sel])
+            S2Ha_tot = np.append(S2Ha_tot, S2Ha[sel]) 
 
-    # Add colorbar
-    sm = cm.ScalarMappable(cmap=cmap) # Create ScalarMappable
-    sm.set_array(chatot)    
-    cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
-    if AGN:
-        collabel = (r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'+
-                    f' (z={redshift:.1f})')
-    else:
-        collabel = r'$L_{\rm H_{\alpha}}$'+f' (z={redshift:.1f})'
-    cbar.set_label(collabel,rotation=270,labelpad=60)        
-
+    # Information on the selection
     if verbose:
         if ismagr and ismagk:
             magmsg = '(R and K mag. used for selection)'
@@ -1540,23 +1409,85 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             magmsg = ''
         print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
 
+    # BPT classification lines
     for ii, bpt in enumerate(['NII','SII']):
-        # Lines
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
         if bpt=='NII':
-            yline = lines_BPT(xline,bpt,'Kauffmann2003')
+            yline = obs.lines_BPT(xline,bpt,'Kauffmann2003')
             axn.plot(xline,yline,'k--')
 
-            yline = lines_BPT(xline,bpt,'Kewley2001')
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
             axn.plot(xline,yline,'k-')
             
         elif bpt=='SII':
-            yline = lines_BPT(xline,bpt,'Kewley2001')
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
             axs.plot(xline,yline,'k-')
 
-            ylinel = lines_BPT(xline,bpt,'Kewley2006')
+            ylinel = obs.lines_BPT(xline,bpt,'Kewley2006')
             axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
+    # Contour plots for model galaxies
+    if AGN:
+        agn_bins = [
+            {'sel': lambda x: x < 0.3,'color':'blue',
+             'label': r'$L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}<0.3$'},
+            {'sel': lambda x: (x >= 0.3) & (x <= 0.7),'color':'lime',
+             'label': r'$0.3\leq L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}\leq0.7$'},
+            {'sel': lambda x: x > 0.7,'color':'red',
+             'label': r'$L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}>0.7$'}]
+    else:
+        agn_bins = [
+            {'sel': lambda x: np.ones_like(x, dtype=bool),'color':'blue',
+             'label': r'$L_{\rm H\alpha}$'+f' (z={redshift:.1f})'}]
+
+    ntot = len(chatot)
+    proxies = []; labels = []
+    for ib, agn_bin in enumerate(agn_bins):
+        ind = agn_bin['sel'](chatot)
+        nsel = np.sum(ind)
+
+        leg = agn_bin['label']
+        col = agn_bin['color']
+        per = nsel*100/ntot
+        print(f'{per:.1f}% of {leg} ({nsel} out of {ntot})')
+        
+        if nsel == 0:
+            continue
+        
+        yy = O3Hb_tot[ind] 
+        for ii, bpt in enumerate(['NII','SII']):
+            if bpt=='NII':
+                xx = N2Ha_tot[ind]
+                if nsel > n4contour:
+                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
+                    levels, colors = contour2Dsigma(color=col)
+                    axn.contour(xc,yc,zc,levels=levels,colors=colors,label=leg)
+                else:
+                    axn.scatter(xx,yy,c=col, s=50,marker='o')
+                # For legend
+                proxy = mlines.Line2D([],[],color=col,marker='o',markersize=8)
+                proxies.append(proxy)
+                labels.append(leg+f' ({per:.1f}%)')
+            elif bpt=='SII':
+                xx = S2Ha_tot[ind]
+                if nsel > n4contour:
+                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
+                    levels, colors = contour2Dsigma(color=col)
+                    axs.contour(xc,yc,zc,levels=levels,colors=colors)
+                else:
+                    axs.scatter(xx,yy,c=col, s=50,marker='o')
+
+    # Single shared legend on top
+    if len(proxies) == 0:
+        print('WARNING plot_bpts: no proxies for legend, skipping legend.')
+    else:
+        fig.legend(proxies, labels,
+                   loc='lower center', bbox_to_anchor=(0.5, 1.0),
+                   ncol=len(proxies), frameon=True,
+                   title=f'z = {redshift:.2f}',
+                   fancybox=True, shadow=False)
+        fig.subplots_adjust(top=0.98)
+    
     # Output
     bptnom = io.get_plotfile(root,endf,'bpt')
     plt.savefig(bptnom)
@@ -1860,8 +1791,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
                             label='Dust-attenuated')
             
         # Set axis properties
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(left=xmin)
+        #ax.set_ylim(bottom=ymin)
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
         if (iline==0) and len(ind[0]) > 0:
@@ -1901,7 +1832,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
 
     # Get metadata
     vol_eff = metadata['vol_eff']
-    redshift = metadata['redshift']    
+    redshift = metadata['redshift']
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
     if AGN:
@@ -1986,7 +1917,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         flux_int = [Ha, HaN2, O3, O3Hb]
         if att:
             flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
-        
+
         # Calculate the cumulative numbers for each line
         for iline in range(nlines):
             # Intrinsic flux
@@ -2014,20 +1945,18 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
     nfigs = 2
     fig, axes = plt.subplots(1, 2, figsize=(30,21))
     axes = axes.flatten()
-    ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
+    ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3})$'
     xmin = fmin
     xmax = fmax
-    ymin = -2
-    ymax = -1.0
-
+    
     line = -2
     for ifig in range(nfigs):
         ax = axes[ifig]
         xtit = r'$\log_{10}(F_{\rm lim}/\mathrm{erg\,s^{-1}\,cm^{-2}})$'
         ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+                    
         line += 2
         for iline in [line,line+1]:
             color = plt.cm.tab10(iline % 10)
@@ -2048,11 +1977,21 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
                     y = np.log10(yy[ind])
                     ll = line_labels[iline]+'(att.)'
                     ax.plot(x, y,'--',color=color,label=ll)
+
+        if ifig == 0: #Add Pozzetti's model no3 if in z range
+            xobs,yobs,obsdata = obs.get_pozzetti(metadata=metadata,
+                                                 outpath=None,
+                                                 verbose=verbose)
+            if obsdata:
+                ll = 'Model3 Pozzetti+2018 (att.)'
+                ax.plot(xobs, yobs, '-',color='gray',label=ll)
+                #if verbose:
+                #    print('Model3 Pozzetti+2018: ',xobs,yobs)
             
         # Legend
         if len(ind[0]) > 0:
             ax.legend(loc='best',frameon=False)
-    fig.suptitle(f'z = {redshift}')
+    fig.suptitle(f'z = {redshift:.1f}')
     plt.tight_layout()
     
     # Output
@@ -2140,21 +2079,21 @@ def make_testplots(snap,ending,outpath=None,
     bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
                     metadata=metadata,verbose=verbose)
     
-    # Make line LFs
-    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-                   metadata=metadata,verbose=verbose)
-    
-    # Cumulative numbers with flux limits (if possible) 
-    if (metadata['flux'] and metadata['redshift']>0):
-        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-                                     outpath=outpath,metadata=metadata,
-                                     verbose=verbose)
-    else:
-        if verbose:
-            if (metadata['flux']):
-                print(f'WARNING: Skipping cumulative flux plot at z=0.')
-            else:
-                print(f'WARNING: No flux data found in {filenom}.')
+#    # Make line LFs
+#    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+#                        metadata=metadata,verbose=verbose)
+#    
+#    # Cumulative numbers with flux limits (if possible)
+#    if (metadata['flux'] and metadata['redshift']>0):
+#        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
+#                                     outpath=outpath,metadata=metadata,
+#                                     verbose=verbose)
+#    else:
+#        if verbose:
+#            if (metadata['flux']):
+#                print(f'WARNING: Skipping cumulative flux plot at z=0.')
+#            else:
+#                print(f'WARNING: No flux data found in {filenom}.')
 
     print(f'SUCCESS: plots in {plots_dir}')
     return

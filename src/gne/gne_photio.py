@@ -307,7 +307,7 @@ def get_lines_gutkin16(lu, lzgas, filenom, lnH=None,
         ngal = uu.size
         int1_zu, int2_zu, int3_zu, int4_zu = [np.zeros((ngal,nemline)) for i in range(4)]
 
-        # Interplate over Zgas and U
+        # Interpolate over Zgas and U
         int1_zu = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid1)
         int4_zu = st.bilinear_interpl(zz,uu,zredges,uedges,emline_grid4)
 
@@ -338,8 +338,9 @@ def get_lines_gutkin16(lu, lzgas, filenom, lnH=None,
 
 def read_feltre16_grids(xid_phot, alpha_phot):
     """
-    Read the photoionisation model tables from Gutkin+16
+    Read the photoionisation model tables from Feltre+16
     into matrices per each value of nH.
+    Units: erg/s for a central Lacc=10^45 erg/s
     
     Parameters
     ----------
