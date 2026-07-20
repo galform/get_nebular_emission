@@ -312,15 +312,12 @@ def gne_att(infile, outpath=None,out_ending=None,
     elif attmod == 'ratios':
         # Add components if attenuation ratios given for the whole
         first_value = next(iter(att_ratios.values()))
-        if first_value.ndim != 2 and coeff.ndim == 3:
-            neblines = np.sum(neblines, axis=1) 
+        if first_value.ndim == 1:
+            neblines = np.sum(neblines, axis=1)
             coeff = np.full(neblines.shape,c.notnum)
-
-        # Assign ratios to coeff matrix, adequately
-        for line in att_rlines:
-            ii = find_line_index(line, c.line_names[photmod_sfr])
-            if ii is not None:
-                coeff[ii,:] = att_ratios[rr+line]
+        elif first_value.ndim != ncomp:
+            if verbose: print('WARNING: No attenuation calculation, different number of components in '+infile)
+            return           
 
         # Assign ratios to coeff matrix, adequately
         valid_lnames = []
@@ -334,8 +331,8 @@ def gne_att(infile, outpath=None,out_ending=None,
         valid_indices = np.array([i for i, line in enumerate(lnames)
                                   if line in valid_lnames])
         lnames = lnames[valid_indices]
-        neblines = neblines[valid_indices] # Modifies 1st axis with lines
-        coeff = coeff[valid_indices] # Modiies 1st axis with lines
+        neblines = neblines[valid_indices]  # Modifies 1st axis with lines
+        coeff = coeff[valid_indices]        # Modifies 1st axis with lines
                 
         if AGN:
             valid_lnames = []
@@ -349,8 +346,8 @@ def gne_att(infile, outpath=None,out_ending=None,
             valid_indices = np.array([i for i, line in enumerate(lnames_agn)
                                       if line in valid_lnames])
             lnames_agn = lnames_agn[valid_indices]
-            neblines_agn = neblines_agn[valid_indices] # Modify first axis with lines
-            coeff_agn = coeff_agn[valid_indices] # Modify first axis with lines
+            neblines_agn = neblines_agn[valid_indices] # Modify 1st axis with lines
+            coeff_agn = coeff_agn[valid_indices]       # Modify 1st axis with lines
     else:
         Rv = io.get_param(att_config, 'Rv', c.Rv)
         costheta = io.get_param(att_config, 'costheta', c.costheta) 

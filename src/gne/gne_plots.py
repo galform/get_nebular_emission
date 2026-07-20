@@ -30,7 +30,7 @@ from gne.gne_flux import flux2L
 import gne.gne_style
 plt.style.use(gne.gne_style.style1)
 
-cmap = 'jet'
+cmap = 'magma'
 n4contour = 3000
 min_Lbol = 42 # Based on Griffin+2020, fig 14
 max_Lbol = 50
@@ -38,6 +38,12 @@ min_Ms = 8    # To be obtained from sim. res. ###here
 max_Ms = 12   # To be obtained from sim. res. ###here
 
 markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '_']
+
+def get_ngrid_nlev(nobj):
+    ngrid = 100 if nobj > n4contour*3 else 50
+    nlev  = None if nobj > n4contour*3 else 3
+    return ngrid, nlev
+
 
 def contour2Dsigma(n_levels=None,color='darkgrey'):
     '''
@@ -48,11 +54,11 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
         levels=c.sigma_2Dprobs[0:n_levels]
     else:
         levels=c.sigma_2Dprobs.copy()
-        
-    nl = len(levels); levels.insert(0,0)
+    
+    nl = len(levels)
+    levels.insert(0,0)
     alphas = np.linspace(0.2, 1, nl)[::-1].tolist()
-    colors = [(*mcol.to_rgba(color, alpha=a),)
-              for a in alphas]
+    colors = [(*mcol.to_rgba(color, alpha=a),)for a in alphas]
 
     return levels,colors
 
@@ -680,57 +686,60 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
 #
 
 
-def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
-    """
-    Plot components as a contour or scatter plot,
-    on given axis and return legend elements.
-    
-    Parameters:
-    -----------
-    ax : matplotlib axis
-        Axis to plot on
-    xx : ndarray
-        X vayyes for each component
-    yy : ndarray
-        Y vayyes for each component
-    tots : ndarray
-        Total number of elements for each component
-    ins : ndarray
-        Number within limits for each component
-    cm : matplotlib colormap, optional
-        Colormap to use
-        
-    Returns:
-    --------
-    proxies : list
-        List of proxy artists for legend
-    labels : list
-        List of labels for legend
-    """
-    proxies = []; labels = []
-
-    n_comp = np.shape(xx)[1]
-    for i in range(n_comp):
-        ind = np.where((xx[:, i] > c.notnum) & (yy[:, i] > c.notnum))[0]
-        if len(ind) > 0:
-            x = xx[ind, i]
-            y = yy[ind, i]
-            col = np.array([cm(float(i) / n_comp)])
-            
-            if len(ind) > n4contour:
-                xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=100)
-                levels, colors = contour2Dsigma(color=col)
-                contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
-                proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
-            else:
-                scatter = ax.scatter(x, y, c=col)
-                proxies.append(scatter)
-            
-            leg = "{} component {} ({:.1f}% in)".format(
-                int(tots[i]), i, ins[i]*100./tots[i])
-            labels.append(leg)
-    
-    return proxies, labels
+#def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
+#    """
+#    Plot components as a contour or scatter plot,
+#    on given axis and return legend elements.
+#    
+#    Parameters:
+#    -----------
+#    ax : matplotlib axis
+#        Axis to plot on
+#    xx : ndarray
+#        X vayyes for each component
+#    yy : ndarray
+#        Y vayyes for each component
+#    tots : ndarray
+#        Total number of elements for each component
+#    ins : ndarray
+#        Number within limits for each component
+#    cm : matplotlib colormap, optional
+#        Colormap to use
+#        
+#    Returns:
+#    --------
+#    proxies : list
+#        List of proxy artists for legend
+#    labels : list
+#        List of labels for legend
+#    """
+#    proxies = []; labels = []
+#
+#    n_comp = np.shape(xx)[1]
+#    for i in range(n_comp):
+#        ind = np.where((xx[:, i] > c.notnum) & (yy[:, i] > c.notnum))[0]
+#        nsel = len(ind)
+#        if nsel > 0:
+#            x = xx[ind, i]
+#            y = yy[ind, i]
+#            col = np.array([cm(float(i) / n_comp)])
+#            
+#            if nsel > n4contour:
+#                ngrid = 50 if nsel < n4contour*3 else 100
+#                xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=ngrid)
+#                nlev = 2 if nsel < n4contour*3 else None
+#                levels, colors = contour2Dsigma(n_levels=nlev, color=col)
+#                contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
+#                proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
+#            else:
+#                scatter = ax.scatter(x, y, c=col)
+#                proxies.append(scatter)
+#            
+#            leg = "{} component {} ({:.1f}% in)".format(
+#                int(tots[i]), i, ins[i]*100./tots[i])
+#            labels.append(leg)
+#    
+#    return proxies, labels
 
 
 def plot_comp_quartiles(ax, xx, yy, xmin, xmax, tots, ins, cm=plt.cm.tab20):
@@ -1040,6 +1049,7 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
     # Prep plots
     fig, (axn, axs) = plt.subplots(1, 2, figsize=(32, 17),
                                    layout='constrained')
+    col = 'darkgrey'
     #plt.subplots_adjust(right=0.85, top=0.9) 
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
@@ -1057,17 +1067,23 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
             axs.set_xlim(xmins[ii], xmaxs[ii])
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
-
+            
         xobs, yobs, obsdata = obs.get_obs_bpt(0.,bpt)
-        if obsdata and bpt=='NII':
-            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
-            levels,colors= contour2Dsigma()
-            contour = axn.contourf(x, y, z, levels=levels,colors=colors)
-        elif obsdata and bpt=='SII':
-            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
-            levels,colors= contour2Dsigma()
-            contour = axs.contourf(x, y, z, levels=levels,colors=colors)
-
+        nobs = len(xobs)
+        if nobs > n4contour:
+            ngrid, nlev = get_ngrid_nlev(nobs)
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
+            levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+            if obsdata and bpt=='NII':
+                contour = axn.contourf(x,y,z,levels=levels,colors=colors)
+            elif obsdata and bpt=='SII':
+                contour = axs.contourf(x,y,z,levels=levels,colors=color)
+        else:
+            if obsdata and bpt=='NII':
+                axn.scatter(xobs,yobs,colors=col)
+            elif obsdata and bpt=='SII':
+                axs.scatter(xobs,yobs,colors=col)
+            
     for ii, bpt in enumerate(['NII','SII']):
         # Lines
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
@@ -1231,6 +1247,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
     # Prep plots
     fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15))
+    col = 'darkgrey'
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
     xmaxs = [0.8,0.9]
@@ -1249,14 +1266,20 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
         xobs, yobs, obsdata = obs.get_obs_bpt(redshift,bpt)
-        if obsdata and bpt=='NII':
-            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
-            levels,colors= contour2Dsigma()
-            contour = axn.contourf(x, y, z, levels=levels,colors=colors)
-        elif obsdata and bpt=='SII':
-            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
-            levels,colors= contour2Dsigma()
-            contour = axs.contourf(x, y, z, levels=levels,colors=colors)
+        nobs = len(xobs)
+        if nobs > n4contour:
+            ngrid, nlev = get_ngrid_nlev(nobs)
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
+            levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+            if obsdata and bpt=='NII':
+                contour = axn.contourf(x,y,z,levels=levels,colors=colors)
+            elif obsdata and bpt=='SII':
+                contour = axs.contourf(x,y,z,levels=levels,colors=colors)
+        else:
+            if obsdata and bpt=='NII':
+                axn.scatter(xobs,yobs,colors=col)
+            elif obsdata and bpt=='SII':
+                axs.scatter(xobs,yobs,colors=col)
 
     # Read data in each subvolume and add data to plots
     seltot = 0
@@ -1445,7 +1468,8 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
     for ib, agn_bin in enumerate(agn_bins):
         ind = agn_bin['sel'](chatot)
         nsel = np.sum(ind)
-
+        ngrid, nlev = get_ngrid_nlev(nsel)
+        
         leg = agn_bin['label']
         col = agn_bin['color']
         per = nsel*100/ntot
@@ -1454,28 +1478,29 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         if nsel == 0:
             continue
         
-        yy = O3Hb_tot[ind] 
+        yy = O3Hb_tot[ind]
         for ii, bpt in enumerate(['NII','SII']):
             if bpt=='NII':
                 xx = N2Ha_tot[ind]
                 if nsel > n4contour:
-                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
-                    levels, colors = contour2Dsigma(color=col)
-                    axn.contour(xc,yc,zc,levels=levels,colors=colors,label=leg)
+                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=ngrid)
+                    levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+                    axn.contour(xc,yc,zc,levels=levels,colors=colors,zorder=1)
                 else:
-                    axn.scatter(xx,yy,c=col, s=50,marker='o')
+                    axn.scatter(xx,yy,c=col, s=40,marker='o',zorder=2)
                 # For legend
-                proxy = mlines.Line2D([],[],color=col,marker='o',markersize=8)
+                proxy = mlines.Line2D([],[],color=col,alpha=0.7,
+                                      marker='o',markersize=8)
                 proxies.append(proxy)
                 labels.append(leg+f' ({per:.1f}%)')
             elif bpt=='SII':
                 xx = S2Ha_tot[ind]
                 if nsel > n4contour:
-                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
-                    levels, colors = contour2Dsigma(color=col)
-                    axs.contour(xc,yc,zc,levels=levels,colors=colors)
+                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=ngrid)
+                    levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+                    axs.contour(xc,yc,zc,levels=levels,colors=colors,zorder=1)
                 else:
-                    axs.scatter(xx,yy,c=col, s=50,marker='o')
+                    axs.scatter(xx,yy,c=col, s=40,marker='o',zorder=2)
 
     # Single shared legend on top
     if len(proxies) == 0:
@@ -1484,7 +1509,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         fig.legend(proxies, labels,
                    loc='lower center', bbox_to_anchor=(0.5, 1.0),
                    ncol=len(proxies), frameon=True,
-                   title=f'z = {redshift:.2f}',
+                   title=f'z = {redshift:.2f}, {ntot} model tracers',
                    fancybox=True, shadow=False)
         fig.subplots_adjust(top=0.98)
     
@@ -1774,7 +1799,7 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
             indy = np.where(y > 0)
             if len(indy[0]) > 0:
                 logy = np.log10(y[indy])
-                ax.plot(x[indy], logy, 'r:',
+                ax.plot(x[indy], logy, 'b:',
                         label=f'Intrinsic (z={redshift:.1f})')
 
         if att:
@@ -1787,7 +1812,7 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
                 indy = np.where(y > 0)
                 if len(indy[0]) > 0:
                     logy = np.log10(y[indy])
-                    ax.plot(x[indy], logy, 'b-',
+                    ax.plot(x[indy], logy, 'r-',
                             label='Dust-attenuated')
             
         # Set axis properties
@@ -1893,27 +1918,29 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         f.close()
 
         if AGN:
-            # Combine luminosities (SFR + AGN if available)
-            Ha = Ha_sfr + Ha_agn
-            HaN2 = Ha + NII_sfr + NII_agn
-            O3 = OIII_sfr + OIII_agn
-            O3Hb = O3 + Hb_sfr + Hb_agn 
+            # Combine without attenuation using safe_sum_arrays
+            Ha = st.safe_sum_arrays([Ha_sfr,Ha_agn])
+            HaN2 = st.safe_sum_arrays([Ha,NII_sfr,NII_agn])
+            O3 = st.safe_sum_arrays([OIII_sfr,OIII_agn])
+            O3Hb = st.safe_sum_arrays([O3,Hb_sfr,Hb_agn])
+            
             if att:
-                Ha_att = Ha_sfr_att + Ha_agn_att
-                HaN2_att = Ha_att + NII_sfr_att + NII_agn_att
-                O3_att = OIII_sfr_att + OIII_agn_att
-                O3Hb_att = O3_att + Hb_sfr_att + Hb_agn_att 
+                Ha_att = st.safe_sum_arrays([Ha_sfr_att,Ha_agn_att])
+                HaN2_att = st.safe_sum_arrays([Ha_att,NII_sfr_att,NII_agn_att])
+                O3_att = st.safe_sum_arrays([OIII_sfr_att,OIII_agn_att])
+                O3Hb_att = st.safe_sum_arrays([O3_att,Hb_sfr_att,Hb_agn_att])
         else:
-            Ha = Ha_sfr
-            HaN2 = Ha + NII_sfr
+            Ha =  Ha_sfr
+            HaN2 = st.safe_sum_arrays([Ha,NII_sfr])
             O3 = OIII_sfr
-            O3Hb = O3 + Hb_sfr
+            O3Hb = st.safe_sum_arrays([O3,Hb_sfr])
+            
             if att:
                 Ha_att = Ha_sfr_att
-                HaN2_att = Ha_att + NII_sfr_att
+                HaN2_att = st.safe_sum_arrays([Ha_att, NII_sfr_att])
                 O3_att = OIII_sfr_att
-                O3Hb_att = O3_att + Hb_sfr_att
-
+                O3Hb_att = st.safe_sum_arrays([O3_att, Hb_sfr_att])
+                
         flux_int = [Ha, HaN2, O3, O3Hb]
         if att:
             flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
@@ -2079,21 +2106,21 @@ def make_testplots(snap,ending,outpath=None,
     bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
                     metadata=metadata,verbose=verbose)
     
-#    # Make line LFs
-#    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-#                        metadata=metadata,verbose=verbose)
-#    
-#    # Cumulative numbers with flux limits (if possible)
-#    if (metadata['flux'] and metadata['redshift']>0):
-#        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-#                                     outpath=outpath,metadata=metadata,
-#                                     verbose=verbose)
-#    else:
-#        if verbose:
-#            if (metadata['flux']):
-#                print(f'WARNING: Skipping cumulative flux plot at z=0.')
-#            else:
-#                print(f'WARNING: No flux data found in {filenom}.')
+    # Make line LFs
+    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+                        metadata=metadata,verbose=verbose)
+    
+    # Cumulative numbers with flux limits (if possible)
+    if (metadata['flux'] and metadata['redshift']>0):
+        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
+                                     outpath=outpath,metadata=metadata,
+                                     verbose=verbose)
+    else:
+        if verbose:
+            if (metadata['flux']):
+                print(f'WARNING: Skipping cumulative flux plot at z=0.')
+            else:
+                print(f'WARNING: No flux data found in {filenom}.')
 
     print(f'SUCCESS: plots in {plots_dir}')
     return

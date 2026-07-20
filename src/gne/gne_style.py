@@ -60,9 +60,6 @@ style1 = {
     'legend.numpoints': 1,
     'legend.loc': 'best',
 
-    # Default colormap
-    #'image.cmap': 'viridis', 
-
     # Figure
     'figure.figsize': [6.5, 7],
     'figure.titlesize': 'large',

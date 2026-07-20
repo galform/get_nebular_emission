@@ -139,7 +139,47 @@ def av_2arrays(xbins, xarray, yarray, weights, nmin):
     return av_2arrays
 
 
-def get_cumulative_2Ddensity(xin, yin, n_grid=100):
+def smooth_histogram_2d(hist, n_neighbors=1.5):
+    """
+    Smooth a 2D histogram by averaging with neighboring cells.
+    
+    Parameters
+    ----------
+    hist : 2D array
+        Input histogram
+    n_neighbors : int
+        Number of neighbors to average (1 = 3×3 window, 2 = 5×5 window)
+    
+    Returns
+    -------
+    smoothed : 2D array
+        Smoothed histogram
+    """
+    nx, ny = hist.shape
+    smoothed = np.zeros_like(hist, dtype=float)
+
+    n_int = int(n_neighbors) 
+    weight = 1.0
+    for dx in range(-n_int, n_int + 1):
+        for dy in range(-n_int, n_int + 1):
+            dist = np.sqrt(dx*dx + dy*dy)
+            gw = np.exp(-dist**2 / (2 * n_neighbors**2))  # Gaussian weight
+            
+            # Shift the histogram
+            shifted = np.zeros_like(hist)
+            if dx > 0: shifted[dx:, :] = hist[:-dx, :]
+            elif dx < 0: shifted[:dx, :] = hist[-dx:, :]
+            
+            if dy > 0: shifted[:, dy:] += shifted[:, :-dy] * gw
+            elif dy < 0: shifted[:, :dy] += shifted[:, -dy:] * gw
+            else: shifted *= gw
+            
+            smoothed += shifted
+    
+    return smoothed / (2 * n_neighbors + 1)**2
+
+
+def get_cumulative_2Ddensity(xin, yin, n_grid=100, smooth=True):
     """
     Calculate the normalised cumulative values for a 2D distribution.
     Useful for then plotting contours with percentiles.
@@ -166,6 +206,10 @@ def get_cumulative_2Ddensity(xin, yin, n_grid=100):
     # Calculate the 2D histogram and edges of the grid
     hist2D, xedges, yedges = np.histogram2d(xin,yin,bins=n_grid,range=xylims)
 
+    # Optional smoothing for sparse data ####here
+    if smooth:
+        hist2D = smooth_histogram_2d(hist2D)
+    
     # Create mesh grid from bin centers
     xx = (xedges[:-1] + xedges[1:])/2.
     yy = (yedges[:-1] + yedges[1:])/2.
