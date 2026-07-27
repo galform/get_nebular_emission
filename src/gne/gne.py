@@ -13,7 +13,7 @@ from gne.gne_Lagn import get_Lagn, get_Lagn_insta
 import gne.gne_const as c
 from gne.gne_stats import components2tot
 from gne.gne_photio import get_lines, get_limits
-from gne.gne_plots import make_testplots
+
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         mp,boxside,effvol,
@@ -32,8 +32,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         model_spec_agn='feltre16',
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
-        Lagn_inputs='Lagn', Lagn_params=[None],Lagn_insta=True,
-        zeq=None,infile_z0=None,
+        Lagn_inputs='Lagn', Lagn_params=[None],Lagn_insta=True, tau_fold=None, 
+        redshift_previous=None, zeq=None, infile_z0=None,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
         cutcols=[None], mincuts=[None], maxcuts=[None],
@@ -299,9 +299,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         # Get the AGN bolometric luminosity
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,Lagn_inputs=Lagn_inputs,
-                        h0=h0,units_h0=units_h0,
+                        h0=h0,omega0=omega0,redshift=redshift,Lbox=boxside,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L=units_L,
-                        testing=testing,verbose=verbose)
+                        testing=testing,redshift_previous=redshift_previous,tau_fold=tau_fold,verbose=verbose)
 
         # If needed obtain the Lbol at the snapshot time
         Lagn_noinsta = None
