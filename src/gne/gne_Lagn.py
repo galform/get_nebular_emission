@@ -5,6 +5,7 @@
 import numpy as np
 import gne.gne_const as c
 from gne.gne_io import read_data
+from gne.gne_griffin import compute_Lbol_griffin
 
 def get_Ledd(Mbh):
     '''
@@ -192,10 +193,10 @@ def get_Lagn_insta(Lagn):
     '''
     return Lagn
 
-def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',
-             Lagn_inputs='Lagn',h0=None,units_h0=False,
-             units_Gyr=False,units_L=0,kagn=c.kagn,
-             kagn_exp=c.kagn_exp,testing=False,verbose=True):
+
+def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
+             h0=None,omega0=None,redshift=None,Lbox=None,units_h0=False,units_Gyr=False,units_L=0,
+             kagn=c.kagn,kagn_exp=c.kagn_exp,testing=False,redshift_previous=None,tau_fold=None,verbose=True):
     '''
     Calculate or get the bolometric luminosity of BHs (erg/s) 
 
@@ -211,6 +212,14 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',
         Names of the parameters to calculate the AGN emission. 
     Lagn_inputs : string
         Type of calculation to obtain Lagn
+    h0 : float
+        Hubble constant
+    omega0 : float
+        omega0
+    redshift : float
+        Redshift
+    Lbox : float
+        Box size
     units_h0: boolean
         True if input units with h
     units_Gyr: boolean
@@ -225,6 +234,10 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',
         Exponent for the dependence of Mdot with Mbh*Mhot, radio mode
     testing : boolean
         If True only run over few entries for testing purposes
+    redshift_previous : float
+        Redshift of the previous snapshot
+    tau_fold : float
+        Folding time scale
     verbose : boolean
         If True print out messages
     
@@ -294,6 +307,10 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',
             #spin = np.full(Mbh.shape,c.spin_bh)
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
+    
+    elif Lagn_inputs=='griffin':
+        Lagn = compute_Lbol_griffin(vals,h0,omega0,redshift,Lbox,params,redshift_previous=redshift_previous,tau_fold=tau_fold)
+        return Lagn # erg/s
 
     Mdot = Mdot/c.yr_to_s ####here to check units w spin
     Mdot_edd = acc_rate_edd(Mbh) ###here units in what follow might be bad as now this is in Msun/yr
