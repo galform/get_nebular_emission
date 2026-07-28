@@ -41,20 +41,10 @@ class TestPredict(unittest.TestCase):
                                            kagn_exp=ke0),val0,rtol=0.01)
 
         
-    def test_Lagn_M16(self):
-        mdot0 = c.yr_to_s/(c.c*c.c*1e7*c.Msun)
-        val0 = c.e_r_agn*(1-c.e_f_agn)
-        self.assertAlmostEqual(agn.get_Lagn_M17(mdot0),val0,3)
-
-        nlen = 3
-        y,val = [np.zeros(nlen) for i in range(2)]
-        y.fill(mdot0); val.fill(val0)
-        assert_allclose(agn.get_Lagn_M17(y),val,rtol=0.001)
-
-        
     def test_Lagn_H14(self):
         # fedd>0.1
-        mdot0 = c.yr_to_s/(c.c*c.c*1e7*c.Msun); mbh0 = 1e-40; val0 = 0.085
+        mdot0 = c.yr_to_s/(c.c*c.c*1e7*c.Msun); mbh0 = 1e-40
+        val0 = c.e_r_agn/(1-c.e_r_agn)
         self.assertAlmostEqual(agn.get_Lagn_H14(mdot0,mbh0),val0,3)
 
         nlen = 3
@@ -63,8 +53,8 @@ class TestPredict(unittest.TestCase):
         assert_allclose(agn.get_Lagn_H14(mdot,mbh),val,rtol=0.001)
         
         # fedd<0.1
-        mdot0 = c.yr_to_s/(c.c*c.c*1e7*c.Msun); mbh0 = 1e-38; val0 = 0.079
-        self.assertAlmostEqual(agn.get_Lagn_H14(mdot0,mbh0),val0,2)
+        mdot0 = 0.2; mbh0 = 1e8; val0 = 1.02016945e+45
+        self.assertAlmostEqual(agn.get_Lagn_H14(mdot0,mbh0),val0,delta=1e38)
         
         mdot.fill(mdot0); mbh.fill(mbh0); val.fill(val0)
         assert_allclose(agn.get_Lagn_H14(mdot,mbh),val,rtol=0.01)

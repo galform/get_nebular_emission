@@ -9,7 +9,7 @@ import gne.gne_io as io
 from gne.gne_model_UnH import get_UnH_sfr, get_UnH_agn
 from gne.gne_Z import correct_Z,get_zgasagn
 from gne.gne_m_sfr import get_sfrdata
-from gne.gne_Lagn import get_Lagn
+from gne.gne_Lagn import get_Lagn, get_Lagn_insta
 import gne.gne_const as c
 from gne.gne_stats import components2tot
 from gne.gne_photio import get_lines, get_limits
@@ -32,7 +32,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         model_spec_agn='feltre16',
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
-        Lagn_inputs='Lagn', Lagn_params=[None],
+        Lagn_inputs='Lagn', Lagn_params=[None],Lagn_insta=True,
         zeq=None,infile_z0=None,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
@@ -117,6 +117,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
        Type of inputs for AGN's bolometric luminosity calculations.
     Lagn_params : list of integers (text files) or strings (hdf5 files)
        Parameters to obtain the bolometric luminosity.
+    Lagn_params : bool
+       If True the instantaneous quantities for AGNs are provided
     Zgas_NLR : list of integer (text file) or strings (hdf5 file)
         Location of the central metallicity in input files
     Z_correct_gradrection : boolean
@@ -204,7 +206,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
     if zeq is not None:
         minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
         ###here this does not work due to Lagn_param, need to change this dependency
-        lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
+        lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_params)
 
     # Characterise the HII regions from galaxy global properties
     lu_sfr, lnH_sfr = get_UnH_sfr(lms, lssfr, lzgas, outfile,
@@ -301,6 +303,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
                         units_Gyr=units_Gyr,units_L=units_L,
                         testing=testing,verbose=verbose)
 
+        # If needed obtain the Lbol at the snapshot time
+        Lagn_noinsta = None
+        if not Lagn_insta:
+            Lagn_noinsta = Lagn
+            Lagn = get_Lagn_insta(Lagn_noinsta)
+            
         # Get the ionising parameter, U, (and filling factor)
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           mgasr_type=mgasr_type,
@@ -321,6 +329,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,
                           nebline_agn,
                           epsilon_agn=epsilon_agn,
+                          Lagn_noinsta=Lagn_noinsta,
                           verbose=verbose)             
         del lu_agn, lzgas_agn 
         del nebline_agn

@@ -146,9 +146,8 @@ acc_rate_crit_visc = 0.001*(lambda_adaf/0.0005)*((1-beta)/beta)*alpha_adaf**2
 # Boundary between the two adaf regimes
 spin_bh = 0.67 # 0, 0.3, 0.5, 0.67, 0.9, 0.95, 1
 
-# From Table 1 in McCarthy+16
+# Typical value for accretion efficiency (e.g. Griffin+2019)
 e_r_agn = 0.1
-e_f_agn = 0.15
 
 # Fit of GP20 data to equation 1 in Henriques et al. 2016: 
 kagn = 5.44e-4 

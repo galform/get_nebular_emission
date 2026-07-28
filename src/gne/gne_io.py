@@ -1041,6 +1041,7 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
 
 def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                    nebline_agn,epsilon_agn=None,
+                   Lagn_noinsta=None,
                    ew_notatt=None,ew_att=None,
                    verbose=True):
     '''
@@ -1087,6 +1088,13 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                                  maxshape=(None))
             hfdat['epsilon_NLR'].dims[0].label = \
                 'AGN NLRs volume filling factor (dimensionless)'
+
+        if Lagn_noinsta is not None:
+            val = L_agn_noinsta.reshape(-1)
+            hfdat.create_dataset('L_agn_noinsta', data=val,
+                                 maxshape=(None))
+            hfdat['L_agn_noinsta'].dims[0].label = \
+                'Lbol (erg/s) for all AGN that have been active from last snapshot'
 
         for i in range(len(c.line_names[photmod_agn])):
             ndata = nebline_agn[0,i,:]
