@@ -6,10 +6,10 @@ import numpy as np
 import gne.gne_const as c
 from gne.gne_io import read_data
 
-def get_Ledd(Mbh): # Eddington luminosity
+def get_Ledd(Mbh):
     '''
-    Calculate the Eddington luminosity for a black hole of mass Mbh,
-    following Eq.3 in Griffin+2019
+    Calculate the Eddington luminosity (erg/s)
+    for a black hole of mass Mbh with Eq.9 in Griffin+2019
 
     Parameters
     ----------
@@ -21,14 +21,14 @@ def get_Ledd(Mbh): # Eddington luminosity
     Ledd : array of floats
     '''
     
-    Ledd = 1.26e38*Mbh # erg/s
+    Ledd = 1.26e38*Mbh
     return Ledd # erg/s
     
 
-def acc_rate_edd(Mbh): # Eddington mass accretion rate
+def acc_rate_edd(Mbh):
     '''
-    Calculate the Eddington mass accretion rate of a black hole,
-    following Eq.4 in Griffin+2019
+    Calculate the Eddington mass accretion rate (Msun/yr)
+    of a black hole following Eq.10 in Griffin+2019
     (or 14.9 in the book from Mo, van den Bosch and White)
 
     Parameters
@@ -41,7 +41,8 @@ def acc_rate_edd(Mbh): # Eddington mass accretion rate
     acc_rate : array of floats
     '''
 
-    acc_rate = (1e-7*c.yr_to_s/c.Msun) * get_Ledd(Mbh)/(c.e_r_agn*c.c*c.c)
+    units2Msunyr = 1e-7*c.yr_to_s/c.Msun
+    acc_rate = units2Msunyr*get_Ledd(Mbh)/(c.e_r_agn*c.c*c.c)
 
     return acc_rate # Msun/yr
 
@@ -118,26 +119,6 @@ def acc_rate_radio(Mhot, Mbh, kagn=c.kagn, kagn_exp=c.kagn_exp):
     return acc_rate # Msun/yr
 
 
-def get_Lagn_M17(Mdot):
-    '''
-    Calculate the AGN bolometric luminosity
-    following Sec.7 and Table 1 in McCarthy+2017
-
-    Parameters
-    ----------
-    Mdot : array of floats
-         Accretion rate onto the black hole (Msun/yr).
-     
-    Returns
-    -------
-    LagnM17 : array of floats
-    '''
-
-    LagnM17 = c.e_r_agn*(1-c.e_f_agn)*Mdot*c.c*c.c * (1e7*c.Msun/c.yr_to_s)
-
-    return LagnM17 #erg/s
-
-
 def get_Lagn_H14(Mdot,Mbh):
     '''
     Calculate the AGN bolometric luminosity
@@ -158,16 +139,14 @@ def get_Lagn_H14(Mdot,Mbh):
     Mdot_edd = acc_rate_edd(Mbh)
     fedd = Mdot/Mdot_edd
 
-    if isinstance(fedd, (float, int)): # Floats
-        if fedd>0.1:
-            LagnH14 = get_Lagn_M17(Mdot)
-        else:
-            LagnH14 = 10.*get_Ledd(Mbh)*(Mdot/Mdot_edd)**2
-    
-    else: # Arrays
-        LagnH14 = 10.*get_Ledd(Mbh)*(Mdot/Mdot_edd)**2
-        LagnH14[fedd>0.1] = get_Lagn_M17(Mdot[fedd>0.1])
+    units = 1e7*c.Msun/c.yr_to_s
+    L_eff = units*Mdot*c.c*c.c*c.e_r_agn/(1-c.e_r_agn)
 
+    L_ineff = 10.*get_Ledd(Mbh)*fedd**2
+
+    LagnH14 = np.where(fedd > 0.1, L_eff, L_ineff)
+    if np.ndim(LagnH14) == 0:
+        return float(LagnH14)
     return LagnH14 #erg/s
 
 
@@ -206,9 +185,17 @@ def Rsch(Mbh):
     return Rs
 
 
-def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
-             h0=None,units_h0=False,units_Gyr=False,units_L=0,
-             kagn=c.kagn,kagn_exp=c.kagn_exp,testing=False,verbose=True):
+def get_Lagn_insta(Lagn):
+    '''
+    Calculate the bolometric luminosity (erg/s)
+    for active AGNs at the output snapshot
+    '''
+    return Lagn
+
+def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',
+             Lagn_inputs='Lagn',h0=None,units_h0=False,
+             units_Gyr=False,units_L=0,kagn=c.kagn,
+             kagn_exp=c.kagn_exp,testing=False,verbose=True):
     '''
     Calculate or get the bolometric luminosity of BHs (erg/s) 
 
@@ -252,7 +239,10 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
                      testing=testing,verbose=verbose)
 
     if Lagn_inputs=='Lagn':
-        Lagn = vals[0]
+        if np.ndim(vals) == 1:
+            Lagn = vals
+        else:
+            Lagn = vals[0]
         if units_L==1:
             cfac = 1e40/(h0*h0)
             Lagn = Lagn*cfac
@@ -263,7 +253,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
             raise ValueError('units_L must be 0, 1 or 2')
         return Lagn # erg/s
     
-    elif Lagn_inputs=='Mdot_hh':
+    elif Lagn_inputs=='Hirschman+14':
         Mdot = vals[0]
         Mbh = vals[1]
         if units_h0:
@@ -272,69 +262,10 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
         if units_Gyr:
             Mdot = Mdot/1e9
 
-        if len(vals) > 2:
-            spin = vals[2]
-        else:
-            #spin = np.full(Mbh.shape,c.spin_bh)
-            Lagn = get_Lagn_H14(Mdot,Mbh)
-            return Lagn # erg/s
+        Lagn = get_Lagn_H14(Mdot,Mbh)
+        return Lagn # erg/s
 
-    elif Lagn_inputs=='Mdot_stb_hh':
-        Mdot = vals[0] + vals[1]
-        Mbh = vals[2]
-        if units_h0:
-            Mdot = Mdot/h0
-            Mbh = Mbh/h0
-        if units_Gyr:
-            Mdot = Mdot/1e9
-        
-        if len(vals) > 3:
-            spin = vals[3]
-        else:
-            #spin = np.full(Mbh.shape,c.spin_bh)
-            Lagn = get_Lagn_H14(Mdot,Mbh)
-            return Lagn # erg/s
-
-    elif Lagn_inputs=='radio_mode':
-        Mhot = vals[0]
-        Mbh = vals[1]
-        if units_h0:
-            Mhot = Mhot/h0
-            Mbh = Mbh/h0            
-
-        Mdot = np.zeros(Mhot.shape)
-        ind = np.where((Mhot!=0)&(Mbh!=0))
-        if (np.shape(ind)[1]>0):
-            Mdot[ind] = acc_rate_radio(Mhot[ind],Mbh[ind],
-                                       kagn=kagn, kagn_exp=kagn_exp)
-
-        if len(vals) > 2:
-            spin = vals[2]
-        else:
-            Lagn = get_Lagn_H14(Mdot,Mbh)
-            return Lagn # erg/s
-            
-    elif Lagn_inputs=='quasar_mode':
-        M_b = vals[0]
-        r_b = vals[1]
-        v_b = vals[2]
-        Mbh = vals[3]
-        if units_h0:
-            M_b = M_b/h0
-            r_b = r_b/h0
-            Mbh = Mbh/h0
-
-        Mdot = np.zeros(M_b.shape)
-        Mdot[M_b>0] = acc_rate_quasar(M_b[M_b>0],r_b[M_b>0], v_b[M_b>0])
-
-        if len(vals) > 4:
-            spin = vals[4]
-        else:
-            #spin = np.full(Mbh.shape,c.spin_bh)
-            Lagn = get_Lagn_H14(Mdot,Mbh)
-            return Lagn # erg/s
-
-    elif Lagn_inputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
+    elif Lagn_inputs=='Griffin+19':
         M_b = vals[0]
         r_b = vals[1]
         v_b = vals[2]

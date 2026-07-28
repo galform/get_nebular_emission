@@ -122,39 +122,21 @@ model_spec_agn = 'feltre16'
 # The calcultions require different black hole (BH) parameters.
 # Lagn_inputs='Lagn' if Lagn in input
 #            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
-#            Lagn_params=[Lagn, Mbh] 
-# Lagn_inputs='Mdot_hh' for a calculation from
+#            Lagn_params=[Lagn] 
+# Lagn_inputs='Hirschmann+14' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
-#            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
-# Lagn_inputs='Mdot_stb_hh' for a calculation from
+#            Lagn_params=[Mdot,Mbh]
+# Lagn_inputs='Griffin+2019' for a calculation from (??????? #here check)
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
-# Lagn_inputs='radio_mode' for a calculation from
-#            the mass of the hot gas, Mhot,
-#            the BH mass, Mbh,
-#            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
-# Lagn_inputs='quasar_mode' for a calculation from
-#            the mass of the bulge, Mbulge,
-#            the half-mass radius of the bulge, rbulge,
-#            the circular velocity of the bulge, vbulge,
-#            the BH mass, Mbh,
-#            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mbulge,rbulge,vbulge,Mbh,(Mspin)]
-# Lagn_inputs='complete' for a calculation from
-#            the mass of the bulge, Mbulge,
-#            the half-mass radius of the bulge, rbulge,
-#            the circular velocity of the bulge, vbulge,
-#            the mass of the hot gas, Mg,
-#            the BH mass, Mbh,
-#            and, as an optional input, the BH spin, Mspin. 
-#            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN','data/mstars_bulge']
+Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN']
+
+# The AGN quantities are "instantaneous" (active at the snapshot)
+Lagn_insta = True
 
 ###################################################################
 ########  Filling factor and Cardelli's law parameters  ###########
@@ -300,6 +282,7 @@ for ivol in list_subvols:
             mgas_r=mgas_r,mgasr_type=mgasr_type,r_type=r_type,
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
+            Lagn_insta=Lagn_insta,
             infile_z0=infile_z0, 
             extra_params=extra_params,
             extra_params_names=extra_params_names,
