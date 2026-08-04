@@ -593,3 +593,27 @@ def vol_sphere(R):
     return V
 
 
+def read_previous_redshift(redshift_path, snapshot) -> float | None:
+    """
+    Read the previous redshift from the redshift list.
+
+    Parameters
+    ----------
+    redshift_path : str
+        Path to the redshift list. The columns should be: snapshot, redshift, factor_scale
+    snapshot : int
+        Snapshot number.
+
+    Returns
+    -------
+    redshift_previous : float | None
+        Previous redshift. None if the snapshot is not found in the redshift list.
+    """
+    redshift_previous = None
+    redshift_list = np.loadtxt(redshift_path, dtype=float)
+    mask = redshift_list[:, 0] == snapshot - 1
+    if mask.sum() > 0:
+        redshift_previous = redshift_list[mask, 1][0]
+    else:
+        redshift_previous = None
+    return redshift_previous
