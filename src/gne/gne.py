@@ -32,7 +32,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         model_spec_agn='feltre16',
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
-        Lagn_inputs='Lagn', Lagn_params=[None],Lagn_insta=True, tau_fold=None, 
+        Lagn_inputs='Lagn', Lagn_params=[None],Lagn_insta=True, Lagn_insta_params=[None],
         redshift_previous=None, zeq=None, infile_z0=None,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
@@ -117,8 +117,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
        Type of inputs for AGN's bolometric luminosity calculations.
     Lagn_params : list of integers (text files) or strings (hdf5 files)
        Parameters to obtain the bolometric luminosity.
-    Lagn_params : bool
+    Lagn_insta : bool
        If True the instantaneous quantities for AGNs are provided
+    Lagn_insta_params : list of integers (text files) or strings (hdf5 files)
+       Parameters to obtain the instantaneous bolometric luminosity.
+    redshift_previous : float
+       Redshift of the previous snapshot.ç
     Zgas_NLR : list of integer (text file) or strings (hdf5 file)
         Location of the central metallicity in input files
     Z_correct_gradrection : boolean
@@ -301,13 +305,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
                         params=Lagn_params,Lagn_inputs=Lagn_inputs,
                         h0=h0,omega0=omega0,redshift=redshift,Lbox=boxside,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L=units_L,
-                        testing=testing,redshift_previous=redshift_previous,tau_fold=tau_fold,verbose=verbose)
+                        testing=testing, verbose=verbose)
 
         # If needed obtain the Lbol at the snapshot time
         Lagn_noinsta = None
         if not Lagn_insta:
-            Lagn_noinsta = Lagn
-            Lagn = get_Lagn_insta(Lagn_noinsta)
+            Lagn_noinsta = Lagn.copy()
+            Lagn = get_Lagn_insta(Lagn_noinsta, redshift, inputformat=inputformat,
+                                  params=Lagn_insta_params,
+                                  redshift_previous=redshift_previous,
+                                  testing=testing,verbose=verbose)
             
         # Get the ionising parameter, U, (and filling factor)
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
