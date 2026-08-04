@@ -478,7 +478,10 @@ def safe_sum_arrays(arrays, notnum=c.notnum):
     all_notnum = np.ones(len(result), dtype=bool)
 
     for arr in arrays:
-        valid = arr > notnum
+        valid = np.ones(arr.shape, dtype=bool)
+        valid = np.logical_and(valid, arr != None)
+        valid = np.logical_and(valid, arr != np.nan)
+        valid[valid] = np.logical_and(valid[valid] ,arr[valid] > notnum)
         result[valid] = result[valid] + arr[valid]
         # Add indexes that are notnum (not valid)
         all_notnum = all_notnum & ~valid

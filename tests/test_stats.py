@@ -159,6 +159,16 @@ class TestPredict(unittest.TestCase):
         arrays = [np.array([1,2,c.notnum]),np.array([2,3,c.notnum])]
         expected = np.array([3,5,c.notnum])
         vals = st.safe_sum_arrays(arrays)
+        np.testing.assert_allclose(vals,expected, atol=0.001)  
+
+        arrays = [np.array([1,2,c.notnum]),np.array([2,None,4])]
+        expected = np.array([3,2,4])
+        vals = st.safe_sum_arrays(arrays)
+        np.testing.assert_allclose(vals,expected, atol=0.001)  
+
+        arrays = [np.array([1,2,c.notnum]),np.array([2,3,None])]
+        expected = np.array([3,5,c.notnum])
+        vals = st.safe_sum_arrays(arrays)
         np.testing.assert_allclose(vals,expected, atol=0.001)        
                 
     def test_romberg(self):
