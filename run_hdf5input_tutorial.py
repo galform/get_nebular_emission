@@ -9,6 +9,7 @@ to also get the predicted attenuated luminosities.
 @authors: viogp
 """
 
+import numpy as np
 import gne.gne_const as const
 from gne.gne import gne
 from gne.gne_att import gne_att
@@ -40,6 +41,11 @@ outpath = None
 subvols = 2
 root = 'data/example_data/iz61/ivol'
 endf   = 'ex.hdf5'
+
+# Redhift list with the following columns: snaphot, redshift, factor_scale
+redshift_path = 'data/example_data/redshift_list.txt'
+
+redshift_list = np.loadtxt(redshift_path, dtype=float)
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -136,7 +142,14 @@ model_spec_agn = 'feltre16'
 Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN']
 
 # The AGN quantities are "instantaneous" (active at the snapshot)
-Lagn_insta = True
+# if Lagn_insta is True, Lagn_insta_params are the parameters to obtain the instantaneous bolometric luminosity.
+# Lagn_insta_params should have the following parameters:
+# - rgas_bulge: radius of the gas in the bulge (Mpc)
+# - mgas_bulge: mass of the gas in the bulge (Msun)
+# - mstars_bulge: mass of the stars in the bulge (Msun)
+# - v_bulge: velocity of the bulge (km/s). 
+# If v_bulge is included the t_bulge is calculated only using rgas_bulge and v_bulge.
+Lagn_insta = True; Lagn_insta_params=["data/rgas_bulge", "data/mgas_bulge", "data/mstars_bulge",]
 
 ###################################################################
 ########  Filling factor and Cardelli's law parameters  ###########
@@ -266,6 +279,16 @@ for ivol in list_subvols:
     f.close()
     effvol = p*boxside**3
 
+    # Try to find the redshift of the previous snapshot
+    redshift_previous = None
+    if redshift_list is not None:
+        mask = redshift_list[:, 0] == snapshot - 1
+        if mask.sum() > 0:
+            redshift_previous = redshift_list[mask, 1][0]
+
+        else:
+            print(f"Redshift of the previous snapshot not found for snapshot {snapshot}")
+
     if get_emission_lines:  
         # Obtain nebular emission lines
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,
@@ -282,8 +305,8 @@ for ivol in list_subvols:
             mgas_r=mgas_r,mgasr_type=mgasr_type,r_type=r_type,
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
-            Lagn_insta=Lagn_insta,
-            infile_z0=infile_z0, 
+            Lagn_insta=Lagn_insta, Lagn_insta_params=Lagn_insta_params,
+            infile_z0=infile_z0, redshift_previous=redshift_previous,
             extra_params=extra_params,
             extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
