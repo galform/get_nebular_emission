@@ -15,6 +15,7 @@ from gne.gne import gne
 from gne.gne_att import gne_att
 from gne.gne_flux import gne_flux
 from gne.gne_plots import make_testplots
+from gne.gne_stats import read_previous_redshift
 import os, h5py
 
 verbose = True
@@ -280,14 +281,9 @@ for ivol in list_subvols:
     effvol = p*boxside**3
 
     # Try to find the redshift of the previous snapshot
-    redshift_previous = None
-    if redshift_list is not None:
-        mask = redshift_list[:, 0] == snapshot - 1
-        if mask.sum() > 0:
-            redshift_previous = redshift_list[mask, 1][0]
-
-        else:
-            print(f"Redshift of the previous snapshot not found for snapshot {snapshot}")
+    redshift_previous = read_previous_redshift(redshift_path, snapshot)
+    if redshift_previous is  None:
+        print(f"Redshift of the previous snapshot not found for snapshot {snapshot}")
 
     if get_emission_lines:  
         # Obtain nebular emission lines
