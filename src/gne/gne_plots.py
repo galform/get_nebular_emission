@@ -1080,9 +1080,9 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
                 contour = axs.contourf(x,y,z,levels=levels,colors=color)
         else:
             if obsdata and bpt=='NII':
-                axn.scatter(xobs,yobs,colors=col)
+                axn.scatter(xobs,yobs,c=col)
             elif obsdata and bpt=='SII':
-                axs.scatter(xobs,yobs,colors=col)
+                axs.scatter(xobs,yobs,c=col)
             
     for ii, bpt in enumerate(['NII','SII']):
         # Lines
@@ -1277,9 +1277,9 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
                 contour = axs.contourf(x,y,z,levels=levels,colors=colors)
         else:
             if obsdata and bpt=='NII':
-                axn.scatter(xobs,yobs,colors=col)
+                axn.scatter(xobs,yobs,c=col)
             elif obsdata and bpt=='SII':
-                axs.scatter(xobs,yobs,colors=col)
+                axs.scatter(xobs,yobs,c=col)
 
     # Read data in each subvolume and add data to plots
     seltot = 0
