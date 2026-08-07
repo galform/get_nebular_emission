@@ -75,7 +75,7 @@ def get_obs_bpt(redshift,bpt):
        True if there is any observational data at the given redshift
     '''
 
-    xobs = -999.; yobs = -999.; obsdata = False
+    xobs = np.array([]); yobs = np.array([]); obsdata = False
 
     # Use different data sets for different redshifts
     if redshift <= 0.2:
@@ -108,7 +108,7 @@ def get_obs_bpt(redshift,bpt):
         elif bpt=='SII':
             obsfile = os.path.join(c.obs_data_dir,'SII_Kashino.txt')
             yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
+            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #S2/Ha
 
     if obsdata:
         ind = np.where((xx>c.notnum) & (yy>c.notnum))
