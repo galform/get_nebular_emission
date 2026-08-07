@@ -1069,20 +1069,21 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
             
         xobs, yobs, obsdata = obs.get_obs_bpt(0.,bpt)
-        nobs = len(xobs)
-        if nobs > n4contour:
-            ngrid, nlev = get_ngrid_nlev(nobs)
-            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
-            levels, colors = contour2Dsigma(n_levels=nlev,color=col)
-            if obsdata and bpt=='NII':
-                contour = axn.contourf(x,y,z,levels=levels,colors=colors)
-            elif obsdata and bpt=='SII':
-                contour = axs.contourf(x,y,z,levels=levels,colors=color)
-        else:
-            if obsdata and bpt=='NII':
-                axn.scatter(xobs,yobs,colors=col)
-            elif obsdata and bpt=='SII':
-                axs.scatter(xobs,yobs,colors=col)
+        if obsdata:
+            nobs = len(xobs)
+            if nobs > n4contour:
+                ngrid, nlev = get_ngrid_nlev(nobs)
+                x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
+                levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+                if bpt=='NII':
+                    contour = axn.contourf(x,y,z,levels=levels,colors=colors)
+                elif bpt=='SII':
+                    contour = axs.contourf(x,y,z,levels=levels,colors=color)
+            else:
+                if bpt=='NII':
+                    axn.scatter(xobs,yobs,c=col)
+                elif bpt=='SII':
+                    axs.scatter(xobs,yobs,c=col)
             
     for ii, bpt in enumerate(['NII','SII']):
         # Lines
@@ -1266,20 +1267,21 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
         xobs, yobs, obsdata = obs.get_obs_bpt(redshift,bpt)
-        nobs = len(xobs)
-        if nobs > n4contour:
-            ngrid, nlev = get_ngrid_nlev(nobs)
-            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
-            levels, colors = contour2Dsigma(n_levels=nlev,color=col)
-            if obsdata and bpt=='NII':
-                contour = axn.contourf(x,y,z,levels=levels,colors=colors)
-            elif obsdata and bpt=='SII':
-                contour = axs.contourf(x,y,z,levels=levels,colors=colors)
-        else:
-            if obsdata and bpt=='NII':
-                axn.scatter(xobs,yobs,colors=col)
-            elif obsdata and bpt=='SII':
-                axs.scatter(xobs,yobs,colors=col)
+        if obsdata:
+            nobs = len(xobs)
+            if nobs > n4contour:
+                ngrid, nlev = get_ngrid_nlev(nobs)
+                x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
+                levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+                if bpt=='NII':
+                    contour = axn.contourf(x,y,z,levels=levels,colors=colors)
+                elif bpt=='SII':
+                    contour = axs.contourf(x,y,z,levels=levels,colors=color)
+            else:
+                if bpt=='NII':
+                    axn.scatter(xobs,yobs,c=col)
+                elif bpt=='SII':
+                    axs.scatter(xobs,yobs,c=col)
 
     # Read data in each subvolume and add data to plots
     seltot = 0
