@@ -3,14 +3,14 @@
 
 #SBATCH -A 16cores
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=1
 #SBATCH --job-name=__GNE_JOB_NAME__
 #SBATCH --error=__GNE_LOG_DIR__/%x_ivol%a_%A.err
 #SBATCH --output=__GNE_LOG_DIR__/%x_ivol%a_%A.out
 #SBATCH --partition=all
 #SBATCH --exclude=epi
 #SBATCH --time=05:00:00
-#SBATCH --array=__GNE_VOLS__%30
+#SBATCH --array=__GNE_VOLS__%8
 #
 export GNE_SUBVOL_INDEX=$SLURM_ARRAY_TASK_ID
 srun python << 'EOF_PYTHON_SCRIPT'
