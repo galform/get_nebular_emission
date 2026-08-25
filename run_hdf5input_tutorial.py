@@ -16,6 +16,7 @@ from gne.gne_att import gne_att
 from gne.gne_flux import gne_flux
 from gne.gne_plots import make_testplots
 from gne.gne_stats import read_previous_redshift
+from gne.gne_cosmology import set_cosmology
 import os, h5py
 
 verbose = True
@@ -143,14 +144,21 @@ model_spec_agn = 'feltre16'
 Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN']
 
 # The AGN quantities are "instantaneous" (active at the snapshot)
-# if Lagn_insta is True, Lagn_insta_params are the parameters to obtain the instantaneous bolometric luminosity.
+# if Lagn_insta is True consider the Lagn is instantaneous and won't be calculated again.
+# If Lagn_insta is False, the Lagn is not instantaneous and will be calculated using the parameters in Lagn_insta_params.
+# Lagn_insta_params are the parameters to obtain the instantaneous bolometric luminosity.
 # Lagn_insta_params should have the following parameters:
 # - rgas_bulge: radius of the gas in the bulge (Mpc)
 # - mgas_bulge: mass of the gas in the bulge (Msun)
 # - mstars_bulge: mass of the stars in the bulge (Msun)
 # - v_bulge: velocity of the bulge (km/s). 
 # If v_bulge is included the t_bulge is calculated only using rgas_bulge and v_bulge.
+# Ratio of lifetime of AGN episode to bulge dynamical timescale. Used for instantaneous Lagn calculation.
+# - The fiducial value used in Shark is 1.0.
+# - If is None we use c.fq as the weights.
+
 Lagn_insta = True; Lagn_insta_params=["data/rgas_bulge", "data/mgas_bulge", "data/mstars_bulge",]
+tau_fold = None
 
 ###################################################################
 ########  Filling factor and Cardelli's law parameters  ###########
@@ -273,6 +281,10 @@ for ivol in list_subvols:
     omegab = header.attrs['omegab']
     lambda0 = header.attrs['lambda0']
     mp = header.attrs['mp_Msunh']
+
+    set_cosmology(h0=h0,omega0=omega0,omegab=omegab,lambda0=lambda0)
+    print("Cosmology set to h0={}, omega0={}, omegab={}, lambda0={}".format(h0,omega0,omegab,lambda0))
+
     try:
         p = header.attrs['percentage']/100.
     except:
@@ -302,6 +314,7 @@ for ivol in list_subvols:
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             Lagn_insta=Lagn_insta, Lagn_insta_params=Lagn_insta_params,
+            tau_fold=tau_fold,
             infile_z0=infile_z0, redshift_previous=redshift_previous,
             extra_params=extra_params,
             extra_params_names=extra_params_names,
