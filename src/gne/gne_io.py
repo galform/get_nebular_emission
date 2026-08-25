@@ -1090,7 +1090,7 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                 'AGN NLRs volume filling factor (dimensionless)'
 
         if Lagn_noinsta is not None:
-            val = L_agn_noinsta.reshape(-1)
+            val = Lagn_noinsta.reshape(-1)
             hfdat.create_dataset('L_agn_noinsta', data=val,
                                  maxshape=(None))
             hfdat['L_agn_noinsta'].dims[0].label = \
