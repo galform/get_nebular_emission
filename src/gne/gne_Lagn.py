@@ -203,7 +203,7 @@ def epsilon_td(spin):
     return epsilon_td
 
 
-def get_Lagn_G19(
+def get_Lbol_from_mdot(
     M_bh_msun: np.ndarray,
     mdot_msun_per_yr: np.ndarray, 
     spin: Optional[np.ndarray] = None                  
@@ -291,6 +291,110 @@ def get_Lagn_G19(
     return Lbol # erg/s
 
 
+# Alternative Griffin+19 implementation (component-wise luminosity sum):
+#   L_bol = L(mdot_hh) + L(mdot_sb), with BOOL Bernoulli sampling on L_sb only.
+# Because L(mdot) is nonlinear (ADAF / thin disc / super-Eddington), this
+# decomposition can be more physically motivated when duty-cycle weights apply
+# only to the starburst channel. Production uses get_Lagn_G19 below, which sums
+# accretion rates before calling get_Lbol_from_mdot, matching Shark and Galform
+# (mdot_tot = mdot_hh + mdot_sb, then L_bol = L(mdot_tot); BOOL turns SB mdot
+# on/off for the instantaneous case).
+#
+# def get_Lagn_G19(
+#     Mbh: np.ndarray,
+#     mdot_hh: np.ndarray,
+#     mdot_sb: np.ndarray,
+#     spin: np.ndarray,
+#     weights: Optional[np.ndarray] = None
+#     ) -> tuple[np.ndarray, Optional[np.ndarray]]:
+#     '''
+#     Calculate the bolometric luminosity of the AGN following Griffin+2019
+#
+#     Parameters
+#     ----------
+#     Mbh: np.ndarray
+#         Mass of the black hole (Msun)
+#     mdot_hh: np.ndarray
+#         Accretion rate onto the black hole (Msun/yr)
+#     mdot_sb: np.ndarray
+#         Accretion rate onto the black hole (Msun/yr)
+#     spin: np.ndarray
+#         Dimensionless spin parameter (between -1 and 1)
+#     weights: Optional[np.ndarray]
+#         Weights for the bolometric luminosity of the BHs at the output snapshot (erg/s)
+#
+#     Returns
+#     -------
+#     Lagn: np.ndarray
+#         Bolometric luminosity of the AGN (erg/s)
+#     Lagn_insta: Optional[np.ndarray]
+#         Instantaneous bolometric luminosity of the AGN (erg/s) if weights is not None.
+#     '''
+#
+#     Lbol_hh = get_Lbol_from_mdot(Mbh, mdot_hh, spin)
+#     Lbol_sb = get_Lbol_from_mdot(Mbh, mdot_sb, spin)
+#     Lbol = Lbol_hh + Lbol_sb
+#     if weights is None:
+#         return Lbol, None
+#
+#     rng = np.random.default_rng(42)
+#     on_sb = rng.random(weights.shape[0]) < weights
+#     Lbol_sb_insta = np.where(on_sb, Lbol_sb, 0.0)   # erg/s
+#     Lbol_insta = Lbol_hh + Lbol_sb_insta
+#
+#     return Lbol, Lbol_insta
+
+
+def get_Lagn_G19(
+    Mbh: np.ndarray, 
+    mdot_hh: np.ndarray, 
+    mdot_sb: np.ndarray, 
+    spin: np.ndarray, 
+    weights: Optional[np.ndarray] = None
+    ) -> tuple[np.ndarray, Optional[np.ndarray]]:
+    '''
+    Calculate the bolometric luminosity of the AGN following Griffin+2019.
+
+    Snapshot luminosity: mdot = mdot_hh + mdot_sb, then L_bol = L(mdot).
+    Instantaneous luminosity: Bernoulli sampling on mdot_sb, then
+    mdot = mdot_hh + where(on_sb, mdot_sb, 0), L_bol_insta = L(mdot).
+    This matches Shark/Galform (sum accretion rates before L(mdot)); see the
+    commented alternative above (L(mdot_hh) + L(mdot_sb)).
+
+    Parameters
+    ----------
+    Mbh: np.ndarray
+        Mass of the black hole (Msun)
+    mdot_hh: np.ndarray
+        Accretion rate onto the black hole (Msun/yr)
+    mdot_sb: np.ndarray
+        Accretion rate onto the black hole (Msun/yr)
+    spin: np.ndarray
+        Dimensionless spin parameter (between -1 and 1)
+    weights: Optional[np.ndarray]
+        Weights for the bolometric luminosity of the BHs at the output snapshot (erg/s)
+
+    Returns
+    -------
+    Lagn_noinsta: np.ndarray
+        Bolometric luminosity of the AGN (erg/s)
+    Lagn: Optional[np.ndarray]
+        Instantaneous bolometric luminosity of the AGN (erg/s) if weights is not None.
+    '''
+    mdot = mdot_hh + mdot_sb
+    Lagn_noinsta = get_Lbol_from_mdot(Mbh, mdot, spin)
+
+    if weights is None:
+        return Lagn_noinsta, None
+
+    rng = np.random.default_rng(42)              
+    on_sb = rng.random(weights.shape[0]) < weights   
+    mdot = mdot_hh + np.where(on_sb, mdot_sb, 0.0)   
+    Lagn = get_Lbol_from_mdot(Mbh, mdot, spin) # erg/s
+
+    return Lagn_noinsta, Lagn
+
+
 def Rsch(Mbh):
     '''
     Schwarzschild radius (Mpc) given the mass of the black hole (Msun)
@@ -309,7 +413,6 @@ def Rsch(Mbh):
     Rs = 2*c.G*Mbh_kg/(c.c**2)/(c.mega*c.parsec)
     return Rs
 
-#TODO: No pasar redshift_previous sino el path de redshift_list.txt para que lo calcule solo.
 def _get_weights_insta_Lagn(
     infile: str,
     cut: np.ndarray,
@@ -319,6 +422,7 @@ def _get_weights_insta_Lagn(
     units_h0: bool = False,
     inputformat: str = 'hdf5',
     params: str = 'Lagn',
+    tau_fold: Optional[float] = None,
     testing: bool = False,
     verbose: bool = True,
     ) -> np.ndarray:
@@ -344,6 +448,10 @@ def _get_weights_insta_Lagn(
         Format of the input file.
     params: str
         Names of the parameters to calculate the AGN emission. 
+    tau_fold: Optional[float]
+        Ratio of lifetime of AGN episode to bulge dynamical timescale. 
+        - The fiducial value used in Shark is 1.0.
+        - If is None we use c.fq as the weights.
     testing: bool
         If True only run over few entries for testing purposes
     verbose: bool
@@ -403,19 +511,22 @@ def _get_weights_insta_Lagn(
     if redshift_previous is not None:
         delta_t_window = abs(t_snapshot - age_of_universe(redshift_previous) * 1e9) # Gyr -> yr
 
-    return np.minimum(c.fq * t_bulge_val/delta_t_window, 1.0)
+    if tau_fold is None:
+        tau_fold = c.fq
+
+    return np.minimum(tau_fold * t_bulge_val/delta_t_window, 1.0)
 
 def get_Lagn_insta(
     Lagn: np.ndarray,
     infile: str,
     cut: np.ndarray,
     redshift: float,
-    method: str = "sampled",
     redshift_previous: Optional[float] = None,
     h0: float = None,
     units_h0: bool = False,
     inputformat: str = 'hdf5',
     params: str = 'Lagn',
+    tau_fold: Optional[float] = None,
     testing: bool = False,
     verbose: bool = True
 ) -> np.ndarray:
@@ -440,6 +551,10 @@ def get_Lagn_insta(
         Format of the input file.
     params: str
         Names of the parameters to calculate the AGN emission. 
+    tau_fold: Optional[float]
+        Ratio of lifetime of AGN episode to bulge dynamical timescale. 
+        - The fiducial value used in Shark is 1.0.
+        - If is None we use c.fq as the weights.
     testing: bool
         If True only run over few entries for testing purposes
     verbose: bool
@@ -461,24 +576,20 @@ def get_Lagn_insta(
         units_h0=units_h0,
         inputformat=inputformat,
         params=params,
+        tau_fold=tau_fold,
         testing=testing,
         verbose=verbose)
-    if method == "average":
-        return Lagn * weights
-    
-    if method == "sampled":
-        rng = np.random.default_rng(42)              
-        on_sb = rng.random(weights.shape[0]) < weights   
-        # 2) Instantaneous SB luminosity (0 if off)
-        Lagn_insta = np.where(on_sb, Lagn, 0.0)   # erg/s
-        return Lagn_insta
-
-    raise ValueError(f"Invalid method: {method}")
+   
+    rng = np.random.default_rng(42)              
+    on_sb = rng.random(weights.shape[0]) < weights   
+    Lagn_insta = np.where(on_sb, Lagn, 0.0)   # erg/s
+    return Lagn_insta
 
 
 def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
-             h0=None,omega0=None,redshift=None,Lbox=None,units_h0=False,units_Gyr=False,units_L=0,
-             kagn=c.kagn,kagn_exp=c.kagn_exp,testing=False,verbose=True,):
+             h0=None,redshift=None,redshift_previous=None,units_h0=False,units_Gyr=False,units_L=0,
+             testing=False,verbose=True, calculate_Lagn_insta=None, Lagn_insta_params=None, tau_fold=None
+             ) -> tuple[np.ndarray, Optional[np.ndarray]]:
     '''
     Calculate or get the bolometric luminosity of BHs (erg/s) 
 
@@ -496,12 +607,10 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
         Type of calculation to obtain Lagn
     h0 : float
         Hubble constant
-    omega0 : float
-        omega0
     redshift : float
         Redshift
-    Lbox : float
-        Box size
+    redshift_previous : float
+        Redshift of the previous snapshot
     units_h0: boolean
         True if input units with h
     units_Gyr: boolean
@@ -510,23 +619,25 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
         0: input units [L]=erg/s  (default);
         1: input units [L]=1e40 h^-2 erg/s
         2: input units [L]=1e40 erg/s
-    kagn : float
-        Multiplicative factor for units Msun/yr, radio mode
-    kagn_exp : float
-        Exponent for the dependence of Mdot with Mbh*Mhot, radio mode
+    calculate_Lagn_insta: boolean
+        If True calculate the instantaneous Lagn
+    Lagn_insta_params: list of strings
+        Names of the parameters to calculate the instantaneous Lagn
+    tau_fold: Optional[float]
+        Ratio of lifetime of AGN episode to bulge dynamical timescale. 
+        - The fiducial value used in Shark is 1.0.
+        - If is None we use c.fq as the weights.
     testing : boolean
         If True only run over few entries for testing purposes
-    redshift_previous : float
-        Redshift of the previous snapshot
-    tau_fold : float
-        Folding time scale
     verbose : boolean
         If True print out messages
     
     Returns
     -------
-    Lagn : array of floats
-        Bolometric luminosity of the BHs (erg/s)
+    Lagn_noinsta : array of floats
+        Bolometric luminosity of the BHs for all AGN that have been active from last snapshot (erg/s)
+    Lagn: array of floats
+        Instantaneous bolometric luminosity of the BHs (erg/s) if calculate_Lagn_insta is True.
     '''
 
     vals = read_data(infile,cut,inputformat=inputformat,
@@ -547,7 +658,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
             Lagn = Lagn*cfac
         elif units_L!=0:
             raise ValueError('units_L must be 0, 1 or 2')
-        return Lagn # erg/s
+        return Lagn, None # erg/s
     
     elif Lagn_inputs=='Hirschman+14':
         Mdot = vals[0]
@@ -559,7 +670,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
             Mdot = Mdot/1e9
 
         Lagn = get_Lagn_H14(Mdot,Mbh)
-        return Lagn # erg/s
+        return Lagn, None # erg/s
 
     elif Lagn_inputs=='Griffin+19':
         Mbh = vals[0]
@@ -567,18 +678,35 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
         mdot_sb = vals[2]
         spin = None
 
-        Mdot = safe_sum_arrays([mdot_hh, mdot_sb])
         if units_h0:
             Mbh = Mbh/h0 # Msun
-            Mdot = Mdot/h0 
+            mdot_hh = mdot_hh/h0 
+            mdot_sb = mdot_sb/h0 
         
         if units_Gyr:
-            Mdot = Mdot / 1e9 # Msun/yr
+            mdot_hh = mdot_hh / 1e9 # Msun/yr
+            mdot_sb = mdot_sb / 1e9 # Msun/yr
 
         if len(vals) > 3:
             spin = vals[3]
+
+        weights = None
+        if calculate_Lagn_insta:
+            weights = _get_weights_insta_Lagn(
+                infile=infile,
+                cut=cut,
+                redshift=redshift,
+                redshift_previous=redshift_previous,
+                h0=h0,
+                units_h0=units_h0,
+                inputformat=inputformat,
+                tau_fold=tau_fold,
+                params=Lagn_insta_params,
+                testing=testing,
+                verbose=verbose
+            )
         
-        Lagn = get_Lagn_G19(Mbh, Mdot, spin)
-        return Lagn # erg/s
+        Lagn_noinsta, Lagn = get_Lagn_G19(Mbh, mdot_hh, mdot_sb, spin, weights)
+        return Lagn_noinsta, Lagn # erg/s
 
     raise ValueError(f"Invalid Lagn_inputs: {Lagn_inputs}")
