@@ -8,6 +8,8 @@ Some useful functions
  ...
 """
 import sys
+from typing import Optional
+
 import numpy as np
 import gne.gne_const as c
 
@@ -593,7 +595,7 @@ def vol_sphere(R):
     return V
 
 
-def read_previous_redshift(redshift_path, snapshot) -> float | None:
+def read_previous_redshift(redshift_path, snapshot) -> Optional[float]:
     """
     Read the previous redshift from the redshift list.
 
@@ -606,7 +608,7 @@ def read_previous_redshift(redshift_path, snapshot) -> float | None:
 
     Returns
     -------
-    redshift_previous : float | None
+    redshift_previous : float, optional
         Previous redshift. None if the snapshot is not found in the redshift list.
     """
     redshift_previous = None

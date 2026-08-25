@@ -2,7 +2,7 @@
 .. moduleauthor:: Julen Expósito-Márquez <expox7@gmail.com>
 .. contributions:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
-from typing import Optional
+from typing import Optional, Tuple
 import numpy as np
 import gne.gne_const as c
 from gne.gne_io import read_data
@@ -351,7 +351,7 @@ def get_Lagn_G19(
     mdot_sb: np.ndarray, 
     spin: np.ndarray, 
     weights: Optional[np.ndarray] = None
-    ) -> tuple[np.ndarray, Optional[np.ndarray]]:
+    ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     '''
     Calculate the bolometric luminosity of the AGN following Griffin+2019.
 
@@ -589,7 +589,7 @@ def get_Lagn_insta(
 def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
              h0=None,redshift=None,redshift_previous=None,units_h0=False,units_Gyr=False,units_L=0,
              testing=False,verbose=True, calculate_Lagn_insta=None, Lagn_insta_params=None, tau_fold=None
-             ) -> tuple[np.ndarray, Optional[np.ndarray]]:
+             ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     '''
     Calculate or get the bolometric luminosity of BHs (erg/s) 
 
