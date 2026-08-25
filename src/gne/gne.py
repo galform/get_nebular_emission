@@ -33,6 +33,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],Lagn_insta=True, Lagn_insta_params=[None],
+        tau_fold=None,
         redshift_previous=None, zeq=None, infile_z0=None,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
@@ -121,6 +122,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
        If True the instantaneous quantities for AGNs are provided
     Lagn_insta_params : list of integers (text files) or strings (hdf5 files)
        Parameters to obtain the instantaneous bolometric luminosity.
+    tau_fold : float
+       Ratio of lifetime of AGN episode to bulge dynamical timescale.
+       - The fiducial value used in Shark is 1.0.
+       - If is None we use c.fq as the weights.
     redshift_previous : float
        Redshift of the previous snapshot.ç
     Zgas_NLR : list of integer (text file) or strings (hdf5 file)
@@ -300,22 +305,29 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
                                     inoh=inoh,inputformat=inputformat,
                                     testing=testing,verbose=verbose)
 
-        # Get the AGN bolometric luminosity
-        Lagn = get_Lagn(infile,cut,inputformat=inputformat,
-                        params=Lagn_params,Lagn_inputs=Lagn_inputs,
-                        h0=h0,omega0=omega0,redshift=redshift,Lbox=boxside,units_h0=units_h0,
-                        units_Gyr=units_Gyr,units_L=units_L,
-                        testing=testing, verbose=verbose)
 
-        # If needed obtain the Lbol at the snapshot time
-        Lagn_noinsta = None
-        if not Lagn_insta:
-            Lagn_noinsta = Lagn.copy()
-            Lagn = get_Lagn_insta(Lagn_noinsta, redshift, inputformat=inputformat,
-                                  params=Lagn_insta_params,
-                                  redshift_previous=redshift_previous,
-                                  testing=testing,verbose=verbose)
-            
+        calculate_Lagn_insta = not Lagn_insta
+        # Get the AGN bolometric luminosity
+        Lagn_noinsta, Lagn = get_Lagn(infile,cut,inputformat=inputformat,
+                        params=Lagn_params,Lagn_inputs=Lagn_inputs,
+                        h0=h0,redshift=redshift,redshift_previous=redshift_previous,units_h0=units_h0,
+                        units_Gyr=units_Gyr,units_L=units_L, calculate_Lagn_insta=calculate_Lagn_insta, Lagn_insta_params=Lagn_insta_params, 
+                        tau_fold=tau_fold, testing=testing, verbose=verbose)
+
+
+        if calculate_Lagn_insta and Lagn is None:
+            Lagn = get_Lagn_insta(
+                Lagn_noinsta, infile, cut, redshift,
+                redshift_previous=redshift_previous,
+                h0=h0, units_h0=units_h0,
+                inputformat=inputformat,
+                params=Lagn_insta_params,
+                tau_fold=tau_fold,
+                testing=testing, verbose=verbose)
+
+        elif not calculate_Lagn_insta:
+            Lagn = Lagn_noinsta.copy()
+
         # Get the ionising parameter, U, (and filling factor)
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           mgasr_type=mgasr_type,
@@ -337,7 +349,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
                           nebline_agn,
                           epsilon_agn=epsilon_agn,
                           Lagn_noinsta=Lagn_noinsta,
-                          verbose=verbose)             
+                          verbose=verbose)   
+        del Lagn_noinsta          
         del lu_agn, lzgas_agn 
         del nebline_agn
     del lms, lssfr, cut
