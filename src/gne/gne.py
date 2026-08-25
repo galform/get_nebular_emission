@@ -327,6 +327,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
 
         elif not calculate_Lagn_insta:
             Lagn = Lagn_noinsta.copy()
+            Lagn_noinsta = None
 
         # Get the ionising parameter, U, (and filling factor)
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
