@@ -10,7 +10,6 @@ to also get the predicted attenuated luminosities.
 """
 
 import numpy as np
-import gne.gne_const as const
 from gne.gne import gne
 from gne.gne_att import gne_att
 from gne.gne_flux import gne_flux
@@ -135,7 +134,13 @@ model_spec_agn = 'feltre16'
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            Lagn_params=[Mdot,Mbh]
-# Lagn_inputs='Griffin+2019' for a calculation from (??????? #here check)
+# Lagn_inputs='Griffin+2019' for a calculation from
+#            the mass accretion rate during the last starburst, Mdot_stb,
+#            the hot halo or radio mass accretion, Mdot_hh,
+#            the BH mass, Mbh,
+#            and, as an optional input, the BH spin, Mspin. 
+#            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
+# Lagn_inputs='Bravo+25' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
@@ -153,12 +158,8 @@ Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN']
 # - mstars_bulge: mass of the stars in the bulge (Msun)
 # - v_bulge: velocity of the bulge (km/s). 
 # If v_bulge is included the t_bulge is calculated only using rgas_bulge and v_bulge.
-# Ratio of lifetime of AGN episode to bulge dynamical timescale. Used for instantaneous Lagn calculation.
-# - The fiducial value used in Shark is 1.0.
-# - If is None we use c.fq as the weights.
 
 Lagn_insta = True; Lagn_insta_params=["data/rgas_bulge", "data/mgas_bulge", "data/mstars_bulge",]
-tau_fold = None
 
 ###################################################################
 ########  Filling factor and Cardelli's law parameters  ###########
@@ -314,7 +315,6 @@ for ivol in list_subvols:
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             Lagn_insta=Lagn_insta, Lagn_insta_params=Lagn_insta_params,
-            tau_fold=tau_fold,
             infile_z0=infile_z0, redshift_previous=redshift_previous,
             extra_params=extra_params,
             extra_params_names=extra_params_names,

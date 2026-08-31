@@ -150,6 +150,9 @@ spin_bh = 0.67 # 0, 0.3, 0.5, 0.67, 0.9, 0.95, 1
 # Typical value for accretion efficiency (e.g. Griffin+2019)
 e_r_agn = 0.1
 
+# Bravo et. al 2025 (Shark):
+tau_fold = 1.0
+
 # Fit of GP20 data to equation 1 in Henriques et al. 2016: 
 kagn = 5.44e-4 
 kagn_exp = 0.597
