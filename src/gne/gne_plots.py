@@ -1078,7 +1078,7 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
                 if bpt=='NII':
                     contour = axn.contourf(x,y,z,levels=levels,colors=colors)
                 elif bpt=='SII':
-                    contour = axs.contourf(x,y,z,levels=levels,colors=color)
+                    contour = axs.contourf(x,y,z,levels=levels,colors=colors)
             else:
                 if bpt=='NII':
                     axn.scatter(xobs,yobs,c=col)
@@ -1276,7 +1276,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
                 if bpt=='NII':
                     contour = axn.contourf(x,y,z,levels=levels,colors=colors)
                 elif bpt=='SII':
-                    contour = axs.contourf(x,y,z,levels=levels,colors=color)
+                    contour = axs.contourf(x,y,z,levels=levels,colors=colors)
             else:
                 if bpt=='NII':
                     axn.scatter(xobs,yobs,c=col)
