@@ -133,6 +133,7 @@ albedo = 0.8
 Lagn_inputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
 
 # Griffin et. al 2019:
+eta_acc_eff = 0.1 # Nominal efficiency of the accretion. eq 10 in Griffin+2019
 alpha_adaf = 0.1 # Viscosity parameter for ADAFs
 alpha_td = 0.1 # Viscosity parameter for TDs
 lambda_adaf = 0.2 # Fraction of viscous energy transferred to electrons in ADAF
@@ -141,13 +142,16 @@ eta_edd = 4 # Super-Eddington suppression factor
 fq = 10 # Ratio of lifetime of AGN episode to bulge dynamical timescale
 fbh = 0.005 # Fraction of the mass of stars formed in a starburst accreted onto a black hole
 
-beta = 1 - alpha_adaf/0.55
+beta = 1 - alpha_adaf/0.55 #  Ratio of gas pressure to total pressure. See 3.1 in Griffin+2019.
 acc_rate_crit_visc = 0.001*(lambda_adaf/0.0005)*((1-beta)/beta)*alpha_adaf**2 
 # Boundary between the two adaf regimes
 spin_bh = 0.67 # 0, 0.3, 0.5, 0.67, 0.9, 0.95, 1
 
 # Typical value for accretion efficiency (e.g. Griffin+2019)
 e_r_agn = 0.1
+
+# Bravo et. al 2025 (Shark):
+tau_fold = 1.0
 
 # Fit of GP20 data to equation 1 in Henriques et al. 2016: 
 kagn = 5.44e-4 

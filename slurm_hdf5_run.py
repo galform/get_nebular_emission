@@ -32,7 +32,7 @@ job_count = 0
 for snaps, subvols in runs:
     for snap in snaps:
         # Generate SLURM script
-        script_path, job_name = create_slurm_script(
+        script_path = create_slurm_script(
             hpc, param_file, snap, subvols,
             verbose=verbose, job_suffix=job_suffix
         )
@@ -41,7 +41,7 @@ for snaps, subvols in runs:
             
         # Submit the job
         if submit_jobs:
-            submit_slurm_job(script_path, job_name)
+            submit_slurm_job(script_path)
             job_count += 1
 
 if submit_jobs and verbose:

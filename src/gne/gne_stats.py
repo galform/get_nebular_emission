@@ -8,6 +8,8 @@ Some useful functions
  ...
 """
 import sys
+from typing import Optional
+
 import numpy as np
 import gne.gne_const as c
 
@@ -478,7 +480,10 @@ def safe_sum_arrays(arrays, notnum=c.notnum):
     all_notnum = np.ones(len(result), dtype=bool)
 
     for arr in arrays:
-        valid = arr > notnum
+        valid = np.ones(arr.shape, dtype=bool)
+        valid = np.logical_and(valid, arr != None)
+        valid = np.logical_and(valid, arr != np.nan)
+        valid[valid] = np.logical_and(valid[valid] ,arr[valid] > notnum)
         result[valid] = result[valid] + arr[valid]
         # Add indexes that are notnum (not valid)
         all_notnum = all_notnum & ~valid
@@ -590,3 +595,27 @@ def vol_sphere(R):
     return V
 
 
+def read_previous_redshift(redshift_path, snapshot) -> Optional[float]:
+    """
+    Read the previous redshift from the redshift list.
+
+    Parameters
+    ----------
+    redshift_path : str
+        Path to the redshift list. The columns should be: snapshot, redshift, factor_scale
+    snapshot : int
+        Snapshot number.
+
+    Returns
+    -------
+    redshift_previous : float, optional
+        Previous redshift. None if the snapshot is not found in the redshift list.
+    """
+    redshift_previous = None
+    redshift_list = np.loadtxt(redshift_path, dtype=float)
+    mask = redshift_list[:, 0] == snapshot - 1
+    if mask.sum() > 0:
+        redshift_previous = redshift_list[mask, 1][0]
+    else:
+        redshift_previous = None
+    return redshift_previous
